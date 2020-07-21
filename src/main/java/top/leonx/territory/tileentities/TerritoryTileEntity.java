@@ -17,11 +17,13 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import top.leonx.territory.container.TerritoryContainer;
+import top.leonx.territory.data.TerritoryData;
 
 import javax.annotation.Nullable;
 import java.util.UUID;
 
 import static top.leonx.territory.TerritoryMod.TERRITORY_TILE_ENTITY_HASH_MAP;
+import static top.leonx.territory.util.DataUtil.ConvertPosToNbt;
 
 public class TerritoryTileEntity extends TileEntity implements ITickableTileEntity, INamedContainerProvider {
     public TerritoryTileEntity() {
@@ -46,9 +48,7 @@ public class TerritoryTileEntity extends TileEntity implements ITickableTileEnti
 
     public void addJurisdiction(ChunkPos pos)
     {
-        CompoundNBT nbt=new CompoundNBT();
-        nbt.putInt("x",pos.x);
-        nbt.putInt("z",pos.z);
+        CompoundNBT nbt=ConvertPosToNbt(pos);
         if(!jurisdictions.contains(nbt))
             jurisdictions.add(nbt);
 
@@ -56,15 +56,14 @@ public class TerritoryTileEntity extends TileEntity implements ITickableTileEnti
 
         if(!TERRITORY_TILE_ENTITY_HASH_MAP.containsKey(pos))
         {
-            TERRITORY_TILE_ENTITY_HASH_MAP.put(pos,this);
+            TERRITORY_TILE_ENTITY_HASH_MAP.put(pos,new TerritoryData(owner_id,pos,null));
         }
     }
 
     public void removeJurisdiction(ChunkPos pos)
     {
-        CompoundNBT nbt=new CompoundNBT();
-        nbt.putInt("x",pos.x);
-        nbt.putInt("z",pos.z);
+        CompoundNBT nbt=ConvertPosToNbt(pos);
+
         if(jurisdictions.contains(nbt))
         {
             jurisdictions.remove(nbt);
@@ -79,7 +78,7 @@ public class TerritoryTileEntity extends TileEntity implements ITickableTileEnti
             ChunkPos pos=new ChunkPos(nbt.getInt("x"),nbt.getInt("z"));
             if(!TERRITORY_TILE_ENTITY_HASH_MAP.contains(pos))
             {
-                TERRITORY_TILE_ENTITY_HASH_MAP.put(pos,this);
+                TERRITORY_TILE_ENTITY_HASH_MAP.put(pos,new TerritoryData(owner_id,pos,null));
             }
         }
     }
