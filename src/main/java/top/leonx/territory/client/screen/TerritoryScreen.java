@@ -30,12 +30,15 @@ public class TerritoryScreen extends ContainerScreen<TerritoryContainer> {
             "map_dynamic" + MathHelper.nextInt(new Random(), 0, 128), mapTexture);
 
     ResourceLocation backgroundLocation = new ResourceLocation("minecraft", "textures/gui/demo_background.png");
-    ResourceLocation whiteSquareLocation = new ResourceLocation("minecraft", "textures/block/white_stained_glass.png");
-    ResourceLocation blueSquareLocation = new ResourceLocation("minecraft", "textures/block/blue_stained_glass.png");
-    ResourceLocation lightBlueSquareLocation = new ResourceLocation("minecraft", "textures/block" +
+
+    ResourceLocation territorySquareLocation = new ResourceLocation("minecraft", "textures/block/blue_stained_glass.png");
+    ResourceLocation edgeSquareLocation = new ResourceLocation("territory", "textures/gui/slash_overlay.png");
+    ResourceLocation mouseOnSquareLocation = new ResourceLocation("minecraft", "textures/block" +
             "/light_blue_stained_glass.png");
-    ResourceLocation cyanSquareLocation = new ResourceLocation("minecraft", "textures/block" +
+    ResourceLocation expandSquareLocation = new ResourceLocation("minecraft", "textures/block" +
             "/cyan_stained_glass.png");
+    ResourceLocation selectedSquareLocation = new ResourceLocation("minecraft", "textures/block" +
+            "/white_stained_glass.png");
 
     public TerritoryScreen(TerritoryContainer screenContainer, PlayerInventory inv, ITextComponent titleIn) {
         super(screenContainer, inv, titleIn);
@@ -141,10 +144,11 @@ public class TerritoryScreen extends ContainerScreen<TerritoryContainer> {
     }
 
     private void drawChunkOverlay(int mouseX, int mouseY) {
-        getMinecraft().getTextureManager().bindTexture(blueSquareLocation);
+
         GlStateManager.enableBlend();
         GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
 
+        getMinecraft().getTextureManager().bindTexture(territorySquareLocation);
         //绘制领地区块
         for (int i = 0; i < container.jurisdictions.size(); i++) {
             ChunkPos pos = container.jurisdictions.get(i);
@@ -152,23 +156,25 @@ public class TerritoryScreen extends ContainerScreen<TerritoryContainer> {
             int chunkZ = pos.z;
             if(getContainer().chunkToBeRemoved.contains(pos)) continue;
             this.blit(mapPosLeft + ((chunkX - mapLeftTopChunkPos.x) << 4), mapPosTop + ((chunkZ - mapLeftTopChunkPos.z) << 4), 0, 0, 16,
-                    16);
+                    16,16,16);
         }
 
 
-        // 设置可选择区块的颜色使用cyan
-        getMinecraft().getTextureManager().bindTexture(cyanSquareLocation);
-
+        getMinecraft().getTextureManager().bindTexture(expandSquareLocation);
         // 绘制可以选择的新区块
         drawOverlayByCollection(container.selectableChunkPos);
-        // 绘制要删除的区块
-        drawOverlayByCollection(container.chunkToBeRemoved);
+
+//        // 绘制要删除的区块
+//        drawOverlayByCollection(container.chunkToBeRemoved);
+
+        getMinecraft().getTextureManager().bindTexture(edgeSquareLocation);
+        drawOverlayByCollection(container.removableChunkPos);
 
         // 绘制鼠标悬浮的区域
         int mouseOnChunkX = (mouseX - this.guiLeft - mapPosLeft) / 16;
         int mouseOnChunkY = (mouseY - this.guiTop - mapPosTop) / 16;
 
-        getMinecraft().getTextureManager().bindTexture(whiteSquareLocation);
+        getMinecraft().getTextureManager().bindTexture(mouseOnSquareLocation);
         ChunkPos mouseOverPos = new ChunkPos(mapLeftTopChunkPos.x + mouseOnChunkX, mapLeftTopChunkPos.z + mouseOnChunkY);
         if (getContainer().removableChunkPos.contains(mouseOverPos)||
                 (getContainer().jurisdictions.size() + container.chunkToBeAdded.size() < getContainer().getTotalProtectPower() && getContainer().selectableChunkPos.contains(mouseOverPos))
@@ -176,12 +182,12 @@ public class TerritoryScreen extends ContainerScreen<TerritoryContainer> {
                 && mouseOnChunkY >= 0 && mouseOnChunkY < chunkNumY) {
 
             this.blit(mapPosLeft + (mouseOnChunkX << 4), mapPosTop + (mouseOnChunkY << 4), 0, 0, 16,
-                    16);
+                    16,16,16);
         }
 
 
         // 绘制选中的区域
-        getMinecraft().getTextureManager().bindTexture(lightBlueSquareLocation);
+        getMinecraft().getTextureManager().bindTexture(selectedSquareLocation);
         drawOverlayByCollection(container.chunkToBeAdded);
     }
 
@@ -194,7 +200,7 @@ public class TerritoryScreen extends ContainerScreen<TerritoryContainer> {
             if (posX < 0 || posZ < 0 || posX >= chunkNumX || posZ >= chunkNumY) continue;
 
             this.blit(mapPosLeft + (posX << 4), mapPosTop + (posZ << 4),
-                    0, 0, 16, 16);
+                    0, 0, 16, 16,16,16);
         }
     }
 
@@ -224,6 +230,7 @@ public class TerritoryScreen extends ContainerScreen<TerritoryContainer> {
                 }
                 MaterialColor materialColor = state.getMaterialColor(Minecraft.getInstance().world, pos);
                 int l = materialColor.getMapColor(materialColor.colorIndex);
+
                 this.mapTexture.getTextureData().setPixelRGBA(j, i,
                         l | 0xFF000000);
             }
