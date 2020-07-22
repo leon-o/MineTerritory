@@ -2,6 +2,11 @@ package top.leonx.territory.util;
 
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.math.ChunkPos;
+import top.leonx.territory.data.PermissionFlag;
+
+import java.util.AbstractMap;
+import java.util.Map;
+import java.util.UUID;
 
 public class DataUtil {
     public static CompoundNBT ConvertPosToNbt(ChunkPos pos)
@@ -14,5 +19,18 @@ public class DataUtil {
     public static ChunkPos ConvertNbtToPos(CompoundNBT nbt)
     {
         return new ChunkPos(nbt.getInt("x"),nbt.getInt("z"));
+    }
+    public static CompoundNBT ConvertUUIDPermissionToNbt(UUID uuid,PermissionFlag flag)
+    {
+        CompoundNBT nbt=new CompoundNBT();
+        nbt.putUniqueId("uuid",uuid);
+        nbt.putInt("flag",flag.getCode());
+        return nbt;
+    }
+
+    public static Map.Entry<UUID,PermissionFlag> ConvertNbtToUUIDPermission(CompoundNBT nbt)
+    {
+        return new AbstractMap.SimpleEntry<>(nbt.getUniqueId("uuid"),
+                new PermissionFlag(nbt.getInt("flag")));
     }
 }

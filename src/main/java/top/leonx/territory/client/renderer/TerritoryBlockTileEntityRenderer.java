@@ -3,20 +3,14 @@ package top.leonx.territory.client.renderer;
 import com.mojang.blaze3d.platform.GlStateManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BannerTextures;
-import net.minecraft.client.renderer.model.ItemCameraTransforms;
 import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
 import net.minecraft.client.renderer.tileentity.model.BannerModel;
-import net.minecraft.item.BannerItem;
 import net.minecraft.item.DyeColor;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 import net.minecraft.tileentity.BannerPattern;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
 import top.leonx.territory.tileentities.TerritoryTileEntity;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class TerritoryBlockTileEntityRenderer extends TileEntityRenderer<TerritoryTileEntity> {
@@ -83,11 +77,11 @@ public class TerritoryBlockTileEntityRenderer extends TileEntityRenderer<Territo
         GlStateManager.scaled(fontSize,-fontSize,fontSize);
         GlStateManager.normal3f(0,0,-fontSize);
         Minecraft.getInstance().fontRenderer.drawString("Owner:",
-                -Minecraft.getInstance().fontRenderer.getStringWidth("Owner:")/2,-70,
+                -Minecraft.getInstance().fontRenderer.getStringWidth("Owner:")/2f,-70,
                 0XFFFFFFFF);
 
-        Minecraft.getInstance().fontRenderer.drawString(tileEntityIn.owner_name,
-                -Minecraft.getInstance().fontRenderer.getStringWidth(tileEntityIn.owner_name)/2,-60+height*10,
+        Minecraft.getInstance().fontRenderer.drawString(tileEntityIn.getOwnerName(),
+                -Minecraft.getInstance().fontRenderer.getStringWidth(tileEntityIn.getOwnerName())/2f,-60+height*10,
                 0XFFFFFFFF);
 
         GlStateManager.popMatrix();

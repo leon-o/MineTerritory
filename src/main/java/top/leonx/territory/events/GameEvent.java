@@ -1,49 +1,34 @@
 package top.leonx.territory.events;
 
-import com.mojang.blaze3d.platform.GlStateManager;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.particles.ParticleTypes;
-import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Hand;
-import net.minecraft.util.Timer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.TextComponent;
-import net.minecraft.world.World;
-import net.minecraft.world.chunk.Chunk;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.EntityViewRenderEvent;
-import net.minecraftforge.client.event.RenderWorldLastEvent;
+import net.minecraftforge.common.UsernameCache;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.item.ItemEvent;
+import net.minecraftforge.event.entity.EntityEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
-import net.minecraftforge.event.entity.player.PlayerContainerEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.event.world.BlockEvent;
+import net.minecraftforge.event.world.ExplosionEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import org.lwjgl.opengl.GL11;
-import org.omg.PortableServer.POA;
 import top.leonx.territory.TerritoryMod;
-import top.leonx.territory.blocks.ModBlocks;
-import top.leonx.territory.data.TerritoryData;
+import top.leonx.territory.client.gui.PlayerList;
+import top.leonx.territory.data.PermissionFlag;
+import top.leonx.territory.data.TerritoryInfo;
 import top.leonx.territory.items.ModItems;
-import top.leonx.territory.tileentities.TerritoryTileEntity;
 
 import javax.annotation.Nullable;
-import java.awt.*;
-import java.nio.charset.IllegalCharsetNameException;
 import java.util.Random;
 
+@SuppressWarnings("unused")
 @Mod.EventBusSubscriber(modid = TerritoryMod.MODID)
 public class GameEvent {
     static Random random=new Random();
@@ -51,7 +36,7 @@ public class GameEvent {
     @SubscribeEvent
     public static void onPlayerLeftClickBlock(PlayerInteractEvent.LeftClickBlock event)
     {
-        if (!hasPermission(event.getPos(), event.getPlayer())) {
+        if (!hasPermission(event.getPos(), event.getPlayer(),PermissionFlag.BREAK)) {
             event.setCanceled(true);
 
             if(!event.getWorld().isRemote)
@@ -62,7 +47,7 @@ public class GameEvent {
     @SubscribeEvent
     public static void onPlayerRightClickBlock(PlayerInteractEvent.RightClickBlock event)
     {
-        if (!hasPermission(event.getPos(), event.getPlayer())) {
+        if (!hasPermission(event.getPos(), event.getPlayer(),PermissionFlag.INTERACTE)) {
             event.setCanceled(true);
 
             if(!event.getWorld().isRemote)
@@ -71,19 +56,21 @@ public class GameEvent {
     }
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
-    private static boolean hasPermission(BlockPos pos, PlayerEntity entity)
+    private static boolean hasPermission(BlockPos pos, PlayerEntity entity, PermissionFlag flag)
     {
         ChunkPos chunkPos = new ChunkPos(pos.getX()>>4,pos.getZ()>>4);
         if(TerritoryMod.TERRITORY_TILE_ENTITY_HASH_MAP.containsKey(chunkPos))
         {
-            TerritoryData data=TerritoryMod.TERRITORY_TILE_ENTITY_HASH_MAP.get(chunkPos);
-            return data.userId==null || data.userId.equals(entity.getUniqueID());
+            TerritoryInfo data=TerritoryMod.TERRITORY_TILE_ENTITY_HASH_MAP.get(chunkPos);
+
+            return data.getOwnerId()==null&&!entity.hasPermissionLevel(4) ||
+                    data.getOwnerId()!=null && (data.getOwnerId().equals(entity.getUniqueID())|| data.permissions.containsKey(entity.getUniqueID()) && data.permissions.get(entity.getUniqueID()).contain(flag));
         }
         return true;
     }
 
     @Nullable
-    private static TerritoryData getTerritoryData(ChunkPos pos)
+    private static TerritoryInfo getTerritoryData(ChunkPos pos)
     {
         if(TerritoryMod.TERRITORY_TILE_ENTITY_HASH_MAP.containsKey(pos))
         {
@@ -101,32 +88,30 @@ public class GameEvent {
         PlayerEntity clientPlayer= Minecraft.getInstance().player;
         if(clientPlayer==null) return;
 
-        ChunkPos lastTickPos=new ChunkPos((int) clientPlayer.lastTickPosX/16,(int) clientPlayer.lastTickPosZ/16);
-        ChunkPos thisTickPos=new ChunkPos((int) clientPlayer.posX/16,(int) clientPlayer.posZ/16);
-        TerritoryData lastTerritoryData=getTerritoryData(lastTickPos);
-        TerritoryData thisTerritoryData=getTerritoryData(thisTickPos);
+        ChunkPos lastTickPos=new ChunkPos((int) clientPlayer.lastTickPosX>>4,(int) clientPlayer.lastTickPosZ>>4);
+        ChunkPos thisTickPos=new ChunkPos((int) clientPlayer.posX>>4,(int) clientPlayer.posZ>>4);
+        TerritoryInfo lastTerritoryInfo =getTerritoryData(lastTickPos);
+        TerritoryInfo thisTerritoryInfo =getTerritoryData(thisTickPos);
 
-        if((lastTerritoryData==null && thisTerritoryData!=null) || (lastTerritoryData!=null && thisTerritoryData!=null && lastTerritoryData.ownerId!=thisTerritoryData.ownerId))
+        if((lastTerritoryInfo ==null && thisTerritoryInfo !=null) || (lastTerritoryInfo !=null && thisTerritoryInfo !=null && lastTerritoryInfo.getOwnerId()!= thisTerritoryInfo.getOwnerId()))
         {
             String ownerName;
-            if(thisTerritoryData.ownerId==null) // exit
+            if(thisTerritoryInfo.getOwnerId()==null) // exit
             {
                 ownerName= "'public area'";
             }else{
-                ownerName=
-                        Minecraft.getInstance().getIntegratedServer().getPlayerList().getPlayerByUUID(thisTerritoryData.ownerId).getDisplayName().getString();
+                ownerName= UsernameCache.getLastKnownUsername(thisTerritoryInfo.getOwnerId());
             }
             clientPlayer.sendMessage(new StringTextComponent(String.format("You have entered %s's territory",
                     ownerName)));
-        }else if(thisTerritoryData==null && lastTerritoryData!=null)
+        }else if(thisTerritoryInfo ==null && lastTerritoryInfo !=null)
         {
             String ownerName;
-            if(lastTerritoryData.ownerId==null) // exit
+            if(lastTerritoryInfo.getOwnerId()==null) // exit
             {
                 ownerName= "'public area'";
             }else{
-                ownerName=
-                        Minecraft.getInstance().getIntegratedServer().getPlayerList().getPlayerByUUID(lastTerritoryData.ownerId).getDisplayName().getString();
+                ownerName= UsernameCache.getLastKnownUsername(lastTerritoryInfo.getOwnerId());
             }
 
             clientPlayer.sendMessage(new StringTextComponent(String.format("You have exited %s's territory", ownerName)));
@@ -135,7 +120,7 @@ public class GameEvent {
         ItemStack heldItem = clientPlayer.getHeldItem(Hand.MAIN_HAND);
         if(heldItem.getItem()== ModItems.TerritoryBlockItem)
         {
-            World world=Minecraft.getInstance().world;
+            // World world=Minecraft.getInstance().world;
             ChunkPos chunkPos=Minecraft.getInstance().world.getChunkAt(clientPlayer.getPosition()).getPos();
             timeDelay++;
             if(timeDelay==5)

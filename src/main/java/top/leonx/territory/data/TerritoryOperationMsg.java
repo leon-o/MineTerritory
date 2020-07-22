@@ -3,13 +3,30 @@ package top.leonx.territory.data;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.math.ChunkPos;
 
+import javax.annotation.Nonnull;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 public class TerritoryOperationMsg {
+    @Nonnull
     public ChunkPos[] readyAdd;
+    @Nonnull
     public ChunkPos[] readyRemove;
+    @Nonnull
+    public Map<UUID,PermissionFlag> permissions;
+    public TerritoryOperationMsg(@Nonnull ChunkPos[] readyAdd, @Nonnull ChunkPos[] readyRemove,
+                                 @Nonnull Map<UUID,PermissionFlag> permissionFlagMap) {
+        this.readyAdd=readyAdd;
+        this.readyRemove=readyRemove;
+        permissions = permissionFlagMap;
+
+    }
 
     public static void encode(TerritoryOperationMsg msg, PacketBuffer buffer) {
         buffer.writeInt(msg.readyAdd.length);
         buffer.writeInt(msg.readyRemove.length);
+        buffer.writeInt(msg.permissions.size());
         for (ChunkPos pos : msg.readyAdd) {
             buffer.writeInt(pos.x);
             buffer.writeInt(pos.z);
@@ -18,23 +35,36 @@ public class TerritoryOperationMsg {
             buffer.writeInt(pos.x);
             buffer.writeInt(pos.z);
         }
+        msg.permissions.forEach((k, v)->{
+            buffer.writeUniqueId(k);
+            buffer.writeInt(v.getCode());
+        });
     }
 
     public static TerritoryOperationMsg decode(PacketBuffer buffer) {
         int addLength=buffer.readInt();
         int removeLength=buffer.readInt();
-        TerritoryOperationMsg msg= new TerritoryOperationMsg();
-        msg.readyAdd=new ChunkPos[addLength];
-        msg.readyRemove=new ChunkPos[removeLength];
+        int permissionLength=buffer.readInt();
 
-        for (int i=0;i<msg.readyAdd.length;i++)
+        HashMap<UUID,PermissionFlag> permissions = new HashMap<>();
+        ChunkPos[] readyAdd = new ChunkPos[addLength];
+        ChunkPos[] readyRemove = new ChunkPos[removeLength];
+
+        for (int i=0;i<readyAdd.length;i++)
         {
-            msg.readyAdd[i] = new ChunkPos(buffer.readInt(),buffer.readInt());
+            readyAdd[i] = new ChunkPos(buffer.readInt(),buffer.readInt());
         }
-        for (int i=0;i<msg.readyRemove.length;i++)
+        for (int i=0;i<readyRemove.length;i++)
         {
-            msg.readyRemove[i] = new ChunkPos(buffer.readInt(),buffer.readInt());
+            readyRemove[i] = new ChunkPos(buffer.readInt(),buffer.readInt());
         }
-        return msg;
+        for (int i=0;i<permissionLength;i++)
+        {
+            UUID uuid=buffer.readUniqueId();
+            int code = buffer.readInt();
+            PermissionFlag flag=new PermissionFlag(code);
+            permissions.put(uuid,flag);
+        }
+        return new TerritoryOperationMsg(readyAdd,readyRemove,permissions);
     }
 }

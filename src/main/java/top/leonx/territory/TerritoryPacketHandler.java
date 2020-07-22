@@ -8,7 +8,6 @@ import net.minecraft.util.math.ChunkPos;
 import net.minecraftforge.fml.network.NetworkEvent;
 import net.minecraftforge.fml.network.NetworkRegistry;
 import net.minecraftforge.fml.network.simple.SimpleChannel;
-import top.leonx.territory.container.TerritoryContainer;
 import top.leonx.territory.data.OperationMsg;
 
 import java.util.HashSet;

@@ -8,6 +8,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import top.leonx.territory.TerritoryMod;
 import top.leonx.territory.client.renderer.TerritoryBlockTileEntityRenderer;
+import top.leonx.territory.client.screen.TerritoryMapScreen;
 import top.leonx.territory.client.screen.TerritoryScreen;
 import top.leonx.territory.container.ModContainerTypes;
 import top.leonx.territory.tileentities.TerritoryTileEntity;

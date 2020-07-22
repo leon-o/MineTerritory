@@ -1,46 +1,55 @@
 package top.leonx.territory.container;
 
-import com.sun.jndi.cosnaming.CNCtx;
+import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.container.Container;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.INBT;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.IWorld;
+import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.network.NetworkDirection;
 import net.minecraftforge.fml.network.NetworkEvent;
 import top.leonx.territory.TerritoryPacketHandler;
+import top.leonx.territory.data.TerritoryInfo;
 import top.leonx.territory.data.TerritoryOperationMsg;
 import top.leonx.territory.tileentities.TerritoryTileEntity;
 
+import javax.annotation.Nonnull;
 import java.util.*;
 import java.util.function.Supplier;
 
 public class TerritoryContainer extends Container {
 
     //The pos relative to mapLeftTopChunkPos
-    public Set<ChunkPos> selectableChunkPos = new HashSet<>();
-    public Set<ChunkPos> removableChunkPos = new HashSet<>();
 
+    private final PlayerEntity player;
+    public final BlockPos tileEntityPos;
+    public final TerritoryInfo territoryInfo;
+    public final Set<ChunkPos> territories = new HashSet<>();
+    private final Set<ChunkPos> originalTerritories=new HashSet<>();
+    public final Set<ChunkPos> selectableChunkPos = new HashSet<>();
+    public final Set<ChunkPos> removableChunkPos = new HashSet<>();
     public TerritoryContainer(int id, PlayerInventory inventory, PacketBuffer buffer) {
         this(id, inventory, getTileEntity(inventory, buffer));
     }
 
     public TerritoryContainer(int id, PlayerInventory inventory, TerritoryTileEntity tileEntity) {
         super(ModContainerTypes.TERRITORY_CONTAINER, id);
-        this.tileEntity = tileEntity;
-        centerPos = tileEntity.getPos();
+        this.player=inventory.player;
+        this.territoryInfo= tileEntity.getTerritoryInfo().copy();
 
-        initJurisdictionList();
+        tileEntityPos = tileEntity.getPos();
+
+        territories.addAll(tileEntity.territories);
+        originalTerritories.addAll(tileEntity.territories);
 
         if (Objects.requireNonNull(tileEntity.getWorld()).isRemote) {
             initSelectableChunkPos();
@@ -67,20 +76,15 @@ public class TerritoryContainer extends Container {
             ServerPlayerEntity sender = contextSupplier.get().getSender();
             if (sender == null)//client side ,when success
             {
-                TerritoryContainer container = (TerritoryContainer) Minecraft.getInstance().player.openContainer;
-
-                container.jurisdictions.removeAll(container.chunkToBeRemoved);
-                container.jurisdictions.addAll(container.chunkToBeAdded);
-                container.chunkToBeAdded.clear();
-                container.chunkToBeRemoved.clear();
-
-                //container.initJurisdictionList();
-                container.initRemovableChunkPos();
-                container.initSelectableChunkPos();
-
+                Minecraft.getInstance().player.closeScreen();
             } else {
                 TerritoryContainer container = (TerritoryContainer) sender.openContainer;
-                if (container.updateTileEntityServerSide(sender, msg)) ;
+                if (!container.updateTileEntityServerSide(sender, msg))return;
+
+                World world=container.player.world;
+                BlockState state=world.getBlockState(container.tileEntityPos);
+                world.notifyBlockUpdate(container.tileEntityPos, state,state,2); //notify all clients to update.
+
                 TerritoryPacketHandler.CHANNEL.sendTo(msg, sender.connection.netManager,
                         NetworkDirection.PLAY_TO_CLIENT);
             }
@@ -89,21 +93,19 @@ public class TerritoryContainer extends Container {
     }
 
 
-    private final TerritoryTileEntity tileEntity;
-    public final BlockPos centerPos;
-    public List<ChunkPos> jurisdictions = new ArrayList<>();
-    public final Set<ChunkPos> chunkToBeAdded = new HashSet<>();
-    public final Set<ChunkPos> chunkToBeRemoved = new HashSet<>();
+    //private final TerritoryTileEntity tileEntity; Should avoid directly operating the Tile Entity directly on the client side
 
 
     @Override
-    public boolean canInteractWith(PlayerEntity playerIn) {
+    public boolean canInteractWith(@Nonnull PlayerEntity playerIn) {
         return true;
     }
 
-    public boolean updateTileEntityServerSide(ServerPlayerEntity playerEntity, TerritoryOperationMsg msg) {
-        if (jurisdictions.size() + msg.readyAdd.length - msg.readyRemove.length > protectPower)
+    public boolean updateTileEntityServerSide(ServerPlayerEntity player, TerritoryOperationMsg msg) {
+        if (originalTerritories.size() + msg.readyAdd.length - msg.readyRemove.length > protectPower)
             return false;
+
+        TerritoryTileEntity tileEntity= (TerritoryTileEntity) player.world.getTileEntity(tileEntityPos);
 
         for (ChunkPos pos : msg.readyRemove) {
             tileEntity.removeJurisdiction(pos);
@@ -111,68 +113,65 @@ public class TerritoryContainer extends Container {
 
         for (ChunkPos pos : msg.readyAdd) {
 
-            if (!playerEntity.isCreative()) {
-                if (playerEntity.experienceLevel >= 30) {
-                    playerEntity.addExperienceLevel(-30);
+            if (!player.isCreative()) {
+                if (player.experienceLevel >= 30) {
+                    player.addExperienceLevel(-30);
                 } else {
                     return false;
                 }
             }
-            playerEntity.world.playSound(playerEntity, playerEntity.getPosition(), SoundEvents.BLOCK_ENCHANTMENT_TABLE_USE,
+            player.world.playSound(player, player.getPosition(), SoundEvents.BLOCK_ENCHANTMENT_TABLE_USE,
                     SoundCategory.BLOCKS, 1F, 1F);
 
             tileEntity.addJurisdiction(pos);
         }
+
+        tileEntity.setPermissionAll(msg.permissions);
         tileEntity.markDirty();
         return true;
     }
 
+    @Override
+    public void onContainerClosed(@Nonnull PlayerEntity playerIn) {
+
+        super.onContainerClosed(playerIn);
+    }
+
     public void Done() {
-        TerritoryOperationMsg msg = new TerritoryOperationMsg();
-        msg.readyAdd = chunkToBeAdded.toArray(new ChunkPos[0]);
-        msg.readyRemove = chunkToBeRemoved.toArray(new ChunkPos[0]);
+
+        ChunkPos[] readyToRemove =
+                originalTerritories.stream().filter(t -> !territories.contains(t)).toArray(ChunkPos[]::new);
+        ChunkPos[] readyToAdd =
+                territories.stream().filter(t -> !originalTerritories.contains(t)).toArray(ChunkPos[]::new);
+
+        TerritoryOperationMsg msg = new TerritoryOperationMsg(readyToAdd,readyToRemove, territoryInfo.permissions);
+
         TerritoryPacketHandler.CHANNEL.sendToServer(msg);
     }
 
-    private void initJurisdictionList() {
-        jurisdictions.clear();
-        for (INBT nbt : tileEntity.jurisdictions) {
-            CompoundNBT compoundNBT = (CompoundNBT) nbt;
-            jurisdictions.add(new ChunkPos(compoundNBT.getInt("x"), compoundNBT.getInt("z")));
-        }
-    }
 
     public void initSelectableChunkPos() {
         selectableChunkPos.clear();
-        List<ChunkPos> tmp = new ArrayList<>(jurisdictions);
+        HashSet<ChunkPos> tmp = new HashSet<>(territories);
 
-        tmp.addAll(chunkToBeAdded);
-        tmp.removeAll(chunkToBeRemoved);
 
         for (ChunkPos pos : tmp) {
             int chunkX = pos.x;
             int chunkZ = pos.z;
-            if (chunkToBeRemoved.contains(pos)) continue;
+
             selectableChunkPos.add(new ChunkPos(chunkX + 1, chunkZ));
             selectableChunkPos.add(new ChunkPos(chunkX, chunkZ + 1));
             selectableChunkPos.add(new ChunkPos(chunkX - 1, chunkZ));
             selectableChunkPos.add(new ChunkPos(chunkX, chunkZ - 1));
         }
-        for (ChunkPos jurisdiction : jurisdictions) {
-            int chunkX = jurisdiction.x;
-            int chunkZ = jurisdiction.z;
-
-            selectableChunkPos.removeIf(t -> t.z == chunkZ && t.x == chunkX);
-        }
+        selectableChunkPos.removeIf(territories::contains);
     }
 
     public void initRemovableChunkPos() {
         removableChunkPos.clear();
-        List<ChunkPos> tmp = new ArrayList<>(jurisdictions);
-        tmp.removeAll(chunkToBeRemoved);
+        List<ChunkPos> tmp = new ArrayList<>(territories);
 
         for (ChunkPos pos : tmp) {
-            if (chunkToBeRemoved.contains(pos)) continue;
             int chunkX = pos.x;
             int chunkZ = pos.z;
             ChunkPos right = new ChunkPos(chunkX + 1, chunkZ);
@@ -180,8 +179,8 @@ public class TerritoryContainer extends Container {
             ChunkPos left = new ChunkPos(chunkX - 1, chunkZ);
             ChunkPos down = new ChunkPos(chunkX, chunkZ - 1);
 
-            List<Boolean> touched = Arrays.asList(jurisdictions.contains(left), jurisdictions.contains(up), jurisdictions.contains(right),
-                    jurisdictions.contains(down));
+            List<Boolean> touched = Arrays.asList(territories.contains(left), territories.contains(up), territories.contains(right),
+                    territories.contains(down));
             int touchedCount= (int) touched.stream().filter(t->t).count();
             if (touchedCount==4
                     ||touchedCount==2 && (touched.get(0)&&touched.get(2) ||touched.get(1)&&touched.get(3)))
@@ -199,8 +198,8 @@ public class TerritoryContainer extends Container {
 
     private int computeProtectPower() {
         int power = 0;
-        BlockPos pos = tileEntity.getPos();
-        IWorld world = tileEntity.getWorld();
+        BlockPos pos = tileEntityPos;
+        IWorld world = player.world;
         for (int k = -1; k <= 1; ++k) {
             for (int l = -1; l <= 1; ++l) {
                 if ((k != 0 || l != 0) && world.isAirBlock(pos.add(l, 0, k)) && world.isAirBlock(pos.add(l, 1, k))) {
@@ -225,6 +224,6 @@ public class TerritoryContainer extends Container {
     }
 
     public int getUsedProtectPower() {
-        return jurisdictions.size() + chunkToBeAdded.size() - chunkToBeRemoved.size();
+        return territories.size();
     }
 }
