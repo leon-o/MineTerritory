@@ -5,8 +5,8 @@ import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraftforge.common.UsernameCache;
 import net.minecraftforge.fml.client.config.GuiButtonExt;
-import top.leonx.territory.client.gui.CheckBoxButtonEx;
 import top.leonx.territory.client.gui.PlayerList;
+import top.leonx.territory.client.gui.PermissionToggleButton;
 import top.leonx.territory.container.TerritoryContainer;
 import top.leonx.territory.data.PermissionFlag;
 import top.leonx.territory.util.UserUtil;
@@ -23,7 +23,7 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryConta
     private TextFieldWidget search;
     private TextFieldWidget addTextField;
     @SuppressWarnings("unused")
-    private final Map<CheckBoxButtonEx,PermissionFlag> permissionCheckbox=new HashMap<>();
+    private final Map<PermissionToggleButton,PermissionFlag> permissionCheckbox=new HashMap<>();
     private GuiButtonExt addPlayerBtn;
     private GuiButtonExt removePlayerBtn;
     PlayerList.PlayerEntry defaultPlayerEntry;
@@ -54,22 +54,23 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryConta
 
 
 
-        int checkboxTop=parent.getGuiTop()+24;
+        int checkboxTop=parent.getGuiTop()+30;
         int checkboxWidth=50;
         int checkboxHeight=20;
         int checkboxIndexTmp=0;
         for (PermissionFlag flag : PermissionFlag.basicFlag) {
-            CheckBoxButtonEx btn=new CheckBoxButtonEx(parent.getGuiLeft()+130,checkboxTop+(checkboxHeight+4)*checkboxIndexTmp,checkboxWidth,checkboxHeight,
-                    flag.getName()
-                    ,container.territoryInfo.defaultPermission.contain(flag));
-            btn.onCheckedChange=t->{
+            PermissionToggleButton btn=new PermissionToggleButton(parent.getGuiLeft()+120,checkboxTop+(checkboxHeight+4)*checkboxIndexTmp,checkboxWidth,
+                    checkboxHeight,
+                    flag.getName(),container.territoryInfo.defaultPermission.contain(flag));
+
+            btn.onTriggered=t->{
                 PermissionFlag permissionFlag;
                 if(playerList.getSelected().equals(defaultPlayerEntry))
                     permissionFlag=container.territoryInfo.defaultPermission;
                 else
                     permissionFlag=container.territoryInfo.permissions.get(playerList.getSelected().getUUID());
 
-                if(t.isChecked())
+                if(t.isStateTriggered())
                     permissionFlag.combine(flag);
                 else
                     permissionFlag.remove(flag);
@@ -191,7 +192,7 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryConta
         else
             editingPermission = container.territoryInfo.permissions.get(entry.getUUID());
 
-        permissionCheckbox.forEach((box,flag)-> box.setIsChecked(editingPermission.contain(flag)));
+        permissionCheckbox.forEach((box,flag)-> box.setStateTriggered(editingPermission.contain(flag)));
 
         removePlayerBtn.active=entry.canDelete;
     }
