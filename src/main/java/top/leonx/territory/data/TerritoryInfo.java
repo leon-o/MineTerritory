@@ -8,14 +8,20 @@ import javax.annotation.Nullable;
 import java.util.*;
 
 public class TerritoryInfo{
-    public final static TerritoryInfo defaultTerritoryInfo=new TerritoryInfo(null,new HashSet<>(), new HashMap<>());
+    public final static TerritoryInfo defaultTerritoryInfo=new TerritoryInfo(null,new HashSet<>());
 
     public Set<ChunkPos> territories;
-    public TerritoryInfo(@Nullable UUID ownerId,@Nonnull Set<ChunkPos> territoryMap, @Nonnull Map<UUID,PermissionFlag> permissions)
+    public TerritoryInfo(@Nullable UUID ownerId, @Nonnull Set<ChunkPos> territoryMap, @Nonnull Map<UUID,PermissionFlag> permissions,
+                         @Nonnull PermissionFlag defaultPermission)
     {
         this.ownerId=ownerId;
         this.permissions = permissions;
         this.territories=territoryMap;
+        this.defaultPermission=defaultPermission;
+    }
+    public TerritoryInfo(@Nullable UUID ownerId,@Nonnull Set<ChunkPos> territoryMap)
+    {
+        this(ownerId,territoryMap,new HashMap<>(),new PermissionFlag());
     }
     @Nullable
     private UUID ownerId;
@@ -33,7 +39,8 @@ public class TerritoryInfo{
     }
     @Nonnull
     public Map<UUID,PermissionFlag> permissions;
-
+    @Nonnull
+    public PermissionFlag defaultPermission;
     @Override
     public boolean equals(Object obj) {
         if(obj==this)
@@ -49,6 +56,6 @@ public class TerritoryInfo{
     public TerritoryInfo copy() {
         Map<UUID,PermissionFlag> flags=new HashMap<>();
         permissions.forEach(flags::put);
-        return new TerritoryInfo(ownerId,new HashSet<>(territories),flags);
+        return new TerritoryInfo(ownerId,new HashSet<>(territories),flags,new PermissionFlag(defaultPermission.getCode()));
     }
 }

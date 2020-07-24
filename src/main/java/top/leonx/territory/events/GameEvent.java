@@ -70,7 +70,10 @@ public class GameEvent {
         {
             TerritoryInfo data=TerritoryMod.TERRITORY_TILE_ENTITY_HASH_MAP.get(pos);
             return data.getOwnerId()==null&&!player.hasPermissionLevel(4) ||
-                    data.getOwnerId()!=null && (data.getOwnerId().equals(player.getUniqueID())|| data.permissions.containsKey(player.getUniqueID()) && data.permissions.get(player.getUniqueID()).contain(flag));
+                    data.getOwnerId()!=null &&
+                            (data.getOwnerId().equals(player.getUniqueID())||
+                            data.permissions.containsKey(player.getUniqueID()) && data.permissions.get(player.getUniqueID()).contain(flag)||
+                            !data.permissions.containsKey(player.getUniqueID()) && data.defaultPermission.contain(flag));
         }
         return true;
     }

@@ -32,6 +32,7 @@ public class TerritoryContainer extends Container {
 
     private final PlayerEntity player;
     public final BlockPos tileEntityPos;
+    public final ChunkPos tileEntityChunkPos;
     public final TerritoryInfo territoryInfo;
     public final Set<ChunkPos> territories = new HashSet<>();
     private final Set<ChunkPos> originalTerritories=new HashSet<>();
@@ -47,6 +48,7 @@ public class TerritoryContainer extends Container {
         this.territoryInfo= tileEntity.getTerritoryInfo().copy();
 
         tileEntityPos = tileEntity.getPos();
+        tileEntityChunkPos=new ChunkPos(tileEntityPos.getX()>>4,tileEntityPos.getZ()>>4);
 
         territories.addAll(tileEntity.getTerritoryInfo().territories);
         originalTerritories.addAll(tileEntity.getTerritoryInfo().territories);
@@ -123,10 +125,11 @@ public class TerritoryContainer extends Container {
             player.world.playSound(player, player.getPosition(), SoundEvents.BLOCK_ENCHANTMENT_TABLE_USE,
                     SoundCategory.BLOCKS, 1F, 1F);
 
-            tileEntity.addJurisdiction(pos);
+            tileEntity.addTerritory(pos);
         }
 
         tileEntity.setPermissionAll(msg.permissions);
+        tileEntity.getTerritoryInfo().defaultPermission=msg.defaultPermission;
         tileEntity.markDirty();
         return true;
     }
@@ -144,7 +147,7 @@ public class TerritoryContainer extends Container {
         ChunkPos[] readyToAdd =
                 territories.stream().filter(t -> !originalTerritories.contains(t)).toArray(ChunkPos[]::new);
 
-        TerritoryOperationMsg msg = new TerritoryOperationMsg(readyToAdd,readyToRemove, territoryInfo.permissions);
+        TerritoryOperationMsg msg = new TerritoryOperationMsg(readyToAdd,readyToRemove, territoryInfo.permissions,territoryInfo.defaultPermission);
 
         TerritoryPacketHandler.CHANNEL.sendToServer(msg);
     }
@@ -188,6 +191,7 @@ public class TerritoryContainer extends Container {
 
             removableChunkPos.add(pos);
         }
+        removableChunkPos.remove(tileEntityChunkPos); // Player cant remove the chunkPos where the tileEntity is located.
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -216,7 +220,7 @@ public class TerritoryContainer extends Container {
             }
         }
 
-        return power;
+        return power+1;
     }
 
     public int getTotalProtectPower() {

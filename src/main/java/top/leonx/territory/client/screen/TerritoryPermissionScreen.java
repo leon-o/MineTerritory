@@ -1,5 +1,6 @@
 package top.leonx.territory.client.screen;
 
+import com.mojang.blaze3d.platform.GlStateManager;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.gui.widget.button.CheckboxButton;
@@ -49,20 +50,26 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryConta
         addPlayerBtn=new GuiButtonExt(halfW-110+80,parent.getGuiTop()+parent.getYSize()-24,20,16,"+",
                 t-> addNewPlayer());
 
-        int checkboxTop=parent.getGuiTop()+8;
+        int checkboxTop=parent.getGuiTop()+24;
         int checkboxWidth=50;
         int checkboxHeight=20;
         int checkboxIndexTmp=0;
         for (PermissionFlag flag : PermissionFlag.basicFlag) {
             CheckBoxButtonEx btn=new CheckBoxButtonEx(halfW,checkboxTop+(checkboxHeight+4)*checkboxIndexTmp,checkboxWidth,checkboxHeight,flag.getName()
-                    ,true);
+                    ,container.territoryInfo.defaultPermission.contain(flag));
             btn.onCheckedChange=isChecked->{
-                if(playerList.getSelected()== null) return;
-                PermissionFlag permission = container.territoryInfo.permissions.get(playerList.getSelected().getUUID());
-                if(isChecked)
-                    permission.combine(flag);
-                else
-                    permission.remove(flag);
+                if(playerList.getSelected()== null){
+                    if(isChecked)
+                        container.territoryInfo.defaultPermission.combine(flag);
+                    else
+                        container.territoryInfo.defaultPermission.remove(flag);
+                }else{
+                    PermissionFlag permission = container.territoryInfo.permissions.get(playerList.getSelected().getUUID());
+                    if(isChecked)
+                        permission.combine(flag);
+                    else
+                        permission.remove(flag);
+                }
             };
             permissionCheckbox.put(btn,flag);
             checkboxIndexTmp++;
@@ -89,6 +96,12 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryConta
         addTextField.render(mouseX,mouseY,partialTicks);
         addTextField.renderButton(mouseX,mouseY,partialTicks);
 
+        String title="ALL";
+        if(playerList.getSelected()!=null) title=playerList.getSelected().getName();
+        GlStateManager.pushMatrix();
+        GlStateManager.scaled(1.2,1.2,1.2);
+        font.drawString(title, this.parent.getGuiLeft()+130,parent.getGuiTop(),0xFFFFF0);
+        GlStateManager.popMatrix();
     }
 
     @Override
@@ -116,23 +129,7 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryConta
             lastPlayerEntry=playerList.getSelected();
             PermissionFlag permission = container.territoryInfo.permissions.get(lastPlayerEntry.getUUID());
             permissionCheckbox.forEach((box,flag)-> box.setIsChecked(permission.contain(flag)));
-
-            //lastTickBreakChecked=flag.contain(PermissionFlag.BREAK);
-            //lastTickInteractChecked =flag.contain(PermissionFlag.PLACE);
         }
-//        if(breakCheckbox.isChecked()^lastTickBreakChecked|| interactCheckbox.isChecked()^ lastTickInteractChecked)
-//        {
-//            PermissionFlag flag=new PermissionFlag();
-//            if(breakCheckbox.isChecked())
-//                flag.combine(PermissionFlag.BREAK);
-//            if(interactCheckbox.isChecked())
-//                flag.combine(PermissionFlag.PLACE);
-//
-//            container.territoryInfo.permissions.replace(playerList.getSelected().getUUID(),flag);
-//
-//            lastTickBreakChecked=breakCheckbox.isChecked();
-//            lastTickInteractChecked = interactCheckbox.isChecked();
-//        }
     }
 
     @Override

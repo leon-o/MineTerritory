@@ -15,12 +15,13 @@ public class TerritoryOperationMsg {
     public ChunkPos[] readyRemove;
     @Nonnull
     public Map<UUID,PermissionFlag> permissions;
+    public PermissionFlag defaultPermission;
     public TerritoryOperationMsg(@Nonnull ChunkPos[] readyAdd, @Nonnull ChunkPos[] readyRemove,
-                                 @Nonnull Map<UUID,PermissionFlag> permissionFlagMap) {
+                                 @Nonnull Map<UUID,PermissionFlag> permissionFlagMap,PermissionFlag defaultPermission) {
         this.readyAdd=readyAdd;
         this.readyRemove=readyRemove;
         permissions = permissionFlagMap;
-
+        this.defaultPermission=defaultPermission;
     }
 
     public static void encode(TerritoryOperationMsg msg, PacketBuffer buffer) {
@@ -39,6 +40,7 @@ public class TerritoryOperationMsg {
             buffer.writeUniqueId(k);
             buffer.writeInt(v.getCode());
         });
+        buffer.writeInt(msg.defaultPermission.getCode());
     }
 
     public static TerritoryOperationMsg decode(PacketBuffer buffer) {
@@ -65,6 +67,7 @@ public class TerritoryOperationMsg {
             PermissionFlag flag=new PermissionFlag(code);
             permissions.put(uuid,flag);
         }
-        return new TerritoryOperationMsg(readyAdd,readyRemove,permissions);
+        int defaultPermissionCode=buffer.readInt();
+        return new TerritoryOperationMsg(readyAdd,readyRemove,permissions,new PermissionFlag(defaultPermissionCode));
     }
 }

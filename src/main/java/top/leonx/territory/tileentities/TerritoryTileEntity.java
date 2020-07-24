@@ -38,6 +38,7 @@ public class TerritoryTileEntity extends TileEntity implements ITickableTileEnti
     //private static final String OWNER_NAME_KEY="owner_name";
     private static final String TERRITORY_POS_KEY ="territories";
     private static final String PERMISSION_KEY="permission";
+    private static final String DEFAULT_PERMISSION_KEY="def_permission";
     public float angle;
     public boolean rise;
 
@@ -54,7 +55,7 @@ public class TerritoryTileEntity extends TileEntity implements ITickableTileEnti
         markDirty();
     }
 
-    public void addJurisdiction(ChunkPos pos)
+    public void addTerritory(ChunkPos pos)
     {
         territoryInfo.territories.add(pos);
 
@@ -75,7 +76,7 @@ public class TerritoryTileEntity extends TileEntity implements ITickableTileEnti
             TERRITORY_TILE_ENTITY_HASH_MAP.remove(pos);
         }
     }
-    public void updateJurisdictionMap()
+    public void updateTerritoryToHashMap()
     {
         territoryInfo.territories.forEach(t->{
             if(!TERRITORY_TILE_ENTITY_HASH_MAP.containsKey(t))
@@ -134,6 +135,7 @@ public class TerritoryTileEntity extends TileEntity implements ITickableTileEnti
         territoryInfo.permissions.forEach((k, v)-> permissionListNBT.add(ConvertUUIDPermissionToNbt(k,v)));
         compound.put(PERMISSION_KEY,permissionListNBT);
         compound.putUniqueId(OWNER_ID_KEY, territoryInfo.getOwnerId());
+        compound.putInt(DEFAULT_PERMISSION_KEY,territoryInfo.defaultPermission.getCode());
         return compound;
     }
 
@@ -148,20 +150,20 @@ public class TerritoryTileEntity extends TileEntity implements ITickableTileEnti
             Map.Entry<UUID, PermissionFlag> entry = ConvertNbtToUUIDPermission((CompoundNBT) t);
             permissionFlagHashMap.put(entry.getKey(),entry.getValue());
         });
-
+        PermissionFlag defPermissionFlag=new PermissionFlag(compound.getInt(DEFAULT_PERMISSION_KEY));
         HashSet<ChunkPos> territoriesTmp=new HashSet<>();
         territoryList.forEach(t-> territoriesTmp.add(ConvertNbtToPos((CompoundNBT) t)));
         if(territoryInfo==null){
-            territoryInfo=new TerritoryInfo(ownerId,territoriesTmp,permissionFlagHashMap);
+            territoryInfo=new TerritoryInfo(ownerId,territoriesTmp,permissionFlagHashMap,defPermissionFlag);
         }else{
             territoryInfo.setOwnerId(ownerId);
             territoryInfo.territories.clear();
             territoryInfo.territories.addAll(territoriesTmp);
-            territoryInfo.permissions.clear();
-            territoryInfo.permissions.putAll(permissionFlagHashMap);
+            setPermissionAll(permissionFlagHashMap);
+            territoryInfo.defaultPermission=defPermissionFlag;
         }
 
-        updateJurisdictionMap();
+        updateTerritoryToHashMap();
     }
 
     //Call when world loads.
@@ -193,8 +195,8 @@ public class TerritoryTileEntity extends TileEntity implements ITickableTileEnti
 
         if(territoryInfo==null)
         {
-            territoryInfo=new TerritoryInfo(null,new HashSet<>(), new HashMap<>());
-            addJurisdiction(new ChunkPos(this.pos.getX()>>4,this.pos.getZ()>>4));
+            territoryInfo=new TerritoryInfo(null,new HashSet<>());
+            addTerritory(new ChunkPos(this.pos.getX()>>4,this.pos.getZ()>>4));
         }
     }
 

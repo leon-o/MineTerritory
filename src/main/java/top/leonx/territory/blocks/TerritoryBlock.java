@@ -5,47 +5,30 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
-import net.minecraft.client.Minecraft;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.fluid.IFluidState;
-import net.minecraft.inventory.container.Container;
-import net.minecraft.inventory.container.INamedContainerProvider;
 import net.minecraft.item.BlockItemUseContext;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.state.IntegerProperty;
-import net.minecraft.state.StateContainer;
-import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.world.Explosion;
 import net.minecraft.world.IBlockReader;
-import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
-import net.minecraft.world.storage.loot.LootContext;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.network.NetworkHooks;
 import top.leonx.territory.TerritoryMod;
 import top.leonx.territory.data.PermissionFlag;
-import top.leonx.territory.items.ModItems;
 import top.leonx.territory.tileentities.ModTileEntityType;
 import top.leonx.territory.tileentities.TerritoryTileEntity;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
+@SuppressWarnings({"NullableProblems", "deprecation"})
 public class TerritoryBlock extends Block {
     //public static final IntegerProperty X=IntegerProperty.create("X",Integer.MIN_VALUE,Integer.MAX_VALUE);
     //public static final IntegerProperty Y=IntegerProperty.create("X",Integer.MIN_VALUE,Integer.MAX_VALUE);
@@ -65,7 +48,9 @@ public class TerritoryBlock extends Block {
         TerritoryTileEntity tileEntity=getTerritoryTileEntity(worldIn,pos);
         if(tileEntity.getOwnerId().equals(player.getUniqueID())
             ||tileEntity.getTerritoryInfo().permissions.containsKey(player.getUniqueID())&&
-                tileEntity.getTerritoryInfo().permissions.get(player.getUniqueID()).contain(PermissionFlag.MANAGE))
+                tileEntity.getTerritoryInfo().permissions.get(player.getUniqueID()).contain(PermissionFlag.MANAGE)
+            ||!tileEntity.getTerritoryInfo().permissions.containsKey(player.getUniqueID())&&
+                tileEntity.getTerritoryInfo().defaultPermission.contain(PermissionFlag.MANAGE))
         {
             NetworkHooks.openGui((ServerPlayerEntity) player,tileEntity,pos);
         }
@@ -87,7 +72,7 @@ public class TerritoryBlock extends Block {
             {
                 if(!context.getWorld().isRemote)
                 {
-                    context.getPlayer().sendMessage(new StringTextComponent("这个区块已被其他玩家拥有"));
+                    context.getPlayer().sendMessage(new StringTextComponent("Already occupied"));
                 }
 
                 return Blocks.AIR.getDefaultState();
