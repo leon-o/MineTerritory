@@ -36,6 +36,7 @@ import net.minecraft.world.storage.loot.LootContext;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.network.NetworkHooks;
 import top.leonx.territory.TerritoryMod;
+import top.leonx.territory.data.PermissionFlag;
 import top.leonx.territory.items.ModItems;
 import top.leonx.territory.tileentities.ModTileEntityType;
 import top.leonx.territory.tileentities.TerritoryTileEntity;
@@ -61,9 +62,12 @@ public class TerritoryBlock extends Block {
     public boolean onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
 
         if(worldIn.isRemote)return false;
-        if(getTerritoryTileEntity(worldIn,pos).getOwnerId().equals(player.getUniqueID()))
+        TerritoryTileEntity tileEntity=getTerritoryTileEntity(worldIn,pos);
+        if(tileEntity.getOwnerId().equals(player.getUniqueID())
+            ||tileEntity.getTerritoryInfo().permissions.containsKey(player.getUniqueID())&&
+                tileEntity.getTerritoryInfo().permissions.get(player.getUniqueID()).contain(PermissionFlag.MANAGE))
         {
-            NetworkHooks.openGui((ServerPlayerEntity) player,getTerritoryTileEntity(worldIn,pos),pos);
+            NetworkHooks.openGui((ServerPlayerEntity) player,tileEntity,pos);
         }
         return true;
     }

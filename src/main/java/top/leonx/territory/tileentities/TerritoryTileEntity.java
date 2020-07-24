@@ -210,7 +210,7 @@ public class TerritoryTileEntity extends TileEntity implements ITickableTileEnti
     @Override
     public void remove() {
         super.remove();
-        if(world.isRemote) return;
+
         ChunkPos pos=this.world.getChunkAt(this.pos).getPos();
         TERRITORY_TILE_ENTITY_HASH_MAP.remove(pos);
     }

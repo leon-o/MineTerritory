@@ -4,13 +4,15 @@ public class PermissionFlag {
     public final static PermissionFlag ENTER=new PermissionFlag(1,"enter");
     public final static PermissionFlag BREAK=new PermissionFlag(2,"break");
     public final static PermissionFlag PLACE =new PermissionFlag(4,"place");
+    public final static PermissionFlag MANAGE =new PermissionFlag(8,"manage");
     public final static PermissionFlag[] basicFlag={
             ENTER,
             BREAK,
-            PLACE
+            PLACE,
+            MANAGE
     };
     private int code;
-    private String name;
+    private final String name;
     public PermissionFlag(int i,String name) {
         this.code=i;
         this.name=name;

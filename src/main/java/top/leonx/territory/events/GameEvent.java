@@ -8,6 +8,7 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.common.UsernameCache;
@@ -38,9 +39,10 @@ public class GameEvent {
             event.setCanceled(true);
 
             if(!event.getWorld().isRemote) {
+                SendMessage(event.getPlayer(),new StringTextComponent("Not your territory"));
+            }else{
                 TerritoryInfo data=TerritoryMod.TERRITORY_TILE_ENTITY_HASH_MAP.get(chunkPos);
                 OutlineRender.StartRender(data.territories,100);
-                event.getPlayer().sendMessage(new StringTextComponent("Not your territory"));
             }
         }
     }
@@ -54,9 +56,10 @@ public class GameEvent {
 
             if(!event.getWorld().isRemote)
             {
+                SendMessage(event.getPlayer(),new StringTextComponent("Not your territory"));
+            }else{
                 TerritoryInfo data=TerritoryMod.TERRITORY_TILE_ENTITY_HASH_MAP.get(chunkPos);
                 OutlineRender.StartRender(data.territories,100);
-                event.getPlayer().sendMessage(new StringTextComponent("Not your territory"));
             }
         }
     }
@@ -95,7 +98,19 @@ public class GameEvent {
 //
 //        }
 //    }
-
+    static final double coolDownTime=100;
+    static double coolDown;
+    private static void SendMessage(PlayerEntity player, ITextComponent component)
+    {
+        if(coolDown>0) return;
+        player.sendMessage(component);
+        coolDown=coolDownTime;
+    }
+    @SubscribeEvent
+    public static void serverTick(TickEvent.ServerTickEvent event)
+    {
+        coolDown-=Minecraft.getInstance().getTickLength();
+    }
     @SubscribeEvent
     public static void clientTick(TickEvent.ClientTickEvent event)
     {
@@ -103,7 +118,6 @@ public class GameEvent {
 
         PlayerEntity clientPlayer= Minecraft.getInstance().player;
         if(clientPlayer==null) return;
-
         ChunkPos lastTickPos=new ChunkPos((int) (clientPlayer.lastTickPosX-0.5)>>4,(int) (clientPlayer.lastTickPosZ-0.5)>>4);
         ChunkPos thisTickPos=new ChunkPos((int) (clientPlayer.posX-0.5)>>4,(int) (clientPlayer.posZ-0.5)>>4);
         if(lastTickPos==null)lastTickPos=thisTickPos;
@@ -121,12 +135,11 @@ public class GameEvent {
             }
             if(hasPermission(thisTickPos,clientPlayer,PermissionFlag.ENTER))
             {
-                clientPlayer.sendMessage(new StringTextComponent(String.format("You have entered %s's territory", ownerName)));
+                SendMessage(clientPlayer,new StringTextComponent(String.format("You have entered %s's territory", ownerName)));
             }else{
-                clientPlayer.sendMessage(new StringTextComponent("You are forbidden to enter"));
+                SendMessage(clientPlayer,new StringTextComponent("You are forbidden to enter"));
                 Vec3d vec=clientPlayer.getMotion();
                 Vec3d vecAfterCollision=lastTickPos.x!=thisTickPos.x?new Vec3d(-vec.x,vec.y,vec.z):new Vec3d(vec.x,vec.y,-vec.z);
-                //if(vecAfterCollision.y<1E-2)vecAfterCollision=vecAfterCollision.add(0,0.3,0);
                 vecAfterCollision=vecAfterCollision.normalize().scale(MathHelper.clamp(vec.length(),1,10));
                 clientPlayer.setMotion(vecAfterCollision);
                 clientPlayer.setPosition(clientPlayer.lastTickPosX,clientPlayer.lastTickPosY,clientPlayer.lastTickPosZ);
@@ -141,8 +154,7 @@ public class GameEvent {
             }else{
                 ownerName= UsernameCache.getLastKnownUsername(lastTerritoryInfo.getOwnerId());
             }
-
-            clientPlayer.sendMessage(new StringTextComponent(String.format("You have exited %s's territory", ownerName)));
+            SendMessage(clientPlayer,new StringTextComponent(String.format("You have exited %s's territory", ownerName)));
         }
 
         ItemStack heldItem = clientPlayer.getHeldItem(Hand.MAIN_HAND);
