@@ -3,15 +3,18 @@ package top.leonx.territory.client.screen;
 import com.mojang.blaze3d.platform.GlStateManager;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.gui.widget.button.CheckboxButton;
 import net.minecraftforge.common.UsernameCache;
 import net.minecraftforge.fml.client.config.GuiButtonExt;
 import top.leonx.territory.client.gui.CheckBoxButtonEx;
 import top.leonx.territory.client.gui.PlayerList;
 import top.leonx.territory.container.TerritoryContainer;
 import top.leonx.territory.data.PermissionFlag;
+import top.leonx.territory.util.UserUtil;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryContainer> {
@@ -21,10 +24,9 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryConta
     private TextFieldWidget addTextField;
     @SuppressWarnings("unused")
     private final Map<CheckBoxButtonEx,PermissionFlag> permissionCheckbox=new HashMap<>();
-//    private CheckboxButton enterCheckbox;
-//    private CheckboxButton breakCheckbox;
-//    private CheckboxButton interactCheckbox;
     private GuiButtonExt addPlayerBtn;
+    private GuiButtonExt removePlayerBtn;
+    PlayerList.PlayerEntry defaultPlayerEntry;
     public TerritoryPermissionScreen(TerritoryContainer container,
                                      ContainerScreen<TerritoryContainer> parent, Consumer<Integer> changePage) {
         super(container,parent,changePage);
@@ -35,41 +37,42 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryConta
         //noinspection unused
         final int halfH = height / 2;
 
-        this.addButton(new GuiButtonExt(halfW+40, parent.getGuiTop()+parent.getYSize()-30, 70, 20, "BACK",
-                $ -> NavigateTo(0)
-        ));
         playerList=new PlayerList(minecraft,100,200,parent.getGuiTop()+24,parent.getGuiTop()+parent.getYSize()-24,16);
-        playerList.setLeftPos(halfW-110);
-        container.territoryInfo.permissions.forEach((k,v)->{
-//            ServerPlayerEntity player = Minecraft.getInstance().getIntegratedServer().getPlayerList().getPlayerByUUID(k);
-            playerList.children().add(playerList.new PlayerEntry(k,playerList));
-        });
-
-        search=new TextFieldWidget(font, halfW-110, parent.getGuiTop()+8, 100,16,"search");
-        addTextField=new TextFieldWidget(font, halfW-110, parent.getGuiTop()+parent.getYSize()-24, 80,16,"NAME");
-        addPlayerBtn=new GuiButtonExt(halfW-110+80,parent.getGuiTop()+parent.getYSize()-24,20,16,"+",
+        playerList.setLeftPos(parent.getGuiLeft()+10);
+        defaultPlayerEntry = new PlayerList.PlayerEntry(UserUtil.DEFAULT_UUID, UserUtil.DEFAULT_NAME, playerList,this::onPlayerEntrySelected);
+        defaultPlayerEntry.canDelete=false;
+        search=new TextFieldWidget(font, parent.getGuiLeft()+10, parent.getGuiTop()+8, 100,16,"search");
+        addTextField=new TextFieldWidget(font, parent.getGuiLeft()+10, parent.getGuiTop()+parent.getYSize()-24, 80,16,"NAME");
+        addPlayerBtn=new GuiButtonExt(parent.getGuiLeft()+90,parent.getGuiTop()+parent.getYSize()-24,20,16,"+",
                 t-> addNewPlayer());
+        removePlayerBtn=new GuiButtonExt(parent.getGuiLeft()+120,parent.getGuiTop()+8,24,16,"Del",
+                t-> removePlayer());
+
+        playerList.children().add(defaultPlayerEntry);
+        container.territoryInfo.permissions.forEach((k,v)-> playerList.children().add(new PlayerList.PlayerEntry(k,playerList,this::onPlayerEntrySelected)));
+        playerList.setSelected(defaultPlayerEntry);
+
+
 
         int checkboxTop=parent.getGuiTop()+24;
         int checkboxWidth=50;
         int checkboxHeight=20;
         int checkboxIndexTmp=0;
         for (PermissionFlag flag : PermissionFlag.basicFlag) {
-            CheckBoxButtonEx btn=new CheckBoxButtonEx(halfW,checkboxTop+(checkboxHeight+4)*checkboxIndexTmp,checkboxWidth,checkboxHeight,flag.getName()
+            CheckBoxButtonEx btn=new CheckBoxButtonEx(parent.getGuiLeft()+130,checkboxTop+(checkboxHeight+4)*checkboxIndexTmp,checkboxWidth,checkboxHeight,
+                    flag.getName()
                     ,container.territoryInfo.defaultPermission.contain(flag));
-            btn.onCheckedChange=isChecked->{
-                if(playerList.getSelected()== null){
-                    if(isChecked)
-                        container.territoryInfo.defaultPermission.combine(flag);
-                    else
-                        container.territoryInfo.defaultPermission.remove(flag);
-                }else{
-                    PermissionFlag permission = container.territoryInfo.permissions.get(playerList.getSelected().getUUID());
-                    if(isChecked)
-                        permission.combine(flag);
-                    else
-                        permission.remove(flag);
-                }
+            btn.onCheckedChange=t->{
+                PermissionFlag permissionFlag;
+                if(playerList.getSelected().equals(defaultPlayerEntry))
+                    permissionFlag=container.territoryInfo.defaultPermission;
+                else
+                    permissionFlag=container.territoryInfo.permissions.get(playerList.getSelected().getUUID());
+
+                if(t.isChecked())
+                    permissionFlag.combine(flag);
+                else
+                    permissionFlag.remove(flag);
             };
             permissionCheckbox.put(btn,flag);
             checkboxIndexTmp++;
@@ -83,8 +86,13 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryConta
         this.children.add(addTextField);
         this.children.add(search);
         this.addButton(addPlayerBtn);
+        this.addButton(removePlayerBtn);
+        this.addButton(new GuiButtonExt(halfW+40, parent.getGuiTop()+parent.getYSize()-30, 70, 20, "BACK",
+                $ -> NavigateTo(0)
+        ));
         permissionCheckbox.keySet().forEach(this::addButton);
     }
+
 
     @Override
     public void renderInternal(int mouseX, int mouseY, float partialTicks) {
@@ -100,7 +108,7 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryConta
         if(playerList.getSelected()!=null) title=playerList.getSelected().getName();
         GlStateManager.pushMatrix();
         GlStateManager.scaled(1.2,1.2,1.2);
-        font.drawString(title, this.parent.getGuiLeft()+130,parent.getGuiTop(),0xFFFFF0);
+        font.drawString(title, (int)((this.parent.getGuiLeft()+150)/1.2),parent.getGuiTop()+4,0xFFFFF0);
         GlStateManager.popMatrix();
     }
 
@@ -110,25 +118,19 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryConta
     }
 
     String lastTickSearch=null;
-    PlayerList.PlayerEntry lastPlayerEntry;
+//    PlayerList.PlayerEntry lastPlayerEntry;
+
+    //Tick ​​is too stupid
     @Override
     public void tick() {
         if(!search.getText().equals(lastTickSearch))
         {
             playerList.children().clear();
+            playerList.children().add(defaultPlayerEntry);
             container.territoryInfo.permissions.entrySet().stream().filter(t-> UsernameCache.getLastKnownUsername(t.getKey()).contains(search.getText())).forEach(
-                    t-> playerList.children().add(playerList.new PlayerEntry(t.getKey(),playerList))
+                    t-> playerList.children().add(new PlayerList.PlayerEntry(t.getKey(),playerList,this::onPlayerEntrySelected))
             );
             lastTickSearch=search.getText();
-        }
-
-
-        if(playerList.getSelected()== null) return;
-        if(lastPlayerEntry!=playerList.getSelected())
-        {
-            lastPlayerEntry=playerList.getSelected();
-            PermissionFlag permission = container.territoryInfo.permissions.get(lastPlayerEntry.getUUID());
-            permissionCheckbox.forEach((box,flag)-> box.setIsChecked(permission.contain(flag)));
         }
     }
 
@@ -171,10 +173,28 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryConta
         }
         else{
             container.territoryInfo.permissions.put(uuid,new PermissionFlag());
-            playerList.children().add(playerList.new PlayerEntry(uuid,name,playerList));
+            playerList.children().add(new PlayerList.PlayerEntry(uuid,name,playerList,this::onPlayerEntrySelected));
         }
     }
+    private void removePlayer() {
+        PlayerList.PlayerEntry selected = playerList.getSelected();
+        if(!selected.canDelete) return;
+        container.territoryInfo.permissions.remove(selected.getUUID());
+        playerList.children().remove(selected);
+    }
+    private void onPlayerEntrySelected(PlayerList.PlayerEntry entry)
+    {
+        PermissionFlag editingPermission;
 
+        if(UserUtil.isDefaultUser(entry.getUUID()))
+            editingPermission=container.territoryInfo.defaultPermission;
+        else
+            editingPermission = container.territoryInfo.permissions.get(entry.getUUID());
+
+        permissionCheckbox.forEach((box,flag)-> box.setIsChecked(editingPermission.contain(flag)));
+
+        removePlayerBtn.active=entry.canDelete;
+    }
     private void updateSuggestion()
     {
         if(addTextField.getText().length()>0)

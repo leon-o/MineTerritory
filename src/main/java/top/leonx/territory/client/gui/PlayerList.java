@@ -3,12 +3,11 @@ package top.leonx.territory.client.gui;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.widget.list.ExtendedList;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraftforge.common.UsernameCache;
-import net.minecraftforge.fml.client.gui.GuiModList;
-import net.minecraftforge.fml.client.gui.GuiSlotModList;
+import top.leonx.territory.util.UserUtil;
 
+import javax.annotation.Nullable;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 public class PlayerList extends ExtendedList<PlayerList.PlayerEntry> {
     private final FontRenderer font;
@@ -31,44 +30,53 @@ public class PlayerList extends ExtendedList<PlayerList.PlayerEntry> {
     protected void renderHoleBackground(int p_renderHoleBackground_1_, int p_renderHoleBackground_2_, int p_renderHoleBackground_3_, int p_renderHoleBackground_4_) {
     }
 
+    @Override
+    public void setSelected(@Nullable PlayerEntry selected) {
+        super.setSelected(selected);
+        selected.onSelected.accept(selected);
+    }
+
     FontRenderer getFontRenderer()
     {
         return font;
     }
-    public class PlayerEntry extends ExtendedList.AbstractListEntry<PlayerEntry> {
+    public static class PlayerEntry extends ExtendedList.AbstractListEntry<PlayerEntry> {
 
         private final UUID uuid;
         private final String name;
         private final PlayerList parent;
+        public boolean canDelete=true;
         public String getName()
         {return name;}
         public UUID getUUID()
         {
             return uuid;
         }
-        public PlayerEntry(UUID uuid, PlayerList parent)
+        private final Consumer<PlayerEntry> onSelected;
+        public PlayerEntry(UUID uuid, PlayerList parent,@Nullable Consumer<PlayerEntry> onSelected)
         {
-            this(uuid,UsernameCache.getLastKnownUsername(uuid),parent);
+            this(uuid, UserUtil.getNameByUUID(uuid),parent,onSelected);
         }
-        public PlayerEntry(UUID uuid,String name,PlayerList parent)
+        public PlayerEntry(UUID uuid,String name,PlayerList parent,@Nullable Consumer<PlayerEntry> onSelected)
         {
             this.uuid=uuid;
             this.name=name;
             this.parent=parent;
+            this.onSelected=onSelected;
         }
 
         @Override
         public void render(int entryIdx, int top, int left, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean p_194999_5_, float partialTicks) {
             FontRenderer font = this.parent.getFontRenderer();
             font.drawString(font.trimStringToWidth(name, entryWidth),left + 3, top + 2, 0xFFFFFF);
-//            font.drawString(font.trimStringToWidth("giao", entryWidth), left + 3 , top + 2 + font.FONT_HEIGHT,
-//                    0xCCCCCC);
         }
         @Override
         public boolean mouseClicked(double x, double y, int btn)
         {
             parent.setSelected(this);
-            PlayerList.this.setSelected(this);
+            if(onSelected!=null)
+                onSelected.accept(this);
+            //PlayerList.this.setSelected(this);
             return false;
         }
     }

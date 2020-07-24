@@ -8,12 +8,12 @@ public class CheckBoxButtonEx extends CheckboxButton {
     public CheckBoxButtonEx(int left, int top, int width, int height, String text, boolean checked) {
         super(left, top, width, height, text, checked);
     }
-    public Consumer<Boolean> onCheckedChange;
+    public Consumer<CheckBoxButtonEx> onCheckedChange;
     @Override
     public void onPress() {
         super.onPress();
         if(onCheckedChange!=null)
-            onCheckedChange.accept(isChecked());
+            onCheckedChange.accept(this);
     }
     public void setIsChecked(boolean checked)
     {
