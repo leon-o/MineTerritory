@@ -1,19 +1,21 @@
 package top.leonx.territory.data;
 
+import net.minecraft.util.math.ChunkPos;
 import net.minecraftforge.common.UsernameCache;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public class TerritoryInfo{
-    public final static TerritoryInfo defaultTerritoryInfo=new TerritoryInfo(null, new HashMap<>());
-    public TerritoryInfo(@Nullable UUID ownerId, @Nonnull Map<UUID,PermissionFlag> permissions)
+    public final static TerritoryInfo defaultTerritoryInfo=new TerritoryInfo(null,new HashSet<>(), new HashMap<>());
+
+    public Set<ChunkPos> territories;
+    public TerritoryInfo(@Nullable UUID ownerId,@Nonnull Set<ChunkPos> territoryMap, @Nonnull Map<UUID,PermissionFlag> permissions)
     {
         this.ownerId=ownerId;
         this.permissions = permissions;
+        this.territories=territoryMap;
     }
     @Nullable
     private UUID ownerId;
@@ -47,6 +49,6 @@ public class TerritoryInfo{
     public TerritoryInfo copy() {
         Map<UUID,PermissionFlag> flags=new HashMap<>();
         permissions.forEach(flags::put);
-        return new TerritoryInfo(ownerId,flags);
+        return new TerritoryInfo(ownerId,new HashSet<>(territories),flags);
     }
 }

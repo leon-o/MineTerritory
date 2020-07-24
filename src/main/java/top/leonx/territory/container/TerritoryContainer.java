@@ -48,8 +48,8 @@ public class TerritoryContainer extends Container {
 
         tileEntityPos = tileEntity.getPos();
 
-        territories.addAll(tileEntity.territories);
-        originalTerritories.addAll(tileEntity.territories);
+        territories.addAll(tileEntity.getTerritoryInfo().territories);
+        originalTerritories.addAll(tileEntity.getTerritoryInfo().territories);
 
         if (Objects.requireNonNull(tileEntity.getWorld()).isRemote) {
             initSelectableChunkPos();

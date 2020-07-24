@@ -5,13 +5,12 @@ import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.gui.widget.button.CheckboxButton;
 import net.minecraftforge.common.UsernameCache;
 import net.minecraftforge.fml.client.config.GuiButtonExt;
+import top.leonx.territory.client.gui.CheckBoxButtonEx;
 import top.leonx.territory.client.gui.PlayerList;
 import top.leonx.territory.container.TerritoryContainer;
 import top.leonx.territory.data.PermissionFlag;
 
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Consumer;
 
 public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryContainer> {
@@ -20,9 +19,10 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryConta
     private TextFieldWidget search;
     private TextFieldWidget addTextField;
     @SuppressWarnings("unused")
-    private CheckboxButton enterCheckbox;
-    private CheckboxButton breakCheckbox;
-    private CheckboxButton interactCheckbox;
+    private final Map<CheckBoxButtonEx,PermissionFlag> permissionCheckbox=new HashMap<>();
+//    private CheckboxButton enterCheckbox;
+//    private CheckboxButton breakCheckbox;
+//    private CheckboxButton interactCheckbox;
     private GuiButtonExt addPlayerBtn;
     public TerritoryPermissionScreen(TerritoryContainer container,
                                      ContainerScreen<TerritoryContainer> parent, Consumer<Integer> changePage) {
@@ -48,8 +48,25 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryConta
         addTextField=new TextFieldWidget(font, halfW-110, parent.getGuiTop()+parent.getYSize()-24, 80,16,"NAME");
         addPlayerBtn=new GuiButtonExt(halfW-110+80,parent.getGuiTop()+parent.getYSize()-24,20,16,"+",
                 t-> addNewPlayer());
-        breakCheckbox=new CheckboxButton(halfW,parent.getGuiTop()+8,50,20,"Break",true);
-        interactCheckbox =new CheckboxButton(halfW,parent.getGuiTop()+36,50,20,"Right Click",true);
+
+        int checkboxTop=parent.getGuiTop()+8;
+        int checkboxWidth=50;
+        int checkboxHeight=20;
+        int checkboxIndexTmp=0;
+        for (PermissionFlag flag : PermissionFlag.basicFlag) {
+            CheckBoxButtonEx btn=new CheckBoxButtonEx(halfW,checkboxTop+(checkboxHeight+4)*checkboxIndexTmp,checkboxWidth,checkboxHeight,flag.getName()
+                    ,true);
+            btn.onCheckedChange=isChecked->{
+                if(playerList.getSelected()== null) return;
+                PermissionFlag permission = container.territoryInfo.permissions.get(playerList.getSelected().getUUID());
+                if(isChecked)
+                    permission.combine(flag);
+                else
+                    permission.remove(flag);
+            };
+            permissionCheckbox.put(btn,flag);
+            checkboxIndexTmp++;
+        }
 
         addTextField.setSuggestion("ADD PLAYER");
         search.setSuggestion("SEARCH");
@@ -59,25 +76,19 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryConta
         this.children.add(addTextField);
         this.children.add(search);
         this.addButton(addPlayerBtn);
-        this.addButton(breakCheckbox);
-        this.addButton(interactCheckbox);
+        permissionCheckbox.keySet().forEach(this::addButton);
     }
 
     @Override
     public void renderInternal(int mouseX, int mouseY, float partialTicks) {
         playerList.render(mouseX,mouseY,partialTicks);
+
         search.render(mouseX,mouseY,partialTicks);
         search.renderButton(mouseX,mouseY,partialTicks);
-//        if(!search.isFocused() && search.getText().length()==0)
-//        {
-//            font.drawString(search.getMessage(),search.x+4,search.y+4,0xCCCCCCCC);
-//        }
+
         addTextField.render(mouseX,mouseY,partialTicks);
         addTextField.renderButton(mouseX,mouseY,partialTicks);
-//        if(!addTextField.isFocused() && addTextField.getText().length()==0)
-//        {
-//            font.drawString(addTextField.getMessage(),addTextField.x+4,addTextField.y+4,0xCCCCCCCC);
-//        }
+
     }
 
     @Override
@@ -87,8 +98,6 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryConta
 
     String lastTickSearch=null;
     PlayerList.PlayerEntry lastPlayerEntry;
-    boolean lastTickBreakChecked=false;
-    boolean lastTickInteracteChecked=false;
     @Override
     public void tick() {
         if(!search.getText().equals(lastTickSearch))
@@ -105,28 +114,25 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryConta
         if(lastPlayerEntry!=playerList.getSelected())
         {
             lastPlayerEntry=playerList.getSelected();
-            PermissionFlag flag = container.territoryInfo.permissions.get(lastPlayerEntry.getUUID());
-            if(breakCheckbox.isChecked()^flag.contain(PermissionFlag.BREAK))
-                breakCheckbox.onPress();
-            if(interactCheckbox.isChecked()^flag.contain(PermissionFlag.INTERACTE))
-                interactCheckbox.onPress();
+            PermissionFlag permission = container.territoryInfo.permissions.get(lastPlayerEntry.getUUID());
+            permissionCheckbox.forEach((box,flag)-> box.setIsChecked(permission.contain(flag)));
 
-            lastTickBreakChecked=flag.contain(PermissionFlag.BREAK);
-            lastTickInteracteChecked=flag.contain(PermissionFlag.INTERACTE);
+            //lastTickBreakChecked=flag.contain(PermissionFlag.BREAK);
+            //lastTickInteractChecked =flag.contain(PermissionFlag.PLACE);
         }
-        if(breakCheckbox.isChecked()^lastTickBreakChecked|| interactCheckbox.isChecked()^lastTickInteracteChecked)
-        {
-            PermissionFlag flag=new PermissionFlag();
-            if(breakCheckbox.isChecked())
-                flag.combine(PermissionFlag.BREAK);
-            if(interactCheckbox.isChecked())
-                flag.combine(PermissionFlag.INTERACTE);
-
-            container.territoryInfo.permissions.replace(playerList.getSelected().getUUID(),flag);
-
-            lastTickBreakChecked=breakCheckbox.isChecked();
-            lastTickInteracteChecked= interactCheckbox.isChecked();
-        }
+//        if(breakCheckbox.isChecked()^lastTickBreakChecked|| interactCheckbox.isChecked()^ lastTickInteractChecked)
+//        {
+//            PermissionFlag flag=new PermissionFlag();
+//            if(breakCheckbox.isChecked())
+//                flag.combine(PermissionFlag.BREAK);
+//            if(interactCheckbox.isChecked())
+//                flag.combine(PermissionFlag.PLACE);
+//
+//            container.territoryInfo.permissions.replace(playerList.getSelected().getUUID(),flag);
+//
+//            lastTickBreakChecked=breakCheckbox.isChecked();
+//            lastTickInteractChecked = interactCheckbox.isChecked();
+//        }
     }
 
     @Override

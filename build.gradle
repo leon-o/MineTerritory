@@ -13,9 +13,9 @@ apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 
-version = '0.1'
+version = "${mod_version}"
 group = 'top.leonx.territory' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
-archivesBaseName = 'territory'
+archivesBaseName = "territory-${minecraft_version}"
 
 sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8' // Need this here so eclipse task generates correctly.
 
@@ -115,8 +115,8 @@ dependencies {
 jar {
     manifest {
         attributes([
-            "Specification-Title": "examplemod",
-            "Specification-Vendor": "examplemodsareus",
+            "Specification-Title": "territory",
+            "Specification-Vendor": "territorysareus",
             "Specification-Version": "1", // We are version 1 of ourselves
             "Implementation-Title": project.name,
             "Implementation-Version": "${version}",
@@ -132,12 +132,15 @@ jar {
 // Note you'll need to add a repository here
 def reobfFile = file("$buildDir/reobfJar/output.jar")
 def reobfArtifact = artifacts.add('default', reobfFile) {
+    //noinspection GroovyAssignabilityCheck
     type 'jar'
     builtBy 'reobfJar'
 }
 publishing {
     publications {
+        //noinspection GroovyAssignabilityCheck
         mavenJava(MavenPublication) {
+            //noinspection GroovyAssignabilityCheck
             artifact reobfArtifact
         }
     }

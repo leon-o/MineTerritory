@@ -1,29 +1,26 @@
 package top.leonx.territory.events;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.particles.ParticleTypes;
 import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.StringTextComponent;
+import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.common.UsernameCache;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.EntityEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
-import net.minecraftforge.event.world.BlockEvent;
-import net.minecraftforge.event.world.ExplosionEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import top.leonx.territory.TerritoryMod;
-import top.leonx.territory.client.gui.PlayerList;
 import top.leonx.territory.data.PermissionFlag;
 import top.leonx.territory.data.TerritoryInfo;
 import top.leonx.territory.items.ModItems;
+import top.leonx.territory.util.OutlineRender;
 
 import javax.annotation.Nullable;
 import java.util.Random;
@@ -36,35 +33,41 @@ public class GameEvent {
     @SubscribeEvent
     public static void onPlayerLeftClickBlock(PlayerInteractEvent.LeftClickBlock event)
     {
-        if (!hasPermission(event.getPos(), event.getPlayer(),PermissionFlag.BREAK)) {
+        ChunkPos chunkPos=new ChunkPos(event.getPos().getX()>>4,event.getPos().getZ()>>4);
+        if (!hasPermission(chunkPos, event.getPlayer(),PermissionFlag.BREAK)) {
             event.setCanceled(true);
 
-            if(!event.getWorld().isRemote)
+            if(!event.getWorld().isRemote) {
+                TerritoryInfo data=TerritoryMod.TERRITORY_TILE_ENTITY_HASH_MAP.get(chunkPos);
+                OutlineRender.StartRender(data.territories,100);
                 event.getPlayer().sendMessage(new StringTextComponent("Not your territory"));
+            }
         }
     }
 
     @SubscribeEvent
     public static void onPlayerRightClickBlock(PlayerInteractEvent.RightClickBlock event)
     {
-        if (!hasPermission(event.getPos(), event.getPlayer(),PermissionFlag.INTERACTE)) {
+        ChunkPos chunkPos=new ChunkPos(event.getPos().getX()>>4,event.getPos().getZ()>>4);
+        if (!hasPermission(chunkPos, event.getPlayer(),PermissionFlag.PLACE)) {
             event.setCanceled(true);
 
             if(!event.getWorld().isRemote)
+            {
+                TerritoryInfo data=TerritoryMod.TERRITORY_TILE_ENTITY_HASH_MAP.get(chunkPos);
+                OutlineRender.StartRender(data.territories,100);
                 event.getPlayer().sendMessage(new StringTextComponent("Not your territory"));
+            }
         }
     }
 
-    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
-    private static boolean hasPermission(BlockPos pos, PlayerEntity entity, PermissionFlag flag)
+    private static boolean hasPermission(ChunkPos pos, PlayerEntity player, PermissionFlag flag)
     {
-        ChunkPos chunkPos = new ChunkPos(pos.getX()>>4,pos.getZ()>>4);
-        if(TerritoryMod.TERRITORY_TILE_ENTITY_HASH_MAP.containsKey(chunkPos))
+        if(TerritoryMod.TERRITORY_TILE_ENTITY_HASH_MAP.containsKey(pos))
         {
-            TerritoryInfo data=TerritoryMod.TERRITORY_TILE_ENTITY_HASH_MAP.get(chunkPos);
-
-            return data.getOwnerId()==null&&!entity.hasPermissionLevel(4) ||
-                    data.getOwnerId()!=null && (data.getOwnerId().equals(entity.getUniqueID())|| data.permissions.containsKey(entity.getUniqueID()) && data.permissions.get(entity.getUniqueID()).contain(flag));
+            TerritoryInfo data=TerritoryMod.TERRITORY_TILE_ENTITY_HASH_MAP.get(pos);
+            return data.getOwnerId()==null&&!player.hasPermissionLevel(4) ||
+                    data.getOwnerId()!=null && (data.getOwnerId().equals(player.getUniqueID())|| data.permissions.containsKey(player.getUniqueID()) && data.permissions.get(player.getUniqueID()).contain(flag));
         }
         return true;
     }
@@ -80,6 +83,19 @@ public class GameEvent {
     }
     static int timeDelay=0;
 
+
+//    static ChunkPos lastTickPos=null;//We cant get correct lastTickPos by LivingUpdateEvent
+//    @SubscribeEvent
+//    public static void onLivingUpdate(LivingEvent.LivingUpdateEvent event)
+//    {
+//
+//        if(event.getEntityLiving() instanceof PlayerEntity)
+//        {
+//            PlayerEntity clientPlayer=(PlayerEntity)event.getEntityLiving();
+//
+//        }
+//    }
+
     @SubscribeEvent
     public static void clientTick(TickEvent.ClientTickEvent event)
     {
@@ -88,8 +104,9 @@ public class GameEvent {
         PlayerEntity clientPlayer= Minecraft.getInstance().player;
         if(clientPlayer==null) return;
 
-        ChunkPos lastTickPos=new ChunkPos((int) clientPlayer.lastTickPosX>>4,(int) clientPlayer.lastTickPosZ>>4);
-        ChunkPos thisTickPos=new ChunkPos((int) clientPlayer.posX>>4,(int) clientPlayer.posZ>>4);
+        ChunkPos lastTickPos=new ChunkPos((int) (clientPlayer.lastTickPosX-0.5)>>4,(int) (clientPlayer.lastTickPosZ-0.5)>>4);
+        ChunkPos thisTickPos=new ChunkPos((int) (clientPlayer.posX-0.5)>>4,(int) (clientPlayer.posZ-0.5)>>4);
+        if(lastTickPos==null)lastTickPos=thisTickPos;
         TerritoryInfo lastTerritoryInfo =getTerritoryData(lastTickPos);
         TerritoryInfo thisTerritoryInfo =getTerritoryData(thisTickPos);
 
@@ -98,18 +115,29 @@ public class GameEvent {
             String ownerName;
             if(thisTerritoryInfo.getOwnerId()==null) // exit
             {
-                ownerName= "'public area'";
+                ownerName= "'protected area'";
             }else{
                 ownerName= UsernameCache.getLastKnownUsername(thisTerritoryInfo.getOwnerId());
             }
-            clientPlayer.sendMessage(new StringTextComponent(String.format("You have entered %s's territory",
-                    ownerName)));
+            if(hasPermission(thisTickPos,clientPlayer,PermissionFlag.ENTER))
+            {
+                clientPlayer.sendMessage(new StringTextComponent(String.format("You have entered %s's territory", ownerName)));
+            }else{
+                clientPlayer.sendMessage(new StringTextComponent("You are forbidden to enter"));
+                Vec3d vec=clientPlayer.getMotion();
+                Vec3d vecAfterCollision=lastTickPos.x!=thisTickPos.x?new Vec3d(-vec.x,vec.y,vec.z):new Vec3d(vec.x,vec.y,-vec.z);
+                //if(vecAfterCollision.y<1E-2)vecAfterCollision=vecAfterCollision.add(0,0.3,0);
+                vecAfterCollision=vecAfterCollision.normalize().scale(MathHelper.clamp(vec.length(),1,10));
+                clientPlayer.setMotion(vecAfterCollision);
+                clientPlayer.setPosition(clientPlayer.lastTickPosX,clientPlayer.lastTickPosY,clientPlayer.lastTickPosZ);
+            }
+            OutlineRender.StartRender(thisTerritoryInfo.territories,100);
         }else if(thisTerritoryInfo ==null && lastTerritoryInfo !=null)
         {
             String ownerName;
             if(lastTerritoryInfo.getOwnerId()==null) // exit
             {
-                ownerName= "'public area'";
+                ownerName= "'protected area'";
             }else{
                 ownerName= UsernameCache.getLastKnownUsername(lastTerritoryInfo.getOwnerId());
             }
@@ -141,5 +169,14 @@ public class GameEvent {
         }else{
             timeDelay=0;
         }
+    }
+
+    @SubscribeEvent
+    public static void onRenderWorld(RenderWorldLastEvent event)
+    {
+        Vec3d projectedView = Minecraft.getInstance().gameRenderer.getActiveRenderInfo().getProjectedView();
+        //RenderUtil.drawWall(projectedView,new Vec3d(-10.0001,0,-10.0001),new Vec3d(10.0001,200,10.0001));
+        OutlineRender.Render(projectedView,event.getPartialTicks());
+        //utlineRender.Render(projectedView.add(new Vec3d(0,2,0)),event.getPartialTicks());
     }
 }

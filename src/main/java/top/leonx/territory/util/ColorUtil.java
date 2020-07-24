@@ -1,7 +1,11 @@
 package top.leonx.territory.util;
 
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+
 import java.awt.*;
 
+@OnlyIn(Dist.CLIENT)
 public class ColorUtil {
     public static Color HSL2RGB(float H, float S, float L) {
 

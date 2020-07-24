@@ -1,20 +1,30 @@
 package top.leonx.territory.data;
 
 public class PermissionFlag {
-    public final static PermissionFlag ENTER=new PermissionFlag(1);
-    public final static PermissionFlag BREAK=new PermissionFlag(2);
-    public final static PermissionFlag INTERACTE=new PermissionFlag(4);
-
+    public final static PermissionFlag ENTER=new PermissionFlag(1,"enter");
+    public final static PermissionFlag BREAK=new PermissionFlag(2,"break");
+    public final static PermissionFlag PLACE =new PermissionFlag(4,"place");
+    public final static PermissionFlag[] basicFlag={
+            ENTER,
+            BREAK,
+            PLACE
+    };
     private int code;
-    public PermissionFlag(int i) {
+    private String name;
+    public PermissionFlag(int i,String name) {
         this.code=i;
+        this.name=name;
+    }
+    public PermissionFlag(int i) {
+        this(i,"");
     }
 
     public PermissionFlag() {
-        this.code=0;
+        this(0);
     }
 
     public int getCode(){return code;}
+    public String getName(){return name;}
     public boolean contain(PermissionFlag flag)
     {
         return (code&flag.code)!=0;

@@ -1,122 +1,131 @@
 package top.leonx.territory.util;
 
+import com.mojang.blaze3d.platform.GlStateManager;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.Vec3d;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
 
+@OnlyIn(Dist.CLIENT)
 public class RenderUtil {
+    private static final ResourceLocation edgeSquareLocation = new ResourceLocation("territory", "textures/gui" +
+            "/slash_overlay.png");
     public static  void drawWall(Vec3d player_pos, Vec3d posA, Vec3d posB)
     {
-        GL11.glPushAttrib(GL11.GL_ENABLE_BIT);
-        GL11.glDisable(GL11.GL_CULL_FACE);
-        GL11.glDisable(GL11.GL_LIGHTING);
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
-
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        GL11.glTranslated(-player_pos.x, -player_pos.y, -player_pos.z);
-        Color c = new Color(255, 215, 0, 155);
-        GL11.glColor4d(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha());
-
+        //GL11.glPushAttrib(GL11.GL_ENABLE_BIT);
+        GlStateManager.disableCull();
+        //GlStateManager.disableLighting();
+        //GL11.glDisable(GL11.GL_TEXTURE_2D);
+        GlStateManager.depthMask(false);
+//        GL11.glEnable(GL11.GL_BLEND);
+//        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GlStateManager.pushMatrix();
+        GlStateManager.translated(-player_pos.x, -player_pos.y, -player_pos.z);
+        Color c = new Color(255, 255, 255, 155);
+        //GlStateManager.color4f(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha());
+        Minecraft.getInstance().textureManager.bindTexture(edgeSquareLocation);
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder bufferBuilder = tessellator.getBuffer();
-        bufferBuilder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
+        bufferBuilder.begin(GL11.GL_QUADS, DefaultVertexFormats.PARTICLE_POSITION_TEX_COLOR_LMAP);
 
-        bufferBuilder.pos(posA.x,posA.y,posA.z).color(c.getRed(),c.getGreen(),c.getBlue(),c.getAlpha()).endVertex();
-        bufferBuilder.pos(posA.x,posB.y,posA.z).color(c.getRed(),c.getGreen(),c.getBlue(),c.getAlpha()).endVertex();
-        bufferBuilder.pos(posA.x,posB.y,posB.z).color(c.getRed(),c.getGreen(),c.getBlue(),c.getAlpha()).endVertex();
-        bufferBuilder.pos(posA.x,posA.y,posB.z).color(c.getRed(),c.getGreen(),c.getBlue(),c.getAlpha()).endVertex();
+        int skyLight = 0xFFFFF0;
+        int blockLight =  0xFFFFF0;
 
-        bufferBuilder.pos(posA.x,posA.y,posA.z).color(c.getRed(),c.getGreen(),c.getBlue(),c.getAlpha()).endVertex();
-        bufferBuilder.pos(posA.x,posB.y,posA.z).color(c.getRed(),c.getGreen(),c.getBlue(),c.getAlpha()).endVertex();
-        bufferBuilder.pos(posB.x,posB.y,posA.z).color(c.getRed(),c.getGreen(),c.getBlue(),c.getAlpha()).endVertex();
-        bufferBuilder.pos(posB.x,posA.y,posA.z).color(c.getRed(),c.getGreen(),c.getBlue(),c.getAlpha()).endVertex();
+        int r=c.getRed();
+        int g=c.getGreen();
+        int b=c.getBlue();
+        int a=c.getAlpha();
+        bufferBuilder.pos(posA.x,posA.y,posA.z).tex(0,0).color(r,g,b,a).lightmap(skyLight, blockLight).endVertex();
+        bufferBuilder.pos(posA.x,posB.y,posA.z).tex(0,1).color(r,g,b,a).lightmap(skyLight, blockLight).endVertex();
+        bufferBuilder.pos(posA.x,posB.y,posB.z).tex(1,1).color(r,g,b,a).lightmap(skyLight, blockLight).endVertex();
+        bufferBuilder.pos(posA.x,posA.y,posB.z).tex(1,0).color(r,g,b,a).lightmap(skyLight, blockLight).endVertex();
 
-        bufferBuilder.pos(posB.x,posA.y,posA.z).color(c.getRed(),c.getGreen(),c.getBlue(),c.getAlpha()).endVertex();
-        bufferBuilder.pos(posB.x,posB.y,posA.z).color(c.getRed(),c.getGreen(),c.getBlue(),c.getAlpha()).endVertex();
-        bufferBuilder.pos(posB.x,posB.y,posB.z).color(c.getRed(),c.getGreen(),c.getBlue(),c.getAlpha()).endVertex();
-        bufferBuilder.pos(posB.x,posA.y,posB.z).color(c.getRed(),c.getGreen(),c.getBlue(),c.getAlpha()).endVertex();
+        bufferBuilder.pos(posA.x,posA.y,posA.z).tex(0,0).color(r,g,b,a).lightmap(skyLight, blockLight).endVertex();
+        bufferBuilder.pos(posA.x,posB.y,posA.z).tex(0,1).color(r,g,b,a).lightmap(skyLight, blockLight).endVertex();
+        bufferBuilder.pos(posB.x,posB.y,posA.z).tex(1,1).color(r,g,b,a).lightmap(skyLight, blockLight).endVertex();
+        bufferBuilder.pos(posB.x,posA.y,posA.z).tex(1,0).color(r,g,b,a).lightmap(skyLight, blockLight).endVertex();
 
-        bufferBuilder.pos(posA.x,posA.y,posB.z).color(c.getRed(),c.getGreen(),c.getBlue(),c.getAlpha()).endVertex();
-        bufferBuilder.pos(posA.x,posB.y,posB.z).color(c.getRed(),c.getGreen(),c.getBlue(),c.getAlpha()).endVertex();
-        bufferBuilder.pos(posB.x,posB.y,posB.z).color(c.getRed(),c.getGreen(),c.getBlue(),c.getAlpha()).endVertex();
-        bufferBuilder.pos(posB.x,posA.y,posB.z).color(c.getRed(),c.getGreen(),c.getBlue(),c.getAlpha()).endVertex();
+        bufferBuilder.pos(posB.x,posA.y,posA.z).tex(0,0).color(r,g,b,a).lightmap(skyLight, blockLight).endVertex();
+        bufferBuilder.pos(posB.x,posB.y,posA.z).tex(0,1).color(r,g,b,a).lightmap(skyLight, blockLight).endVertex();
+        bufferBuilder.pos(posB.x,posB.y,posB.z).tex(1,1).color(r,g,b,a).lightmap(skyLight, blockLight).endVertex();
+        bufferBuilder.pos(posB.x,posA.y,posB.z).tex(1,0).color(r,g,b,a).lightmap(skyLight, blockLight).endVertex();
+
+        bufferBuilder.pos(posA.x,posA.y,posB.z).tex(0,0).color(r,g,b,a).lightmap(skyLight, blockLight).endVertex();
+        bufferBuilder.pos(posA.x,posB.y,posB.z).tex(0,1).color(r,g,b,a).lightmap(skyLight, blockLight).endVertex();
+        bufferBuilder.pos(posB.x,posB.y,posB.z).tex(1,1).color(r,g,b,a).lightmap(skyLight, blockLight).endVertex();
+        bufferBuilder.pos(posB.x,posA.y,posB.z).tex(1,0).color(r,g,b,a).lightmap(skyLight, blockLight).endVertex();
 
         tessellator.draw();
 
-        GL11.glTranslated(player_pos.x, player_pos.y, player_pos.z);
-        GL11.glDepthMask(true);
-        GL11.glPopAttrib();
+        GlStateManager.popMatrix();
+        //GL11.glEnable(GL11.GL_TEXTURE_2D);
+        GlStateManager.depthMask(true);
+        GlStateManager.enableCull();
+        //GL11.glPopAttrib();
     }
-    public static void drawBoundingBox(Vec3d player_pos, Vec3d posA, Vec3d posB, boolean smooth, float width) {
 
-        GL11.glPushAttrib(GL11.GL_ENABLE_BIT);
-        GL11.glDisable(GL11.GL_CULL_FACE);
-        GL11.glDisable(GL11.GL_LIGHTING);
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
+    public static void drawWall(Vec3d from,Vec3d to,double height,int rgb,int alpha,int skyL, int blockL, BufferBuilder buffer)
+    {
+        drawDoubleSidePlane(from,to.subtract(from),new Vec3d(0,height,0),rgb,alpha,skyL,blockL,buffer);
+    }
+    public static void drawWall(Vec3d from,Vec3d to,double height,int minU,int minV,int maxU,int maxV,int rgb,int alpha,int skyL, int blockL, BufferBuilder buffer)
+    {
+        drawDoubleSidePlane(from,to.subtract(from),new Vec3d(0,height,0),minU,minV,maxU,maxV,rgb,alpha,skyL,blockL,buffer);
+    }
+    public static void drawDoubleSidePlane(Vec3d o,Vec3d l1,Vec3d l2,int rgb,int alpha,int skyL, int blockL, BufferBuilder buffer)
+    {
+        drawDoubleSidePlane(o,l1,l2,0,0,1,1,rgb,alpha,skyL,blockL,buffer);
+    }
 
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        GL11.glTranslated(-player_pos.x, -player_pos.y, -player_pos.z);
-        //posA=new Vec3d(posA.x-player_pos.x,posA.y-player_pos.y,posA.z-player_pos.z);
-        //posB=new Vec3d(posB.x-player_pos.x,posB.y-player_pos.y,posB.z-player_pos.z);
-        Color c = new Color(255, 215, 0, 150);
-        GL11.glColor4d(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha());
-        GL11.glLineWidth(width);
-        GL11.glDepthMask(false);
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder bufferBuilder = tessellator.getBuffer();
-        bufferBuilder.begin(GL11.GL_LINE, DefaultVertexFormats.POSITION_COLOR);
+    public static void drawDoubleSidePlane(Vec3d o,Vec3d l1,Vec3d l2,int minU,int minV,int maxU,int maxV,int rgb,int alpha,int skyL, int blockL,
+                                           BufferBuilder buffer)
+    {
+        Vec3d n = l1.crossProduct(l2).normalize();
+        drawPlane(o.add(n.scale(0.01)),l1,l2,minU,minV,maxU,maxV,rgb,alpha,skyL,blockL, buffer);
+        drawPlane(o.subtract(n.scale(0.01)),l2,l1,minV,minU,maxV,maxU,rgb,alpha,skyL,blockL, buffer);
+    }
 
-        double dx = Math.abs(posA.x - posB.x);
-        double dy = Math.abs(posA.y - posB.y);
-        double dz = Math.abs(posA.z - posB.z);
+    public static void drawPlane(Vec3d o,Vec3d l1,Vec3d l2,int rgb,int alpha,int skyL, int blockL, BufferBuilder buffer)
+    {
+        drawPlane(o,l1,l2,0,0,1,1,rgb,alpha,skyL,blockL,buffer);
+    }
 
-        //AB
-        bufferBuilder.pos(posA.x, posA.y, posA.z).color(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha()).endVertex();          //A
-        bufferBuilder.pos(posA.x, posA.y, posA.z+dz).color(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha()).endVertex();       //B
-        //BC
-        bufferBuilder.pos(posA.x, posA.y, posA.z+dz).color(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha()).endVertex();       //B
-        bufferBuilder.pos(posA.x+dx, posA.y, posA.z+dz).color(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha()).endVertex();    //C
-        //CD
-        bufferBuilder.pos(posA.x+dx, posA.y, posA.z+dz).color(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha()).endVertex();    //C
-        bufferBuilder.pos(posA.x+dx, posA.y, posA.z).color(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha()).endVertex();       //D
-        //DA
-        bufferBuilder.pos(posA.x+dx, posA.y, posA.z).color(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha()).endVertex();       //D
-        bufferBuilder.pos(posA.x, posA.y, posA.z).color(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha()).endVertex();          //A
-        //EF
-        bufferBuilder.pos(posA.x, posA.y+dy, posA.z).color(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha()).endVertex();       //E
-        bufferBuilder.pos(posA.x, posA.y+dy, posA.z+dz).color(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha()).endVertex();    //F
-        //FG
-        bufferBuilder.pos(posA.x, posA.y+dy, posA.z+dz).color(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha()).endVertex();    //F
-        bufferBuilder.pos(posA.x+dx, posA.y+dy, posA.z+dz).color(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha()).endVertex(); //G
-        //GH
-        bufferBuilder.pos(posA.x+dx, posA.y+dy, posA.z+dz).color(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha()).endVertex(); //G
-        bufferBuilder.pos(posA.x+dx, posA.y+dy, posA.z).color(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha()).endVertex();    //H
-        //HE
-        bufferBuilder.pos(posA.x+dx, posA.y+dy, posA.z).color(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha()).endVertex();    //H
-        bufferBuilder.pos(posA.x, posA.y+dy, posA.z).color(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha()).endVertex();       //E
-        //AE
-        bufferBuilder.pos(posA.x, posA.y, posA.z).color(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha()).endVertex();          //A
-        bufferBuilder.pos(posA.x, posA.y+dy, posA.z).color(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha()).endVertex();       //E
-        //BF
-        bufferBuilder.pos(posA.x, posA.y, posA.z+dz).color(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha()).endVertex();       //B
-        bufferBuilder.pos(posA.x, posA.y+dy, posA.z+dz).color(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha()).endVertex();    //F
-        //CG
-        bufferBuilder.pos(posA.x+dx, posA.y, posA.z+dz).color(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha()).endVertex();    //C
-        bufferBuilder.pos(posA.x+dx, posA.y+dy, posA.z+dz).color(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha()).endVertex(); //G
-        //DH
-        bufferBuilder.pos(posA.x+dx, posA.y, posA.z).color(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha()).endVertex();       //D
-        bufferBuilder.pos(posA.x+dx, posA.y+dy, posA.z).color(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha()).endVertex();    //H
+    /**
+     * Draw plane by a origin point and two edges on the screen.
+     * @param o origin point
+     * @param l1 edge1
+     * @param l2 edge2
+     * @param col color RGB
+     * @param skyL skylight color RGB
+     * @param blockL block light color RGB
+     * @param buffer Buffer Builder
+     */
+    // Normal direction = l1 x l2
+    public static void drawPlane(Vec3d o,Vec3d l1,Vec3d l2,int minU,int minV,int maxU,int maxV,int col,int alpha,int skyL, int blockL, BufferBuilder buffer)
+    {
+        int r=(col>>>16)& 0x000000FF;
+        int g=(col>>>8)& 0x000000FF;
+        int b=col & 0x000000FF;
+        buffer.pos(o.x,o.y,o.z).tex(minU,minV).color(r,g,b,alpha).lightmap(skyL, blockL).endVertex();
+        buffer.pos(o.x+l1.x,o.y+l1.y,o.z+l1.z).tex(minU,maxV).color(r,g,b,alpha).lightmap(skyL, blockL).endVertex();
+        buffer.pos(o.x+l1.x+l2.x,o.y+l1.y+l2.y,o.z+l1.z+l2.z).tex(maxU,maxV).color(r,g,b,alpha).lightmap(skyL, blockL).endVertex();
+        buffer.pos(o.x+l2.x,o.y+l2.y,o.z+l2.z).tex(maxU,minV).color(r,g,b,alpha).lightmap(skyL, blockL).endVertex();
+    }
 
-        tessellator.draw();
+    public static void enableTextureRepeat() {
+        GlStateManager.texParameter(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL11.GL_REPEAT);
+        GlStateManager.texParameter(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL11.GL_REPEAT);
+    }
 
-        GL11.glTranslated(player_pos.x, player_pos.y, player_pos.z);
-        GL11.glDepthMask(true);
-        GL11.glPopAttrib();
+    public static void disableTextureRepeat() {
+        GlStateManager.texParameter(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL11.GL_CLAMP);
+        GlStateManager.texParameter(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL11.GL_CLAMP);
     }
 }

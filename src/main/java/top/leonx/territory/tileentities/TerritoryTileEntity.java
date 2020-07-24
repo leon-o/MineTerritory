@@ -43,7 +43,6 @@ public class TerritoryTileEntity extends TileEntity implements ITickableTileEnti
 
     public UUID getOwnerId(){return territoryInfo.getOwnerId();}
     public String getOwnerName(){return territoryInfo.getOwnerName();}
-    public HashSet<ChunkPos> territories;
     private TerritoryInfo territoryInfo;
     public TerritoryInfo getTerritoryInfo()
     {
@@ -57,7 +56,7 @@ public class TerritoryTileEntity extends TileEntity implements ITickableTileEnti
 
     public void addJurisdiction(ChunkPos pos)
     {
-        territories.add(pos);
+        territoryInfo.territories.add(pos);
 
         if(world.isRemote) return;
 
@@ -70,15 +69,15 @@ public class TerritoryTileEntity extends TileEntity implements ITickableTileEnti
     public void removeJurisdiction(ChunkPos pos)
     {
 
-        if(territories.contains(pos))
+        if(territoryInfo.territories.contains(pos))
         {
-            territories.remove(pos);
+            territoryInfo.territories.remove(pos);
             TERRITORY_TILE_ENTITY_HASH_MAP.remove(pos);
         }
     }
     public void updateJurisdictionMap()
     {
-        territories.forEach(t->{
+        territoryInfo.territories.forEach(t->{
             if(!TERRITORY_TILE_ENTITY_HASH_MAP.containsKey(t))
             {
                 TERRITORY_TILE_ENTITY_HASH_MAP.put(t, territoryInfo);
@@ -125,7 +124,7 @@ public class TerritoryTileEntity extends TileEntity implements ITickableTileEnti
     private CompoundNBT writeInternal(CompoundNBT compound)
     {
         ListNBT territoryListNBT=new ListNBT();
-        territories.forEach(t->{
+        territoryInfo.territories.forEach(t->{
             CompoundNBT nbt=ConvertPosToNbt(t);
             territoryListNBT.add(nbt);
         });
@@ -140,28 +139,28 @@ public class TerritoryTileEntity extends TileEntity implements ITickableTileEnti
 
     private void readInternal(CompoundNBT compound)
     {
+        UUID ownerId = compound.getUniqueId(OWNER_ID_KEY);
         ListNBT territoryList = compound.getList(TERRITORY_POS_KEY, 10);
-
-        if(territories==null) territories=new HashSet<>();
-        territories.clear();
-
-        territoryList.forEach(t-> territories.add(ConvertNbtToPos((CompoundNBT) t)));
-
         ListNBT permissionList = compound.getList(PERMISSION_KEY, 10);
+
         HashMap<UUID,PermissionFlag> permissionFlagHashMap=new HashMap<>();
         permissionList.forEach(t->{
             Map.Entry<UUID, PermissionFlag> entry = ConvertNbtToUUIDPermission((CompoundNBT) t);
             permissionFlagHashMap.put(entry.getKey(),entry.getValue());
         });
-        UUID ownerId = compound.getUniqueId(OWNER_ID_KEY);
 
-        if(territoryInfo==null)
-            territoryInfo =new TerritoryInfo(ownerId,permissionFlagHashMap);
-        else
-        {   //if not null, don't replace.
+        HashSet<ChunkPos> territoriesTmp=new HashSet<>();
+        territoryList.forEach(t-> territoriesTmp.add(ConvertNbtToPos((CompoundNBT) t)));
+        if(territoryInfo==null){
+            territoryInfo=new TerritoryInfo(ownerId,territoriesTmp,permissionFlagHashMap);
+        }else{
             territoryInfo.setOwnerId(ownerId);
-            territoryInfo.permissions=permissionFlagHashMap;
+            territoryInfo.territories.clear();
+            territoryInfo.territories.addAll(territoriesTmp);
+            territoryInfo.permissions.clear();
+            territoryInfo.permissions.putAll(permissionFlagHashMap);
         }
+
         updateJurisdictionMap();
     }
 
@@ -193,10 +192,8 @@ public class TerritoryTileEntity extends TileEntity implements ITickableTileEnti
         super.onLoad();
 
         if(territoryInfo==null)
-            territoryInfo=new TerritoryInfo(null, new HashMap<>());
-        if(territories ==null)
         {
-            territories = new HashSet<>();
+            territoryInfo=new TerritoryInfo(null,new HashSet<>(), new HashMap<>());
             addJurisdiction(new ChunkPos(this.pos.getX()>>4,this.pos.getZ()>>4));
         }
     }
@@ -205,7 +202,7 @@ public class TerritoryTileEntity extends TileEntity implements ITickableTileEnti
         ItemStack itemStack=new ItemStack(state.getBlock().asItem());
         CompoundNBT tag = itemStack.getOrCreateChildTag("territory");
         ListNBT territoryList=new ListNBT();
-        territories.forEach(t-> territoryList.add(ConvertPosToNbt(t)));
+        territoryInfo.territories.forEach(t-> territoryList.add(ConvertPosToNbt(t)));
         tag.put(TERRITORY_POS_KEY, territoryList);
 
         return itemStack;
