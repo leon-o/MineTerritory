@@ -1,19 +1,22 @@
 package top.leonx.territory.events;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.particles.ParticleTypes;
 import net.minecraft.util.Hand;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.*;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.common.UsernameCache;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.living.LivingEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -22,8 +25,10 @@ import top.leonx.territory.data.PermissionFlag;
 import top.leonx.territory.data.TerritoryInfo;
 import top.leonx.territory.items.ModItems;
 import top.leonx.territory.util.OutlineRender;
+import top.leonx.territory.util.UserUtil;
 
 import javax.annotation.Nullable;
+import java.util.HashSet;
 import java.util.Random;
 
 @SuppressWarnings("unused")
@@ -35,13 +40,14 @@ public class GameEvent {
     public static void onPlayerLeftClickBlock(PlayerInteractEvent.LeftClickBlock event)
     {
         ChunkPos chunkPos=new ChunkPos(event.getPos().getX()>>4,event.getPos().getZ()>>4);
-        if (!hasPermission(chunkPos, event.getPlayer(),PermissionFlag.BREAK)) {
+        if (!hasPermission(chunkPos, event.getPlayer(),PermissionFlag.LEFT_CLICK)) {
             event.setCanceled(true);
 
             if(!event.getWorld().isRemote) {
-                SendMessage(event.getPlayer(),new StringTextComponent("Not your territory"));
+                SendMessage(event.getPlayer(),new TranslationTextComponent("message.territory.no_permission",
+                        new TranslationTextComponent(PermissionFlag.LEFT_CLICK.getTranslationKey())));
             }else{
-                TerritoryInfo data=TerritoryMod.TERRITORY_TILE_ENTITY_HASH_MAP.get(chunkPos);
+                TerritoryInfo data=TerritoryMod.TERRITORY_INFO_HASH_MAP.get(chunkPos);
                 OutlineRender.StartRender(data.territories,100);
             }
         }
@@ -51,14 +57,15 @@ public class GameEvent {
     public static void onPlayerRightClickBlock(PlayerInteractEvent.RightClickBlock event)
     {
         ChunkPos chunkPos=new ChunkPos(event.getPos().getX()>>4,event.getPos().getZ()>>4);
-        if (!hasPermission(chunkPos, event.getPlayer(),PermissionFlag.PLACE)) {
+        if (!hasPermission(chunkPos, event.getPlayer(),PermissionFlag.RIGHT_CLICK)) {
             event.setCanceled(true);
 
             if(!event.getWorld().isRemote)
             {
-                SendMessage(event.getPlayer(),new StringTextComponent("Not your territory"));
+                SendMessage(event.getPlayer(),new TranslationTextComponent("message.territory.no_permission",
+                        new TranslationTextComponent(PermissionFlag.RIGHT_CLICK.getTranslationKey())));
             }else{
-                TerritoryInfo data=TerritoryMod.TERRITORY_TILE_ENTITY_HASH_MAP.get(chunkPos);
+                TerritoryInfo data=TerritoryMod.TERRITORY_INFO_HASH_MAP.get(chunkPos);
                 OutlineRender.StartRender(data.territories,100);
             }
         }
@@ -66,9 +73,9 @@ public class GameEvent {
 
     private static boolean hasPermission(ChunkPos pos, PlayerEntity player, PermissionFlag flag)
     {
-        if(TerritoryMod.TERRITORY_TILE_ENTITY_HASH_MAP.containsKey(pos))
+        if(TerritoryMod.TERRITORY_INFO_HASH_MAP.containsKey(pos))
         {
-            TerritoryInfo data=TerritoryMod.TERRITORY_TILE_ENTITY_HASH_MAP.get(pos);
+            TerritoryInfo data=TerritoryMod.TERRITORY_INFO_HASH_MAP.get(pos);
             return data.getOwnerId()==null&&!player.hasPermissionLevel(4) ||
                     data.getOwnerId()!=null &&
                             (data.getOwnerId().equals(player.getUniqueID())||
@@ -81,26 +88,15 @@ public class GameEvent {
     @Nullable
     private static TerritoryInfo getTerritoryData(ChunkPos pos)
     {
-        if(TerritoryMod.TERRITORY_TILE_ENTITY_HASH_MAP.containsKey(pos))
+        if(TerritoryMod.TERRITORY_INFO_HASH_MAP.containsKey(pos))
         {
-            return TerritoryMod.TERRITORY_TILE_ENTITY_HASH_MAP.get(pos);
+            return TerritoryMod.TERRITORY_INFO_HASH_MAP.get(pos);
         }
         return null;
     }
     static int timeDelay=0;
 
 
-//    static ChunkPos lastTickPos=null;//We cant get correct lastTickPos by LivingUpdateEvent
-//    @SubscribeEvent
-//    public static void onLivingUpdate(LivingEvent.LivingUpdateEvent event)
-//    {
-//
-//        if(event.getEntityLiving() instanceof PlayerEntity)
-//        {
-//            PlayerEntity clientPlayer=(PlayerEntity)event.getEntityLiving();
-//
-//        }
-//    }
     static final double coolDownTime=100;
     static double coolDown;
     private static void SendMessage(PlayerEntity player, ITextComponent component)
@@ -112,8 +108,12 @@ public class GameEvent {
     @SubscribeEvent
     public static void serverTick(TickEvent.ServerTickEvent event)
     {
-        coolDown-=Minecraft.getInstance().getTickLength();
+        coolDown-=1;
     }
+
+    private static ChunkPos lastLookedPos=null;
+
+    @OnlyIn(Dist.CLIENT)
     @SubscribeEvent
     public static void clientTick(TickEvent.ClientTickEvent event)
     {
@@ -129,18 +129,13 @@ public class GameEvent {
 
         if((lastTerritoryInfo ==null && thisTerritoryInfo !=null) || (lastTerritoryInfo !=null && thisTerritoryInfo !=null && lastTerritoryInfo.getOwnerId()!= thisTerritoryInfo.getOwnerId()))
         {
-            String ownerName;
-            if(thisTerritoryInfo.getOwnerId()==null) // exit
-            {
-                ownerName= "'protected area'";
-            }else{
-                ownerName= UsernameCache.getLastKnownUsername(thisTerritoryInfo.getOwnerId());
-            }
+            String ownerName = UserUtil.getNameByUUID(thisTerritoryInfo.getOwnerId());
             if(hasPermission(thisTickPos,clientPlayer,PermissionFlag.ENTER))
             {
-                SendMessage(clientPlayer,new StringTextComponent(String.format("You have entered %s's territory", ownerName)));
+                SendMessage(clientPlayer,new TranslationTextComponent("message.territory.enter_territory",ownerName));
             }else{
-                SendMessage(clientPlayer,new StringTextComponent("You are forbidden to enter"));
+                SendMessage(clientPlayer,new TranslationTextComponent("message.territory.no_permission",
+                        new TranslationTextComponent(PermissionFlag.ENTER.getTranslationKey())));
                 Vec3d vec=clientPlayer.getMotion();
                 Vec3d vecAfterCollision=lastTickPos.x!=thisTickPos.x?new Vec3d(-vec.x,vec.y,vec.z):new Vec3d(vec.x,vec.y,-vec.z);
                 vecAfterCollision=vecAfterCollision.normalize().scale(MathHelper.clamp(vec.length(),1,10));
@@ -150,42 +145,32 @@ public class GameEvent {
             OutlineRender.StartRender(thisTerritoryInfo.territories,100);
         }else if(thisTerritoryInfo ==null && lastTerritoryInfo !=null)
         {
-            String ownerName;
-            if(lastTerritoryInfo.getOwnerId()==null) // exit
-            {
-                ownerName= "'protected area'";
-            }else{
-                ownerName= UsernameCache.getLastKnownUsername(lastTerritoryInfo.getOwnerId());
-            }
-            SendMessage(clientPlayer,new StringTextComponent(String.format("You have exited %s's territory", ownerName)));
+            String ownerName = UserUtil.getNameByUUID(lastTerritoryInfo.getOwnerId());
+
+            SendMessage(clientPlayer,new TranslationTextComponent("message.territory.exit_territory",ownerName));
         }
 
         ItemStack heldItem = clientPlayer.getHeldItem(Hand.MAIN_HAND);
         if(heldItem.getItem()== ModItems.TerritoryBlockItem)
         {
-            // World world=Minecraft.getInstance().world;
-            ChunkPos chunkPos=Minecraft.getInstance().world.getChunkAt(clientPlayer.getPosition()).getPos();
-            timeDelay++;
-            if(timeDelay==5)
+            ClientPlayerEntity player=Minecraft.getInstance().player;
+            BlockRayTraceResult blockRayTraceResult = Minecraft.getInstance().world.rayTraceBlocks(new RayTraceContext(player.getEyePosition(0),
+                    player.getEyePosition(0).add(player.getLookVec().scale(4)),
+                    RayTraceContext.BlockMode.COLLIDER, RayTraceContext.FluidMode.ANY, player));
+            BlockPos pos = blockRayTraceResult.getPos();
+            ChunkPos thisChunkPos=new ChunkPos(pos.getX()>>4,pos.getZ()>>4);
+
+            if(!thisChunkPos.equals(lastLookedPos))
             {
-                timeDelay=0;
-                for(float i=0;i<16;i+=0.2)
-                {
-                    Minecraft.getInstance().world.addParticle(ParticleTypes.DRAGON_BREATH,(chunkPos.x<<4)+i+ MathHelper.nextFloat(random,-0.1f,0.1f),
-                            clientPlayer.posY,chunkPos.z<<4,0,0.03,0);
-                    Minecraft.getInstance().world.addParticle(ParticleTypes.DRAGON_BREATH,(chunkPos.x<<4)+i+ MathHelper.nextFloat(random,-0.1f,0.1f),
-                            clientPlayer.posY,(chunkPos.z<<4)+16,0,0.03,0);
-                    Minecraft.getInstance().world.addParticle(ParticleTypes.DRAGON_BREATH,(chunkPos.x<<4),
-                            clientPlayer.posY,(chunkPos.z<<4)+i+ MathHelper.nextFloat(random,-0.1f,0.1f),0,0.03,0);
-                    Minecraft.getInstance().world.addParticle(ParticleTypes.DRAGON_BREATH,(chunkPos.x<<4)+16,
-                            clientPlayer.posY,(chunkPos.z<<4)+i+ MathHelper.nextFloat(random,-0.1f,0.1f),0,0.03,0);
-                }
+                HashSet<ChunkPos> set = new HashSet<>();
+                set.add(thisChunkPos);
+                OutlineRender.StartRender(set,100);
+                lastLookedPos=thisChunkPos;
             }
-        }else{
-            timeDelay=0;
         }
     }
 
+    @OnlyIn(Dist.CLIENT)
     @SubscribeEvent
     public static void onRenderWorld(RenderWorldLastEvent event)
     {
@@ -193,5 +178,12 @@ public class GameEvent {
         //RenderUtil.drawWall(projectedView,new Vec3d(-10.0001,0,-10.0001),new Vec3d(10.0001,200,10.0001));
         OutlineRender.Render(projectedView,event.getPartialTicks());
         //utlineRender.Render(projectedView.add(new Vec3d(0,2,0)),event.getPartialTicks());
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    @SubscribeEvent
+    public static void onPlayerLogOut(ClientPlayerNetworkEvent.LoggedOutEvent event)
+    {
+        TerritoryMod.TERRITORY_INFO_HASH_MAP.clear();
     }
 }

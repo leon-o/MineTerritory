@@ -3,6 +3,7 @@ package top.leonx.territory.client.screen;
 import com.mojang.blaze3d.platform.GlStateManager;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.resources.I18n;
 import net.minecraftforge.common.UsernameCache;
 import net.minecraftforge.fml.client.config.GuiButtonExt;
 import top.leonx.territory.client.gui.PlayerList;
@@ -41,11 +42,11 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryConta
         playerList.setLeftPos(parent.getGuiLeft()+10);
         defaultPlayerEntry = new PlayerList.PlayerEntry(UserUtil.DEFAULT_UUID, UserUtil.DEFAULT_NAME, playerList,this::onPlayerEntrySelected);
         defaultPlayerEntry.canDelete=false;
-        search=new TextFieldWidget(font, parent.getGuiLeft()+10, parent.getGuiTop()+8, 100,16,"search");
-        addTextField=new TextFieldWidget(font, parent.getGuiLeft()+10, parent.getGuiTop()+parent.getYSize()-24, 80,16,"NAME");
+        search=new TextFieldWidget(font, parent.getGuiLeft()+10, parent.getGuiTop()+8, 100,16,I18n.format("gui.territory.search"));
+        addTextField=new TextFieldWidget(font, parent.getGuiLeft()+10, parent.getGuiTop()+parent.getYSize()-24, 80,16,I18n.format("gui.territory.add_player"));
         addPlayerBtn=new GuiButtonExt(parent.getGuiLeft()+90,parent.getGuiTop()+parent.getYSize()-24,20,16,"+",
                 t-> addNewPlayer());
-        removePlayerBtn=new GuiButtonExt(parent.getGuiLeft()+120,parent.getGuiTop()+8,24,16,"Del",
+        removePlayerBtn=new GuiButtonExt(parent.getGuiLeft()+120,parent.getGuiTop()+8,24,16,I18n.format("gui.territory.remove_player_btn"),
                 t-> removePlayer());
 
         playerList.children().add(defaultPlayerEntry);
@@ -61,7 +62,7 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryConta
         for (PermissionFlag flag : PermissionFlag.basicFlag) {
             PermissionToggleButton btn=new PermissionToggleButton(parent.getGuiLeft()+120,checkboxTop+(checkboxHeight+4)*checkboxIndexTmp,checkboxWidth,
                     checkboxHeight,
-                    flag.getName(),container.territoryInfo.defaultPermission.contain(flag));
+                    I18n.format(flag.getTranslationKey()),container.territoryInfo.defaultPermission.contain(flag));
 
             btn.onTriggered=t->{
                 PermissionFlag permissionFlag;
@@ -79,8 +80,8 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryConta
             checkboxIndexTmp++;
         }
 
-        addTextField.setSuggestion("ADD PLAYER");
-        search.setSuggestion("SEARCH");
+        addTextField.setSuggestion(I18n.format("gui.territory.add_player"));
+        search.setSuggestion(I18n.format("gui.territory.search"));
         addPlayerBtn.active=false;
 
         this.children.add(playerList);
@@ -88,7 +89,7 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryConta
         this.children.add(search);
         this.addButton(addPlayerBtn);
         this.addButton(removePlayerBtn);
-        this.addButton(new GuiButtonExt(halfW+40, parent.getGuiTop()+parent.getYSize()-30, 70, 20, "BACK",
+        this.addButton(new GuiButtonExt(halfW+40, parent.getGuiTop()+parent.getYSize()-30, 70, 20, I18n.format("gui.territory.back"),
                 $ -> NavigateTo(0)
         ));
         permissionCheckbox.keySet().forEach(this::addButton);
@@ -105,7 +106,7 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryConta
         addTextField.render(mouseX,mouseY,partialTicks);
         addTextField.renderButton(mouseX,mouseY,partialTicks);
 
-        String title="ALL";
+        String title=I18n.format("gui.territory.all_player");
         if(playerList.getSelected()!=null) title=playerList.getSelected().getName();
         GlStateManager.pushMatrix();
         GlStateManager.scaled(1.2,1.2,1.2);
@@ -119,9 +120,7 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryConta
     }
 
     String lastTickSearch=null;
-//    PlayerList.PlayerEntry lastPlayerEntry;
 
-    //Tick ​​is too stupid
     @Override
     public void tick() {
         if(!search.getText().equals(lastTickSearch))
@@ -212,13 +211,13 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryConta
             }
         }else{
             addPlayerBtn.active=false;
-            addTextFieldSuggestion="ADD PLAYER";
+            addTextFieldSuggestion=I18n.format("gui.territory.add_player");
         }
         addTextField.setSuggestion(addTextFieldSuggestion);
 
         if(search.getText().length()>0)
             search.setSuggestion("");
         else
-            search.setSuggestion("SEARCH");
+            search.setSuggestion(I18n.format("gui.territory.search"));
     }
 }

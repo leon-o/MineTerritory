@@ -24,15 +24,15 @@ import net.minecraftforge.fml.network.NetworkHooks;
 import top.leonx.territory.TerritoryMod;
 import top.leonx.territory.data.PermissionFlag;
 import top.leonx.territory.tileentities.ModTileEntityType;
-import top.leonx.territory.tileentities.TerritoryTileEntity;
+import top.leonx.territory.tileentities.TerritoryTableTileEntity;
 
 import javax.annotation.Nullable;
 
 @SuppressWarnings({"NullableProblems", "deprecation"})
-public class TerritoryBlock extends Block {
+public class TerritoryTableBlock extends Block {
     //public static final IntegerProperty X=IntegerProperty.create("X",Integer.MIN_VALUE,Integer.MAX_VALUE);
     //public static final IntegerProperty Y=IntegerProperty.create("X",Integer.MIN_VALUE,Integer.MAX_VALUE);
-    public TerritoryBlock() {
+    public TerritoryTableBlock() {
         super(Properties.create(Material.IRON).sound(SoundType.GLASS).hardnessAndResistance(3f));
     }
 
@@ -45,7 +45,7 @@ public class TerritoryBlock extends Block {
     public boolean onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
 
         if(worldIn.isRemote)return false;
-        TerritoryTileEntity tileEntity=getTerritoryTileEntity(worldIn,pos);
+        TerritoryTableTileEntity tileEntity=getTerritoryTileEntity(worldIn,pos);
         if(tileEntity.getOwnerId().equals(player.getUniqueID())
             ||tileEntity.getTerritoryInfo().permissions.containsKey(player.getUniqueID())&&
                 tileEntity.getTerritoryInfo().permissions.get(player.getUniqueID()).contain(PermissionFlag.MANAGE)
@@ -68,7 +68,7 @@ public class TerritoryBlock extends Block {
     public BlockState getStateForPlacement(BlockItemUseContext context) {
 
         {
-            if(TerritoryMod.TERRITORY_TILE_ENTITY_HASH_MAP.containsKey(context.getWorld().getChunkAt(context.getPos()).getPos() ))
+            if(TerritoryMod.TERRITORY_INFO_HASH_MAP.containsKey(context.getWorld().getChunkAt(context.getPos()).getPos() ))
             {
                 if(!context.getWorld().isRemote)
                 {
@@ -89,9 +89,9 @@ public class TerritoryBlock extends Block {
     }
 
 
-    private TerritoryTileEntity getTerritoryTileEntity(IBlockReader worldIn, BlockPos pos)
+    private TerritoryTableTileEntity getTerritoryTileEntity(IBlockReader worldIn, BlockPos pos)
     {
-        return (TerritoryTileEntity)worldIn.getTileEntity(pos);
+        return (TerritoryTableTileEntity)worldIn.getTileEntity(pos);
     }
 
     @Override

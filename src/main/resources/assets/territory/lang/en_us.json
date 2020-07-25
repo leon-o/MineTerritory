@@ -1,0 +1,20 @@
+{
+  "block.territory.territory_table": "Territory Table",
+  "message.territory.no_permission": "You have't permission to %s",
+  "message.territory.enter_territory": "You entered %s's territory",
+  "message.territory.exit_territory": "You exited %s's territory",
+  "permission.territory.enter": "Enter",
+  "permission.territory.left_click": "Left Click",
+  "permission.territory.right_click": "Right Click",
+  "permission.territory.use_table": "Use Table",
+  "gui.territory.add_player": "ADD PLAYER",
+  "gui.territory.add_player_btn": "+",
+  "gui.territory.remove_player_btn": "Del",
+  "gui.territory.search": "SEARCH",
+  "gui.territory.done_btn": "Done",
+  "gui.territory.permission_btn": "Permission",
+  "gui.territory.map_btn": "Map",
+  "gui.territory.back": "Back",
+  "gui.territory.owner": "Owner",
+  "gui.territory.all_player": "All Player"
+}

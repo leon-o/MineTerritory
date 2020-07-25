@@ -15,7 +15,7 @@ public class TerritoryMod
     // Directly reference a log4j logger.
     public static final Logger LOGGER = LogManager.getLogger();
     public static final String MODID= "territory";
-    public static final ConcurrentHashMap<ChunkPos, TerritoryInfo> TERRITORY_TILE_ENTITY_HASH_MAP=
+    public static final ConcurrentHashMap<ChunkPos, TerritoryInfo> TERRITORY_INFO_HASH_MAP =
             new ConcurrentHashMap<>();
     public TerritoryMod() {
 

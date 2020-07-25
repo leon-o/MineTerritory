@@ -20,7 +20,7 @@ import net.minecraftforge.fml.network.NetworkEvent;
 import top.leonx.territory.TerritoryPacketHandler;
 import top.leonx.territory.data.TerritoryInfo;
 import top.leonx.territory.data.TerritoryOperationMsg;
-import top.leonx.territory.tileentities.TerritoryTileEntity;
+import top.leonx.territory.tileentities.TerritoryTableTileEntity;
 
 import javax.annotation.Nonnull;
 import java.util.*;
@@ -42,7 +42,7 @@ public class TerritoryContainer extends Container {
         this(id, inventory, getTileEntity(inventory, buffer));
     }
 
-    public TerritoryContainer(int id, PlayerInventory inventory, TerritoryTileEntity tileEntity) {
+    public TerritoryContainer(int id, PlayerInventory inventory, TerritoryTableTileEntity tileEntity) {
         super(ModContainerTypes.TERRITORY_CONTAINER, id);
         this.player=inventory.player;
         this.territoryInfo= tileEntity.getTerritoryInfo().copy();
@@ -62,9 +62,9 @@ public class TerritoryContainer extends Container {
 
     public int protectPower;
 
-    private static TerritoryTileEntity getTileEntity(PlayerInventory inventory, PacketBuffer buffer) {
+    private static TerritoryTableTileEntity getTileEntity(PlayerInventory inventory, PacketBuffer buffer) {
         final TileEntity tileAtPos = inventory.player.world.getTileEntity(buffer.readBlockPos());
-        return (TerritoryTileEntity) tileAtPos;
+        return (TerritoryTableTileEntity) tileAtPos;
     }
 
     static {
@@ -107,7 +107,7 @@ public class TerritoryContainer extends Container {
         if (originalTerritories.size() + msg.readyAdd.length - msg.readyRemove.length > protectPower)
             return false;
 
-        TerritoryTileEntity tileEntity= (TerritoryTileEntity) player.world.getTileEntity(tileEntityPos);
+        TerritoryTableTileEntity tileEntity= (TerritoryTableTileEntity) player.world.getTileEntity(tileEntityPos);
 
         for (ChunkPos pos : msg.readyRemove) {
             tileEntity.removeJurisdiction(pos);
@@ -194,7 +194,6 @@ public class TerritoryContainer extends Container {
         removableChunkPos.remove(tileEntityChunkPos); // Player cant remove the chunkPos where the tileEntity is located.
     }
 
-    @OnlyIn(Dist.CLIENT)
     public int getBlockPower(IWorld world, BlockPos pos) {
         String banner_name = Objects.requireNonNull(world.getBlockState(pos).getBlock().getRegistryName()).getPath();
         return banner_name.contains("banner") ? 1 : 0;

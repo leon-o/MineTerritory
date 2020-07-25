@@ -42,7 +42,7 @@ public class ModEvent {
         public static void onBlocksRegistry(final RegistryEvent.Register<Block> blockRegistryEvent) {
 
             blockRegistryEvent.getRegistry().registerAll(
-                    ModBlocks.TERRITORY_BLOCK.setRegistryName("territory")
+                    ModBlocks.TERRITORY_BLOCK.setRegistryName("territory_table")
             );
         }
         @SubscribeEvent

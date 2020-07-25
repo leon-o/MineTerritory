@@ -2,21 +2,22 @@ package top.leonx.territory.data;
 
 public class PermissionFlag {
     public final static PermissionFlag ENTER=new PermissionFlag(1,"enter");
-    public final static PermissionFlag BREAK=new PermissionFlag(2,"break");
-    public final static PermissionFlag PLACE =new PermissionFlag(4,"place");
-    public final static PermissionFlag MANAGE =new PermissionFlag(8,"manage");
+    public final static PermissionFlag LEFT_CLICK =new PermissionFlag(2,"left_click");
+    public final static PermissionFlag RIGHT_CLICK =new PermissionFlag(4,"right_click");
+    public final static PermissionFlag MANAGE =new PermissionFlag(8,"use_table");
     public final static PermissionFlag[] basicFlag={
             ENTER,
-            BREAK,
-            PLACE,
+            LEFT_CLICK,
+            RIGHT_CLICK,
             MANAGE
     };
     private int code;
-    private final String name;
-    public PermissionFlag(int i,String name) {
+    private final String name_key;
+    public PermissionFlag(int i,String name_key) {
         this.code=i;
-        this.name=name;
+        this.name_key =name_key;
     }
+
     public PermissionFlag(int i) {
         this(i,"");
     }
@@ -26,7 +27,7 @@ public class PermissionFlag {
     }
 
     public int getCode(){return code;}
-    public String getName(){return name;}
+    public String getTranslationKey(){return String.format("permission.territory.%s",name_key);}
     public boolean contain(PermissionFlag flag)
     {
         return (code&flag.code)!=0;

@@ -3,6 +3,7 @@ package top.leonx.territory.client.gui;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.widget.list.ExtendedList;
+import net.minecraft.client.resources.I18n;
 import top.leonx.territory.util.UserUtil;
 
 import javax.annotation.Nullable;
@@ -68,7 +69,10 @@ public class PlayerList extends ExtendedList<PlayerList.PlayerEntry> {
         @Override
         public void render(int entryIdx, int top, int left, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean p_194999_5_, float partialTicks) {
             FontRenderer font = this.parent.getFontRenderer();
-            font.drawString(font.trimStringToWidth(name, entryWidth),left + 3, top + 2, 0xFFFFFF);
+            if(UserUtil.isDefaultUser(uuid))
+                font.drawString(font.trimStringToWidth(I18n.format("gui.territory.all_player"), entryWidth),left + 3, top + 2, 0xFFF0F0);
+            else
+                font.drawString(font.trimStringToWidth(name, entryWidth),left + 3, top + 2, 0xFFFFFF);
         }
         @Override
         public boolean mouseClicked(double x, double y, int btn)

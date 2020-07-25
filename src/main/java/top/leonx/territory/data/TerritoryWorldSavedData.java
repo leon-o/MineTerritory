@@ -8,10 +8,6 @@ import net.minecraft.world.storage.WorldSavedData;
 import top.leonx.territory.TerritoryMod;
 
 import javax.annotation.Nonnull;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 import static top.leonx.territory.util.DataUtil.ConvertNbtToPos;
 import static top.leonx.territory.util.DataUtil.ConvertPosToNbt;
@@ -32,9 +28,9 @@ public class TerritoryWorldSavedData extends WorldSavedData {
         if(reservedTerritory.contains(posNbt))
             return;
         reservedTerritory.add(posNbt);
-        if(!TerritoryMod.TERRITORY_TILE_ENTITY_HASH_MAP.containsKey(pos))
+        if(!TerritoryMod.TERRITORY_INFO_HASH_MAP.containsKey(pos))
         {
-            TerritoryMod.TERRITORY_TILE_ENTITY_HASH_MAP.put(pos,TerritoryInfo.defaultTerritoryInfo);
+            TerritoryMod.TERRITORY_INFO_HASH_MAP.put(pos,TerritoryInfo.defaultTerritoryInfo);
         }
         markDirty();
     }
@@ -42,7 +38,7 @@ public class TerritoryWorldSavedData extends WorldSavedData {
     {
         CompoundNBT posNbt=ConvertPosToNbt(pos);
         reservedTerritory.remove(posNbt);
-        TerritoryMod.TERRITORY_TILE_ENTITY_HASH_MAP.remove(pos);
+        TerritoryMod.TERRITORY_INFO_HASH_MAP.remove(pos);
         markDirty();
     }
 
@@ -53,9 +49,9 @@ public class TerritoryWorldSavedData extends WorldSavedData {
         for(int i=0;i<reservedTerritory.size();i++)
         {
             ChunkPos pos = ConvertNbtToPos(reservedTerritory.getCompound(i));
-            if(!TerritoryMod.TERRITORY_TILE_ENTITY_HASH_MAP.containsKey(pos))
+            if(!TerritoryMod.TERRITORY_INFO_HASH_MAP.containsKey(pos))
             {
-                TerritoryMod.TERRITORY_TILE_ENTITY_HASH_MAP.put(pos,TerritoryInfo.defaultTerritoryInfo);
+                TerritoryMod.TERRITORY_INFO_HASH_MAP.put(pos,TerritoryInfo.defaultTerritoryInfo);
             }
         }
     }

@@ -7,6 +7,7 @@ import net.minecraft.block.material.MaterialColor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.client.resources.I18n;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
@@ -46,10 +47,10 @@ public class TerritoryMapScreen extends AbstractScreenPage<TerritoryContainer> {
         final int halfW = width / 2;
         final int halfH = height / 2;
 
-        this.addButton(new GuiButtonExt(halfW + 40, halfH + 50, 70, 20, "DONE",
+        this.addButton(new GuiButtonExt(halfW + 40, halfH + 50, 70, 20, I18n.format("gui.territory.done_btn"),
                 $ -> container.Done()
         ));
-        this.addButton(new GuiButtonExt(halfW+40, halfH + 28, 70, 20, "PERMISSION",
+        this.addButton(new GuiButtonExt(halfW+40, halfH + 28, 70, 20, I18n.format("gui.territory.permission_btn"),
                 $ -> NavigateTo(1)
         ));
         mapLeftTopChunkPos = new ChunkPos((container.tileEntityPos.getX() >> 4) - 4, (container.tileEntityPos.getZ() >> 4) - 4);
@@ -197,7 +198,7 @@ public class TerritoryMapScreen extends AbstractScreenPage<TerritoryContainer> {
         for (int i = 0; i < mapSizeX; ++i) {
 
             for (int j = 0; j < mapSizeY; ++j) {
-                BlockPos pos = new BlockPos(centerPos.getX() + i, 120, centerPos.getZ() + j);
+                BlockPos pos = new BlockPos(centerPos.getX() + i-mapSizeX/2, 120, centerPos.getZ() + j-mapSizeX/2);
                 BlockState state = null;
                 for (; pos.getY() > 0; pos = pos.down()) {
                     state = Minecraft.getInstance().world.getBlockState(pos);
@@ -208,7 +209,7 @@ public class TerritoryMapScreen extends AbstractScreenPage<TerritoryContainer> {
                 MaterialColor materialColor = state.getMaterialColor(Minecraft.getInstance().world, pos);
                 int l = materialColor.getMapColor(materialColor.colorIndex);
 
-                this.mapTexture.getTextureData().setPixelRGBA(j, i,
+                this.mapTexture.getTextureData().setPixelRGBA(i, j,
                         l | 0xFF000000);
             }
         }

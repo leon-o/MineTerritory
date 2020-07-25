@@ -1,0 +1,5 @@
+{
+    "variants": {
+        "": { "model": "territory:block/territory_table" }
+    }
+}

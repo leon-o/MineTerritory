@@ -49,7 +49,7 @@ public class PermissionToggleButton extends Widget {
             int k = this.getYImage(this.isHovered);
             GuiUtils.drawContinuousTexturedBox(WIDGETS_LOCATION, this.x, this.y, 0, 46 + k * 20, this.width, this.height, 200, 20, 2, 3, 2, 2, this.blitOffset);
             this.renderBg(mc, mouseX, mouseY);
-            int color = 0xe0e0e0;
+            int color = 0xa0a0a0;
 
             if (packedFGColor != 0)
             {
@@ -57,7 +57,7 @@ public class PermissionToggleButton extends Widget {
             }
             else if (this.stateTriggered)
             {
-                color = 0xa0a0a0;
+                color = 0xe0e0e0;
             }
             else if (this.isHovered)
             {

@@ -1,6 +1,7 @@
 package top.leonx.territory.tileentities;
 
 import net.minecraft.block.BlockState;
+import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.container.Container;
@@ -16,6 +17,8 @@ import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import top.leonx.territory.container.TerritoryContainer;
 import top.leonx.territory.data.PermissionFlag;
 import top.leonx.territory.data.TerritoryInfo;
@@ -27,11 +30,11 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.UUID;
 
-import static top.leonx.territory.TerritoryMod.TERRITORY_TILE_ENTITY_HASH_MAP;
+import static top.leonx.territory.TerritoryMod.TERRITORY_INFO_HASH_MAP;
 import static top.leonx.territory.util.DataUtil.*;
 
-public class TerritoryTileEntity extends TileEntity implements ITickableTileEntity, INamedContainerProvider {
-    public TerritoryTileEntity() {
+public class TerritoryTableTileEntity extends TileEntity implements ITickableTileEntity, INamedContainerProvider {
+    public TerritoryTableTileEntity() {
         super(ModTileEntityType.TERRITORY_TILE_ENTITY);
     }
     private static final String OWNER_ID_KEY="owner_id";
@@ -61,9 +64,9 @@ public class TerritoryTileEntity extends TileEntity implements ITickableTileEnti
 
         if(world.isRemote) return;
 
-        if(!TERRITORY_TILE_ENTITY_HASH_MAP.containsKey(pos))
+        if(!TERRITORY_INFO_HASH_MAP.containsKey(pos))
         {
-            TERRITORY_TILE_ENTITY_HASH_MAP.put(pos, territoryInfo);
+            TERRITORY_INFO_HASH_MAP.put(pos, territoryInfo);
         }
     }
 
@@ -73,15 +76,15 @@ public class TerritoryTileEntity extends TileEntity implements ITickableTileEnti
         if(territoryInfo.territories.contains(pos))
         {
             territoryInfo.territories.remove(pos);
-            TERRITORY_TILE_ENTITY_HASH_MAP.remove(pos);
+            TERRITORY_INFO_HASH_MAP.remove(pos);
         }
     }
     public void updateTerritoryToHashMap()
     {
         territoryInfo.territories.forEach(t->{
-            if(!TERRITORY_TILE_ENTITY_HASH_MAP.containsKey(t))
+            if(!TERRITORY_INFO_HASH_MAP.containsKey(t))
             {
-                TERRITORY_TILE_ENTITY_HASH_MAP.put(t, territoryInfo);
+                TERRITORY_INFO_HASH_MAP.put(t, territoryInfo);
             }
         });
     }
@@ -214,14 +217,23 @@ public class TerritoryTileEntity extends TileEntity implements ITickableTileEnti
         super.remove();
 
         ChunkPos pos=this.world.getChunkAt(this.pos).getPos();
-        TERRITORY_TILE_ENTITY_HASH_MAP.remove(pos);
+        TERRITORY_INFO_HASH_MAP.remove(pos);
     }
 
     @Override
     public void tick() {
-        if(!this.world.isRemote) return;
-        PlayerEntity playerentity = this.world.getClosestPlayer((float)this.pos.getX() + 0.5F, (float)this.pos.getY() + 0.5F, (float)this.pos.getZ() + 0.5F, 3.0D, false);
-        if (playerentity != null) {
+        if(world.isRemote)
+            computeAngle();
+    }
+    @OnlyIn(Dist.CLIENT)
+    private void computeAngle()
+    {
+        PlayerEntity playerentity = Minecraft.getInstance().player;//this.world.getClosestPlayer((float)this.pos.getX() + 0.5F, (float)this.pos.getY() + 0.5F,
+
+        // (float)this.pos.getZ
+        // () + 0
+        // .5F);
+        if (playerentity != null && this.pos.withinDistance(playerentity.getPositionVec(),4)) {
             rise=true;
             double dx=playerentity.posX-this.pos.getX();
             double dz=playerentity.posZ-this.pos.getZ();
@@ -240,7 +252,6 @@ public class TerritoryTileEntity extends TileEntity implements ITickableTileEnti
             rise=false;
         }
     }
-
     @Nonnull
     @Override
     public ITextComponent getDisplayName() {
