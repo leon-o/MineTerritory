@@ -42,8 +42,12 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
     private static final String TERRITORY_POS_KEY ="territories";
     private static final String PERMISSION_KEY="permission";
     private static final String DEFAULT_PERMISSION_KEY="def_permission";
+
+    //For renderer
     public float angle;
     public boolean rise;
+    public float scale=1/6f;
+    public float height=0.8f;
 
     public UUID getOwnerId(){return territoryInfo.getOwnerId();}
     public String getOwnerName(){return territoryInfo.getOwnerName();}

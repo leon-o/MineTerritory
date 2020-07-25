@@ -17,8 +17,7 @@ import java.util.List;
 public class TerritoryTableTileEntityRenderer extends TileEntityRenderer<TerritoryTableTileEntity> {
 
     float wave=0;
-    float scale=1/6f;
-    float height=0.8f;
+
     BannerModel bannerModel=new BannerModel();
     List<BannerPattern> patterns=new ArrayList<>();
     List<DyeColor> colors=new ArrayList<>();
@@ -35,33 +34,29 @@ public class TerritoryTableTileEntityRenderer extends TileEntityRenderer<Territo
     public void render(TerritoryTableTileEntity tileEntityIn, double x, double y, double z, float partialTicks, int destroyStage) {
         wave+=0.07*partialTicks;
         wave%=Math.PI*2;
-
-        GlStateManager.pushMatrix();
-        if(tileEntityIn.rise)
-        {
-            height+=0.1*partialTicks;
-            scale+=0.08f*partialTicks;
+        if(tileEntityIn.rise){
+            tileEntityIn.height+=0.1*partialTicks;
+            tileEntityIn.scale+=0.08f*partialTicks;
         }else{
-            height-=0.1*partialTicks;
-            scale-=0.06f*partialTicks;
+            tileEntityIn.height-=0.1*partialTicks;
+            tileEntityIn.scale-=0.06f*partialTicks;
         }
-        height=MathHelper.clamp(height,0.8f,1.1f);
-        scale=MathHelper.clamp(scale,1/4f,1/2f);
-        GlStateManager.translated(x+0.5,y+height,z+0.5);
+        tileEntityIn.height=MathHelper.clamp(tileEntityIn.height,0.8f,1.1f);
+        tileEntityIn.scale=MathHelper.clamp(tileEntityIn.scale,1/4f,1/2f);
+        GlStateManager.pushMatrix();
+        GlStateManager.translated(x+0.5,y+tileEntityIn.height,z+0.5);
         GlStateManager.rotatef( 90-tileEntityIn.angle,0,1,0);
 
         GlStateManager.pushMatrix();
-
         GlStateManager.enableRescaleNormal();
-        GlStateManager.scalef(scale, -scale, -scale);
-
+        GlStateManager.scalef(tileEntityIn.scale, -tileEntityIn.scale, -tileEntityIn.scale);
 
         bannerModel.func_205056_c().rotateAngleX=
                 (-0.0125F + 0.01F * MathHelper.cos(wave) * (float)Math.PI);
 
         this.bindTexture(BannerTextures.BANNER_DESIGNS.getResourceLocation("b"+ "233",
                 patterns,colors));
-//        this.bindTexture(new ResourceLocation("textures/entity/banner_base.png"));
+
         bannerModel.renderBanner();
 
         GlStateManager.popMatrix();
@@ -79,7 +74,7 @@ public class TerritoryTableTileEntityRenderer extends TileEntityRenderer<Territo
                 0XFFFFFFFF);
 
         Minecraft.getInstance().fontRenderer.drawString(tileEntityIn.getOwnerName(),
-                -Minecraft.getInstance().fontRenderer.getStringWidth(tileEntityIn.getOwnerName())/2f,-60+height*10,
+                -Minecraft.getInstance().fontRenderer.getStringWidth(tileEntityIn.getOwnerName())/2f,-60+tileEntityIn.height*10,
                 0XFFFFFFFF);
 
         GlStateManager.popMatrix();
