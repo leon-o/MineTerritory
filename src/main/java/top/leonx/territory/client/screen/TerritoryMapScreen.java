@@ -13,13 +13,14 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.fml.client.config.GuiButtonExt;
-import top.leonx.territory.container.TerritoryContainer;
+import top.leonx.territory.container.TerritoryTableContainer;
 
 import java.util.Collection;
 import java.util.Random;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
-public class TerritoryMapScreen extends AbstractScreenPage<TerritoryContainer> {
+public class TerritoryMapScreen extends AbstractScreenPage<TerritoryTableContainer> {
 
     private final DynamicTexture mapTexture = new DynamicTexture(256, 256, true);
     private final ResourceLocation mapLocation = Minecraft.getInstance().getTextureManager().getDynamicTextureLocation(
@@ -34,10 +35,12 @@ public class TerritoryMapScreen extends AbstractScreenPage<TerritoryContainer> {
             "/light_blue_stained_glass.png");
     private static final ResourceLocation expandSquareLocation = new ResourceLocation("minecraft", "textures/block" +
             "/cyan_stained_glass.png");
+    private static final ResourceLocation forbiddenSquareLocation = new ResourceLocation("minecraft", "textures/block" +
+            "/red_stained_glass.png");
 //    private static final ResourceLocation selectedSquareLocation = new ResourceLocation("minecraft", "textures/block" +
 //            "/white_stained_glass.png");
 
-    public TerritoryMapScreen(TerritoryContainer container, ContainerScreen<TerritoryContainer> parent, Consumer<Integer> changePage) {
+    public TerritoryMapScreen(TerritoryTableContainer container, ContainerScreen<TerritoryTableContainer> parent, Consumer<Integer> changePage) {
         super(container,parent,changePage);
     }
 
@@ -110,8 +113,7 @@ public class TerritoryMapScreen extends AbstractScreenPage<TerritoryContainer> {
                 // select the territory to be removed
                 container.territories.remove(pos);
             }
-            getContainer().initRemovableChunkPos();
-            getContainer().initSelectableChunkPos();
+            getContainer().initChunkInfo();
         }
 
         return super.mouseClicked(mouseX, mouseY, p_mouseClicked_5_);
@@ -174,7 +176,10 @@ public class TerritoryMapScreen extends AbstractScreenPage<TerritoryContainer> {
             blit(mapPosLeft + (mouseOnChunkX << 4), mapPosTop + (mouseOnChunkY << 4), 0, 0, 16,
                     16,16,16);
         }
-
+        getMinecraft().getTextureManager().bindTexture(forbiddenSquareLocation);
+        drawOverlayByCollection(container.forbiddenChunkPos.stream().filter(
+                t->t.x>=mapLeftTopChunkPos.x&&t.x<=mapLeftTopChunkPos.x+mapSizeX/16&&t.z>=mapLeftTopChunkPos.z&&t.z<=mapLeftTopChunkPos.z+mapSizeY/16)
+                .collect(Collectors.toList()));
 
     }
 

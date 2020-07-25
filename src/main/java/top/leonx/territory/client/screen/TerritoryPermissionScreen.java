@@ -8,7 +8,7 @@ import net.minecraftforge.common.UsernameCache;
 import net.minecraftforge.fml.client.config.GuiButtonExt;
 import top.leonx.territory.client.gui.PlayerList;
 import top.leonx.territory.client.gui.PermissionToggleButton;
-import top.leonx.territory.container.TerritoryContainer;
+import top.leonx.territory.container.TerritoryTableContainer;
 import top.leonx.territory.data.PermissionFlag;
 import top.leonx.territory.util.UserUtil;
 
@@ -18,7 +18,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryContainer> {
+public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryTableContainer> {
 
     private PlayerList playerList;
     private TextFieldWidget search;
@@ -28,8 +28,8 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryConta
     private GuiButtonExt addPlayerBtn;
     private GuiButtonExt removePlayerBtn;
     PlayerList.PlayerEntry defaultPlayerEntry;
-    public TerritoryPermissionScreen(TerritoryContainer container,
-                                     ContainerScreen<TerritoryContainer> parent, Consumer<Integer> changePage) {
+    public TerritoryPermissionScreen(TerritoryTableContainer container,
+                                     ContainerScreen<TerritoryTableContainer> parent, Consumer<Integer> changePage) {
         super(container,parent,changePage);
     }
     @Override

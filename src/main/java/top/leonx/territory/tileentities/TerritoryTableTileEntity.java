@@ -19,7 +19,7 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import top.leonx.territory.container.TerritoryContainer;
+import top.leonx.territory.container.TerritoryTableContainer;
 import top.leonx.territory.data.PermissionFlag;
 import top.leonx.territory.data.TerritoryInfo;
 
@@ -261,6 +261,6 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
     @Nullable
     @Override
     public Container createMenu(int id, @Nonnull PlayerInventory inventory, @Nonnull PlayerEntity entity) {
-        return new TerritoryContainer(id,inventory,this);
+        return new TerritoryTableContainer(id,inventory,this);
     }
 }

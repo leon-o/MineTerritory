@@ -5,20 +5,20 @@ import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.ITextComponent;
-import top.leonx.territory.container.TerritoryContainer;
+import top.leonx.territory.container.TerritoryTableContainer;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TerritoryScreen extends ContainerScreen<TerritoryContainer> {
+public class TerritoryScreen extends ContainerScreen<TerritoryTableContainer> {
 
-    private final List<AbstractScreenPage<TerritoryContainer>> pages=new ArrayList<>();
+    private final List<AbstractScreenPage<TerritoryTableContainer>> pages=new ArrayList<>();
     private int pageNumber=0;
     private static final ResourceLocation backgroundLocation = new ResourceLocation("minecraft", "textures/gui" +
             "/demo_background.png");
 
-    public TerritoryScreen(TerritoryContainer screenContainer, PlayerInventory inv, ITextComponent titleIn) {
+    public TerritoryScreen(TerritoryTableContainer screenContainer, PlayerInventory inv, ITextComponent titleIn) {
         super(screenContainer, inv, titleIn);
         pages.add(new TerritoryMapScreen(screenContainer,this,this::ChangePage));
         pages.add(new TerritoryPermissionScreen(screenContainer,this,this::ChangePage));

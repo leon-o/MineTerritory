@@ -13,10 +13,9 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.network.NetworkDirection;
 import net.minecraftforge.fml.network.NetworkEvent;
+import top.leonx.territory.TerritoryMod;
 import top.leonx.territory.TerritoryPacketHandler;
 import top.leonx.territory.data.TerritoryInfo;
 import top.leonx.territory.data.TerritoryOperationMsg;
@@ -25,8 +24,10 @@ import top.leonx.territory.tileentities.TerritoryTableTileEntity;
 import javax.annotation.Nonnull;
 import java.util.*;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-public class TerritoryContainer extends Container {
+public class TerritoryTableContainer extends Container {
 
     //The pos relative to mapLeftTopChunkPos
 
@@ -38,11 +39,12 @@ public class TerritoryContainer extends Container {
     private final Set<ChunkPos> originalTerritories=new HashSet<>();
     public final Set<ChunkPos> selectableChunkPos = new HashSet<>();
     public final Set<ChunkPos> removableChunkPos = new HashSet<>();
-    public TerritoryContainer(int id, PlayerInventory inventory, PacketBuffer buffer) {
+    public final Set<ChunkPos> forbiddenChunkPos=new HashSet<>();
+    public TerritoryTableContainer(int id, PlayerInventory inventory, PacketBuffer buffer) {
         this(id, inventory, getTileEntity(inventory, buffer));
     }
 
-    public TerritoryContainer(int id, PlayerInventory inventory, TerritoryTableTileEntity tileEntity) {
+    public TerritoryTableContainer(int id, PlayerInventory inventory, TerritoryTableTileEntity tileEntity) {
         super(ModContainerTypes.TERRITORY_CONTAINER, id);
         this.player=inventory.player;
         this.territoryInfo= tileEntity.getTerritoryInfo().copy();
@@ -54,8 +56,7 @@ public class TerritoryContainer extends Container {
         originalTerritories.addAll(tileEntity.getTerritoryInfo().territories);
 
         if (Objects.requireNonNull(tileEntity.getWorld()).isRemote) {
-            initSelectableChunkPos();
-            initRemovableChunkPos();
+            initChunkInfo();
         }
         protectPower = computeProtectPower();
     }
@@ -70,7 +71,7 @@ public class TerritoryContainer extends Container {
     static {
         TerritoryPacketHandler.registerMessage(TerritoryOperationMsg.class, TerritoryOperationMsg::encode,
                 TerritoryOperationMsg::decode,
-                TerritoryContainer::handler);
+                TerritoryTableContainer::handler);
     }
 
     private static void handler(TerritoryOperationMsg msg, Supplier<NetworkEvent.Context> contextSupplier) {
@@ -80,7 +81,7 @@ public class TerritoryContainer extends Container {
             {
                 Minecraft.getInstance().player.closeScreen();
             } else {
-                TerritoryContainer container = (TerritoryContainer) sender.openContainer;
+                TerritoryTableContainer container = (TerritoryTableContainer) sender.openContainer;
                 if (!container.updateTileEntityServerSide(sender, msg))return;
 
                 World world=container.player.world;
@@ -153,12 +154,11 @@ public class TerritoryContainer extends Container {
     }
 
 
-    public void initSelectableChunkPos() {
+    public void initChunkInfo() {
         selectableChunkPos.clear();
-        HashSet<ChunkPos> tmp = new HashSet<>(territories);
 
 
-        for (ChunkPos pos : tmp) {
+        for (ChunkPos pos : territories) {
             int chunkX = pos.x;
             int chunkZ = pos.z;
 
@@ -168,13 +168,11 @@ public class TerritoryContainer extends Container {
             selectableChunkPos.add(new ChunkPos(chunkX, chunkZ - 1));
         }
         selectableChunkPos.removeIf(territories::contains);
-    }
+        selectableChunkPos.removeIf(TerritoryMod.TERRITORY_INFO_HASH_MAP::containsKey);
 
-    public void initRemovableChunkPos() {
         removableChunkPos.clear();
-        List<ChunkPos> tmp = new ArrayList<>(territories);
 
-        for (ChunkPos pos : tmp) {
+        for (ChunkPos pos : territories) {
             int chunkX = pos.x;
             int chunkZ = pos.z;
             ChunkPos right = new ChunkPos(chunkX + 1, chunkZ);
@@ -192,6 +190,10 @@ public class TerritoryContainer extends Container {
             removableChunkPos.add(pos);
         }
         removableChunkPos.remove(tileEntityChunkPos); // Player cant remove the chunkPos where the tileEntity is located.
+
+        Stream<ChunkPos> complement = TerritoryMod.TERRITORY_INFO_HASH_MAP.keySet().stream().filter(t -> !originalTerritories.contains(t));
+        forbiddenChunkPos.clear();
+        forbiddenChunkPos.addAll(complement.collect(Collectors.toList()));
     }
 
     public int getBlockPower(IWorld world, BlockPos pos) {
