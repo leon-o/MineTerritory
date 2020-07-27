@@ -6,6 +6,7 @@ import net.minecraft.block.Blocks;
 import net.minecraft.block.material.MaterialColor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
+import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.util.ResourceLocation;
@@ -25,7 +26,6 @@ public class TerritoryMapScreen extends AbstractScreenPage<TerritoryTableContain
     private final DynamicTexture mapTexture = new DynamicTexture(256, 256, true);
     private final ResourceLocation mapLocation = Minecraft.getInstance().getTextureManager().getDynamicTextureLocation(
             "map_dynamic" + MathHelper.nextInt(new Random(), 0, 128), mapTexture);
-    //private PlayerList playerList;
 
     private static final ResourceLocation territorySquareLocation = new ResourceLocation("minecraft", "textures/block" +
             "/blue_stained_glass.png");
@@ -37,9 +37,8 @@ public class TerritoryMapScreen extends AbstractScreenPage<TerritoryTableContain
             "/cyan_stained_glass.png");
     private static final ResourceLocation forbiddenSquareLocation = new ResourceLocation("minecraft", "textures/block" +
             "/red_stained_glass.png");
-//    private static final ResourceLocation selectedSquareLocation = new ResourceLocation("minecraft", "textures/block" +
-//            "/white_stained_glass.png");
 
+    private TextFieldWidget territoryNameTextField;
     public TerritoryMapScreen(TerritoryTableContainer container, ContainerScreen<TerritoryTableContainer> parent, Consumer<Integer> changePage) {
         super(container,parent,changePage);
     }
@@ -49,7 +48,7 @@ public class TerritoryMapScreen extends AbstractScreenPage<TerritoryTableContain
 
         final int halfW = width / 2;
         final int halfH = height / 2;
-
+        territoryNameTextField=new TextFieldWidget(font, parent.getGuiLeft()+160, parent.getGuiTop()+24, 80,16,"Name");
         this.addButton(new GuiButtonExt(halfW + 40, halfH + 50, 70, 20, I18n.format("gui.territory.done_btn"),
                 $ -> container.Done()
         ));
@@ -57,30 +56,19 @@ public class TerritoryMapScreen extends AbstractScreenPage<TerritoryTableContain
                 $ -> NavigateTo(1)
         ));
         mapLeftTopChunkPos = new ChunkPos((container.tileEntityPos.getX() >> 4) - 4, (container.tileEntityPos.getZ() >> 4) - 4);
-
+        territoryNameTextField.setText(container.territoryInfo.territoryName);
+        this.children.add(territoryNameTextField);
         drawMapTexture();
 
     }
 
 
-//    private void drawSquare(int x, int y, int width, int height, Color color) {
-//        GlStateManager.bindTexture(0);
-//
-//        Tessellator tessellator = Tessellator.getInstance();
-//        BufferBuilder bufferbuilder = tessellator.getBuffer();
-//        bufferbuilder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
-//        bufferbuilder.putColorRGBA(0, color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha());
-//
-//        bufferbuilder.pos(x, y + height, 0).tex(0, 1).endVertex();
-//        bufferbuilder.pos(x + width, y + height, 0).tex(1, 1).endVertex();
-//        bufferbuilder.pos(x + width, y, 0).tex(1, 0).endVertex();
-//        bufferbuilder.pos(x, y, 0).tex(0, 0).endVertex();
-//        tessellator.draw();
-//    }
-
     @Override
     public void renderInternal(final int mouseX, final int mouseY, final float partialTicks) {
         //playerList.render(mouseX,mouseY,partialTicks);
+        territoryNameTextField.render(mouseX,mouseY,partialTicks);
+        territoryNameTextField.renderButton(mouseX,mouseY,partialTicks);
+        font.drawString(I18n.format("gui.territory.territory_name"),parent.getGuiLeft()+160,parent.getGuiTop()+8,0xFFFFFF);
     }
 
     @Override
@@ -221,4 +209,9 @@ public class TerritoryMapScreen extends AbstractScreenPage<TerritoryTableContain
         this.mapTexture.updateDynamicTexture();
     }
 
+    @Override
+    public void tick() {
+        super.tick();
+        container.territoryInfo.territoryName=territoryNameTextField.getText();
+    }
 }

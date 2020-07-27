@@ -76,9 +76,8 @@ public class GameEvent {
         if(TerritoryMod.TERRITORY_INFO_HASH_MAP.containsKey(pos))
         {
             TerritoryInfo data=TerritoryMod.TERRITORY_INFO_HASH_MAP.get(pos);
-            return data.getOwnerId()==null&&!player.hasPermissionLevel(4) ||
-                    data.getOwnerId()!=null &&
-                            (data.getOwnerId().equals(player.getUniqueID())||
+            return  player.hasPermissionLevel(4)||
+                    data.getOwnerId()!=null && (data.getOwnerId().equals(player.getUniqueID())||
                             data.permissions.containsKey(player.getUniqueID()) && data.permissions.get(player.getUniqueID()).contain(flag)||
                             !data.permissions.containsKey(player.getUniqueID()) && data.defaultPermission.contain(flag));
         }
@@ -132,7 +131,7 @@ public class GameEvent {
             String ownerName = UserUtil.getNameByUUID(thisTerritoryInfo.getOwnerId());
             if(hasPermission(thisTickPos,clientPlayer,PermissionFlag.ENTER))
             {
-                SendMessage(clientPlayer,new TranslationTextComponent("message.territory.enter_territory",ownerName));
+                SendMessage(clientPlayer,new TranslationTextComponent("message.territory.enter_territory",ownerName,thisTerritoryInfo.territoryName));
             }else{
                 SendMessage(clientPlayer,new TranslationTextComponent("message.territory.no_permission",
                         new TranslationTextComponent(PermissionFlag.ENTER.getTranslationKey())));
@@ -147,7 +146,7 @@ public class GameEvent {
         {
             String ownerName = UserUtil.getNameByUUID(lastTerritoryInfo.getOwnerId());
 
-            SendMessage(clientPlayer,new TranslationTextComponent("message.territory.exit_territory",ownerName));
+            SendMessage(clientPlayer,new TranslationTextComponent("message.territory.exit_territory",ownerName,lastTerritoryInfo.territoryName));
         }
 
         ItemStack heldItem = clientPlayer.getHeldItem(Hand.MAIN_HAND);

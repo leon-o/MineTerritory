@@ -1,8 +1,8 @@
 {
   "block.territory.territory_table": "Territory Table",
   "message.territory.no_permission": "You have't permission to %s",
-  "message.territory.enter_territory": "You entered %s's territory",
-  "message.territory.exit_territory": "You exited %s's territory",
+  "message.territory.enter_territory": "You entered %s's territory: %s",
+  "message.territory.exit_territory": "You exited %s's territory: %s",
   "permission.territory.enter": "Enter",
   "permission.territory.left_click": "Left Click",
   "permission.territory.right_click": "Right Click",
@@ -16,5 +16,6 @@
   "gui.territory.map_btn": "Map",
   "gui.territory.back": "Back",
   "gui.territory.owner": "Owner",
-  "gui.territory.all_player": "All Player"
+  "gui.territory.all_player": "All Player",
+  "gui.territory.territory_name": "Territory Name"
 }

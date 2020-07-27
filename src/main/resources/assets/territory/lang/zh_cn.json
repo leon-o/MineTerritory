@@ -1,8 +1,8 @@
 {
   "block.territory.territory_table": "领地台",
-  "message.territory.no_permission": "你没有 %s 的权限",
-  "message.territory.enter_territory": "你进入了 %s 的领地",
-  "message.territory.exit_territory": "你离开了 %s 的领地",
+  "message.territory.no_permission": "你没有%s的权限",
+  "message.territory.enter_territory": "你进入了%s的领地: %s",
+  "message.territory.exit_territory": "你离开了%s的领地: %s",
   "permission.territory.enter": "进入",
   "permission.territory.left_click": "点左键",
   "permission.territory.right_click": "点右键",
@@ -16,5 +16,6 @@
   "gui.territory.map_btn": "地图编辑",
   "gui.territory.back": "返回",
   "gui.territory.owner": "拥有者",
-  "gui.territory.all_player": "所有人"
+  "gui.territory.all_player": "所有人",
+  "gui.territory.territory_name": "领地名称"
 }

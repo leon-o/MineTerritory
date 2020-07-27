@@ -131,6 +131,7 @@ public class TerritoryTableContainer extends Container {
 
         tileEntity.setPermissionAll(msg.permissions);
         tileEntity.getTerritoryInfo().defaultPermission=msg.defaultPermission;
+        tileEntity.getTerritoryInfo().territoryName=msg.territoryName;
         tileEntity.markDirty();
         return true;
     }
@@ -148,7 +149,8 @@ public class TerritoryTableContainer extends Container {
         ChunkPos[] readyToAdd =
                 territories.stream().filter(t -> !originalTerritories.contains(t)).toArray(ChunkPos[]::new);
 
-        TerritoryOperationMsg msg = new TerritoryOperationMsg(readyToAdd,readyToRemove, territoryInfo.permissions,territoryInfo.defaultPermission);
+        TerritoryOperationMsg msg = new TerritoryOperationMsg(territoryInfo.territoryName,readyToAdd,readyToRemove,
+                territoryInfo.permissions,territoryInfo.defaultPermission);
 
         TerritoryPacketHandler.CHANNEL.sendToServer(msg);
     }
