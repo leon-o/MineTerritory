@@ -16,11 +16,9 @@ See [Wiki](https://github.com/leon-o/MineTerritory/wiki)
 
 ## Following Plan
 
-The permissions part is a bit poor. There are only four permissions : enter, left-click, right-click, and territory management.:sweat_smile:
-
-These permissions should be further subdivided in the future.
-
 1.15 and 1.16 versions will be considered in the future.
+The banner on Territory Table will be changeable.
+More various calculation methods of Protect Power for territories.
 
 ## LICENSE
 

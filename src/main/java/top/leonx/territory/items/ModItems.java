@@ -6,5 +6,5 @@ import net.minecraft.item.ItemGroup;
 import top.leonx.territory.blocks.ModBlocks;
 
 public class ModItems {
-    public static final Item TerritoryBlockItem= new BlockItem(ModBlocks.TERRITORY_BLOCK,new Item.Properties().group(ItemGroup.FOOD));
+    public static final Item TerritoryBlockItem= new BlockItem(ModBlocks.TERRITORY_BLOCK,new Item.Properties().group(ItemGroup.DECORATIONS));
 }

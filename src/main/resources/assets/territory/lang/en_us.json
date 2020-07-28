@@ -3,6 +3,7 @@
   "message.territory.no_permission": "You have't permission to %s",
   "message.territory.enter_territory": "You entered %s's territory: %s",
   "message.territory.exit_territory": "You exited %s's territory: %s",
+  "message.territory.need_experience": "%s level experience required",
   "permission.territory.enter": "Enter",
   "permission.territory.attack_entity": "Attack",
   "permission.territory.break_block": "Break Block",

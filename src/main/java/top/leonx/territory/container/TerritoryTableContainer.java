@@ -11,6 +11,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.network.NetworkDirection;
@@ -121,9 +122,11 @@ public class TerritoryTableContainer extends Container {
         for (ChunkPos pos : msg.readyAdd) {
 
             if (!player.isCreative()) {
-                if (player.experienceLevel >= 30) {
-                    player.addExperienceLevel(-30);
+                int experienceNeed=msg.readyAdd.length+msg.readyRemove.length;
+                if (player.experienceLevel >= experienceNeed) {
+                    player.addExperienceLevel(-(msg.readyAdd.length+msg.readyRemove.length));
                 } else {
+                    player.sendMessage(new TranslationTextComponent("message.territory.need_experience",Integer.toString(experienceNeed)));
                     return false;
                 }
             }
@@ -176,23 +179,6 @@ public class TerritoryTableContainer extends Container {
 
         removableChunkPos.clear();
 
-//        for (ChunkPos pos : territories) {
-//            int chunkX = pos.x;
-//            int chunkZ = pos.z;
-//            ChunkPos right = new ChunkPos(chunkX + 1, chunkZ);
-//            ChunkPos up = new ChunkPos(chunkX, chunkZ + 1);
-//            ChunkPos left = new ChunkPos(chunkX - 1, chunkZ);
-//            ChunkPos down = new ChunkPos(chunkX, chunkZ - 1);
-//
-//            List<Boolean> touched = Arrays.asList(territories.contains(left), territories.contains(up), territories.contains(right),
-//                    territories.contains(down));
-//            int touchedCount= (int) touched.stream().filter(t->t).count();
-//            if (touchedCount==4
-//                    ||touchedCount==2 && (touched.get(0)&&touched.get(2) ||touched.get(1)&&touched.get(3)))
-//                continue;
-//
-//            removableChunkPos.add(pos);
-//        }
         removableChunkPos.addAll(territories);
         removableChunkPos.removeAll(computeCutChunk(tileEntityChunkPos, territories));
         removableChunkPos.remove(tileEntityChunkPos); // Player cant remove the chunkPos where the tileEntity is located.

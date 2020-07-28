@@ -5,6 +5,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
+import net.minecraft.block.material.MaterialColor;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
@@ -30,11 +31,12 @@ import javax.annotation.Nullable;
 
 @SuppressWarnings({"NullableProblems", "deprecation"})
 public class TerritoryTableBlock extends Block {
+    public TerritoryTableBlock(Properties properties) {
+        super(properties);
+    }
     //public static final IntegerProperty X=IntegerProperty.create("X",Integer.MIN_VALUE,Integer.MAX_VALUE);
     //public static final IntegerProperty Y=IntegerProperty.create("X",Integer.MIN_VALUE,Integer.MAX_VALUE);
-    public TerritoryTableBlock() {
-        super(Properties.create(Material.IRON).sound(SoundType.GLASS).hardnessAndResistance(3f));
-    }
+
 
     @Override
     public boolean hasTileEntity(BlockState state) {
