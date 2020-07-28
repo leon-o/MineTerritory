@@ -56,6 +56,10 @@ public class TerritoryTableContainer extends Container {
         originalTerritories.addAll(tileEntity.getTerritoryInfo().territories);
 
         if (Objects.requireNonNull(tileEntity.getWorld()).isRemote) {
+
+            Stream<ChunkPos> complement = TerritoryMod.TERRITORY_INFO_HASH_MAP.keySet().stream().filter(t -> !originalTerritories.contains(t));
+            forbiddenChunkPos.addAll(complement.collect(Collectors.toList()));
+
             initChunkInfo();
         }
         protectPower = computeProtectPower();
@@ -154,8 +158,6 @@ public class TerritoryTableContainer extends Container {
 
         TerritoryPacketHandler.CHANNEL.sendToServer(msg);
     }
-
-
     public void initChunkInfo() {
         selectableChunkPos.clear();
 
@@ -170,32 +172,80 @@ public class TerritoryTableContainer extends Container {
             selectableChunkPos.add(new ChunkPos(chunkX, chunkZ - 1));
         }
         selectableChunkPos.removeIf(territories::contains);
-        selectableChunkPos.removeIf(TerritoryMod.TERRITORY_INFO_HASH_MAP::containsKey);
+        selectableChunkPos.removeIf(forbiddenChunkPos::contains);
 
         removableChunkPos.clear();
 
-        for (ChunkPos pos : territories) {
-            int chunkX = pos.x;
-            int chunkZ = pos.z;
-            ChunkPos right = new ChunkPos(chunkX + 1, chunkZ);
-            ChunkPos up = new ChunkPos(chunkX, chunkZ + 1);
-            ChunkPos left = new ChunkPos(chunkX - 1, chunkZ);
-            ChunkPos down = new ChunkPos(chunkX, chunkZ - 1);
-
-            List<Boolean> touched = Arrays.asList(territories.contains(left), territories.contains(up), territories.contains(right),
-                    territories.contains(down));
-            int touchedCount= (int) touched.stream().filter(t->t).count();
-            if (touchedCount==4
-                    ||touchedCount==2 && (touched.get(0)&&touched.get(2) ||touched.get(1)&&touched.get(3)))
-                continue;
-
-            removableChunkPos.add(pos);
-        }
+//        for (ChunkPos pos : territories) {
+//            int chunkX = pos.x;
+//            int chunkZ = pos.z;
+//            ChunkPos right = new ChunkPos(chunkX + 1, chunkZ);
+//            ChunkPos up = new ChunkPos(chunkX, chunkZ + 1);
+//            ChunkPos left = new ChunkPos(chunkX - 1, chunkZ);
+//            ChunkPos down = new ChunkPos(chunkX, chunkZ - 1);
+//
+//            List<Boolean> touched = Arrays.asList(territories.contains(left), territories.contains(up), territories.contains(right),
+//                    territories.contains(down));
+//            int touchedCount= (int) touched.stream().filter(t->t).count();
+//            if (touchedCount==4
+//                    ||touchedCount==2 && (touched.get(0)&&touched.get(2) ||touched.get(1)&&touched.get(3)))
+//                continue;
+//
+//            removableChunkPos.add(pos);
+//        }
+        removableChunkPos.addAll(territories);
+        removableChunkPos.removeAll(computeCutChunk(tileEntityChunkPos, territories));
         removableChunkPos.remove(tileEntityChunkPos); // Player cant remove the chunkPos where the tileEntity is located.
-
-        Stream<ChunkPos> complement = TerritoryMod.TERRITORY_INFO_HASH_MAP.keySet().stream().filter(t -> !originalTerritories.contains(t));
-        forbiddenChunkPos.clear();
-        forbiddenChunkPos.addAll(complement.collect(Collectors.toList()));
+    }
+    // Calculate cut vertex https://www.cnblogs.com/en-heng/p/4002658.html
+    private HashSet<ChunkPos> computeCutChunk(ChunkPos center, Collection<ChunkPos> chunks)
+    {
+        HashMap<ChunkPos,Boolean> visit=new HashMap<>();
+        HashMap<ChunkPos,ChunkPos> parent=new HashMap<>();
+        HashMap<ChunkPos,Integer> dfn=new HashMap<>();
+        HashMap<ChunkPos,Integer> low=new HashMap<>();
+        chunks.forEach(t->{
+            visit.put(t,false);
+            parent.put(t,null);
+            dfn.put(t,0);
+            low.put(t,0);
+        });
+        HashSet<ChunkPos> result=new HashSet<>();
+        computeCutChunk(center,chunks,visit,parent,dfn,low,0,result);
+        return result;
+    }
+    private void computeCutChunk(ChunkPos current, Collection<ChunkPos> chunks, Map<ChunkPos,Boolean> visit, Map<ChunkPos,ChunkPos> parent, Map<ChunkPos,
+            Integer> dfn, Map<ChunkPos,Integer> low, int dfsCount, HashSet<ChunkPos> result)
+    {
+        dfsCount++;
+        int children=0;
+        int chunkX=current.x;
+        int chunkZ=current.z;
+        ChunkPos right = new ChunkPos(chunkX + 1, chunkZ);
+        ChunkPos up = new ChunkPos(chunkX, chunkZ + 1);
+        ChunkPos left = new ChunkPos(chunkX - 1, chunkZ);
+        ChunkPos down = new ChunkPos(chunkX, chunkZ - 1);
+        List<ChunkPos> linked=Arrays.asList(left,up,right,down);
+        visit.replace(current,true);
+        dfn.replace(current,dfsCount);
+        low.replace(current,dfsCount);
+        for(ChunkPos pos:linked)
+        {
+            if(!chunks.contains(pos)) continue;
+            if(!visit.get(pos))
+            {
+                children++;
+                parent.replace(pos,current);
+                computeCutChunk(pos,chunks,visit,parent,dfn,low,dfsCount,result);
+                low.replace(current,Math.min(low.get(pos),low.get(current)));
+                if(parent.get(current)==null && children>1 || parent.get(current)!=null && low.get(pos)>=dfn.get(current))
+                {
+                    result.add(current);
+                }
+            }else if(pos!=parent.get(current)){
+                low.replace(current,Math.min(low.get(current),dfn.get(pos)));
+            }
+        }
     }
 
     public int getBlockPower(IWorld world, BlockPos pos) {

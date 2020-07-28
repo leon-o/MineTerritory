@@ -30,7 +30,7 @@ public class TerritoryMapScreen extends AbstractScreenPage<TerritoryTableContain
     private static final ResourceLocation territorySquareLocation = new ResourceLocation("minecraft", "textures/block" +
             "/blue_stained_glass.png");
     private static final ResourceLocation edgeSquareLocation = new ResourceLocation("territory", "textures/gui" +
-            "/slash_overlay.png");
+            "/point_overlay.png");
     private static final ResourceLocation mouseOnSquareLocation = new ResourceLocation("minecraft", "textures/block" +
             "/light_blue_stained_glass.png");
     private static final ResourceLocation expandSquareLocation = new ResourceLocation("minecraft", "textures/block" +
@@ -143,9 +143,6 @@ public class TerritoryMapScreen extends AbstractScreenPage<TerritoryTableContain
             // 绘制可以选择的新区块
             drawOverlayByCollection(container.selectableChunkPos);
         }
-
-//        // 绘制要删除的区块
-//        drawOverlayByCollection(container.chunkToBeRemoved);
 
         getMinecraft().getTextureManager().bindTexture(edgeSquareLocation);
         drawOverlayByCollection(container.removableChunkPos);
