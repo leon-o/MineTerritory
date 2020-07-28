@@ -6,6 +6,7 @@ import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.resources.I18n;
 import net.minecraftforge.common.UsernameCache;
 import net.minecraftforge.fml.client.config.GuiButtonExt;
+import top.leonx.territory.client.gui.PermissionList;
 import top.leonx.territory.client.gui.PlayerList;
 import top.leonx.territory.client.gui.PermissionToggleButton;
 import top.leonx.territory.container.TerritoryTableContainer;
@@ -21,9 +22,10 @@ import java.util.function.Consumer;
 public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryTableContainer> {
 
     private PlayerList playerList;
+    private PermissionList permissionList;
     private TextFieldWidget search;
     private TextFieldWidget addTextField;
-    @SuppressWarnings("unused")
+
     private final Map<PermissionToggleButton,PermissionFlag> permissionCheckbox=new HashMap<>();
     private GuiButtonExt addPlayerBtn;
     private GuiButtonExt removePlayerBtn;
@@ -48,20 +50,16 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryTable
                 t-> addNewPlayer());
         removePlayerBtn=new GuiButtonExt(parent.getGuiLeft()+120,parent.getGuiTop()+8,24,16,I18n.format("gui.territory.remove_player_btn"),
                 t-> removePlayer());
+        permissionList=new PermissionList(parent.getGuiLeft()+120,parent.getGuiTop()+30,110,100,"permission_list");
 
         playerList.children().add(defaultPlayerEntry);
         container.territoryInfo.permissions.forEach((k,v)-> playerList.children().add(new PlayerList.PlayerEntry(k,playerList,this::onPlayerEntrySelected)));
         playerList.setSelected(defaultPlayerEntry);
 
-
-
-        int checkboxTop=parent.getGuiTop()+30;
         int checkboxWidth=50;
         int checkboxHeight=20;
-        int checkboxIndexTmp=0;
         for (PermissionFlag flag : PermissionFlag.basicFlag) {
-            PermissionToggleButton btn=new PermissionToggleButton(parent.getGuiLeft()+120,checkboxTop+(checkboxHeight+4)*checkboxIndexTmp,checkboxWidth,
-                    checkboxHeight,
+            PermissionToggleButton btn=new PermissionToggleButton(0,0,checkboxWidth, checkboxHeight,
                     I18n.format(flag.getTranslationKey()),container.territoryInfo.defaultPermission.contain(flag));
 
             btn.onTriggered=t->{
@@ -76,29 +74,32 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryTable
                 else
                     permissionFlag.remove(flag);
             };
+            permissionList.children.add(btn);
             permissionCheckbox.put(btn,flag);
-            checkboxIndexTmp++;
         }
 
         addTextField.setSuggestion(I18n.format("gui.territory.add_player"));
         search.setSuggestion(I18n.format("gui.territory.search"));
         addPlayerBtn.active=false;
 
-        this.children.add(playerList);
-        this.children.add(addTextField);
-        this.children.add(search);
-        this.addButton(addPlayerBtn);
-        this.addButton(removePlayerBtn);
         this.addButton(new GuiButtonExt(halfW+40, parent.getGuiTop()+parent.getYSize()-30, 70, 20, I18n.format("gui.territory.back"),
                 $ -> NavigateTo(0)
         ));
-        permissionCheckbox.keySet().forEach(this::addButton);
+        this.children.add(playerList);
+        this.children.add(addTextField);
+        this.children.add(search);
+        this.children.add(permissionList);
+        this.addButton(addPlayerBtn);
+        this.addButton(removePlayerBtn);
+
+        //permissionCheckbox.keySet().forEach(this::addButton);
     }
 
 
     @Override
     public void renderInternal(int mouseX, int mouseY, float partialTicks) {
         playerList.render(mouseX,mouseY,partialTicks);
+        permissionList.render(mouseX,mouseY,partialTicks);
 
         search.render(mouseX,mouseY,partialTicks);
         search.renderButton(mouseX,mouseY,partialTicks);

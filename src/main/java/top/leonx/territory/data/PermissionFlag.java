@@ -2,13 +2,25 @@ package top.leonx.territory.data;
 
 public class PermissionFlag {
     public final static PermissionFlag ENTER=new PermissionFlag(1,"enter");
-    public final static PermissionFlag LEFT_CLICK =new PermissionFlag(2,"left_click");
-    public final static PermissionFlag RIGHT_CLICK =new PermissionFlag(4,"right_click");
-    public final static PermissionFlag MANAGE =new PermissionFlag(8,"use_table");
+    public final static PermissionFlag ATTACK_ENTITY=new PermissionFlag(1<<1,"attack_entity");
+    public final static PermissionFlag BREAK_BLOCK=new PermissionFlag(1<<2,"break_block");
+    public final static PermissionFlag PLACE_BLOCK=new PermissionFlag(1<<3,"place_block");
+    public final static PermissionFlag USE_DOOR=new PermissionFlag(1<<4,"use_door");
+    public final static PermissionFlag USE_CHEST=new PermissionFlag(1<<5,"use_chest");
+    public final static PermissionFlag INTERACT_ENTITY=new PermissionFlag(1<<6,"interact_entity");
+    public final static PermissionFlag USE_ITEM_ON_BLOCK=new PermissionFlag(1<<7,"use_item_on_block");
+    public final static PermissionFlag MANAGE =new PermissionFlag(1<<31,"use_table");
+    @SuppressWarnings("unused")
+    public final static PermissionFlag DEFAULT_PERMISSION=new PermissionFlag(1);
     public final static PermissionFlag[] basicFlag={
             ENTER,
-            LEFT_CLICK,
-            RIGHT_CLICK,
+            ATTACK_ENTITY,
+            BREAK_BLOCK,
+            PLACE_BLOCK,
+            USE_DOOR,
+            USE_CHEST,
+            INTERACT_ENTITY,
+            USE_ITEM_ON_BLOCK,
             MANAGE
     };
     private int code;
@@ -32,6 +44,7 @@ public class PermissionFlag {
     {
         return (code&flag.code)!=0;
     }
+    @SuppressWarnings("unused")
     public static PermissionFlag combine(PermissionFlag ...flags)
     {
         int code=0;

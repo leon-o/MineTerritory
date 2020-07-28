@@ -1,9 +1,15 @@
 package top.leonx.territory.events;
 
+import net.minecraft.block.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.Pose;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.BlockItem;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.particles.ParticleTypes;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.*;
@@ -16,6 +22,8 @@ import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.common.UsernameCache;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.living.LivingAttackEvent;
+import net.minecraftforge.event.entity.living.LivingDamageEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -40,16 +48,13 @@ public class GameEvent {
     public static void onPlayerLeftClickBlock(PlayerInteractEvent.LeftClickBlock event)
     {
         ChunkPos chunkPos=new ChunkPos(event.getPos().getX()>>4,event.getPos().getZ()>>4);
-        if (!hasPermission(chunkPos, event.getPlayer(),PermissionFlag.LEFT_CLICK)) {
-            event.setCanceled(true);
+        PermissionFlag doWhat=PermissionFlag.BREAK_BLOCK;
+        boolean canDo=hasPermission(chunkPos,event.getPlayer(),doWhat);
 
-            if(!event.getWorld().isRemote) {
-                SendMessage(event.getPlayer(),new TranslationTextComponent("message.territory.no_permission",
-                        new TranslationTextComponent(PermissionFlag.LEFT_CLICK.getTranslationKey())));
-            }else{
-                TerritoryInfo data=TerritoryMod.TERRITORY_INFO_HASH_MAP.get(chunkPos);
-                OutlineRender.StartRender(data.territories,100);
-            }
+        if (!canDo) {
+            event.setCanceled(true);
+            notifyPlayer(event.getPlayer(),chunkPos,doWhat,event.getWorld().isRemote);
+
         }
     }
 
@@ -57,20 +62,71 @@ public class GameEvent {
     public static void onPlayerRightClickBlock(PlayerInteractEvent.RightClickBlock event)
     {
         ChunkPos chunkPos=new ChunkPos(event.getPos().getX()>>4,event.getPos().getZ()>>4);
-        if (!hasPermission(chunkPos, event.getPlayer(),PermissionFlag.RIGHT_CLICK)) {
-            event.setCanceled(true);
+        PermissionFlag doWhat;
+        BlockPos pos = event.getPos();
+        Block blockType=event.getWorld().getBlockState(pos).getBlock();
 
-            if(!event.getWorld().isRemote)
-            {
-                SendMessage(event.getPlayer(),new TranslationTextComponent("message.territory.no_permission",
-                        new TranslationTextComponent(PermissionFlag.RIGHT_CLICK.getTranslationKey())));
-            }else{
-                TerritoryInfo data=TerritoryMod.TERRITORY_INFO_HASH_MAP.get(chunkPos);
-                OutlineRender.StartRender(data.territories,100);
+        if(blockType instanceof ContainerBlock)
+        {
+            doWhat=PermissionFlag.USE_CHEST;
+        }else if(blockType instanceof DoorBlock || blockType instanceof FenceGateBlock || blockType instanceof TrapDoorBlock){
+            doWhat=PermissionFlag.USE_DOOR;
+        }else if(event.getItemStack().getItem() instanceof BlockItem) {
+            doWhat=PermissionFlag.PLACE_BLOCK;
+        }else if(event.getItemStack().getItem()!= Items.AIR){
+            doWhat=PermissionFlag.USE_ITEM_ON_BLOCK;
+        }else {
+            return;
+        }
+
+        boolean canDo=hasPermission(chunkPos,event.getPlayer(),doWhat);
+        if (!canDo) {
+            event.setCanceled(true);
+            notifyPlayer(event.getPlayer(),chunkPos,doWhat,event.getWorld().isRemote);
+        }
+    }
+    @SubscribeEvent
+    public static void onEntityDamageEntity(LivingDamageEvent event)
+    {
+        Entity entity = event.getSource().getTrueSource();
+        if(entity instanceof PlayerEntity)
+        {
+            PlayerEntity player=(PlayerEntity)entity;
+            BlockPos pos=event.getEntityLiving().getPosition();
+            ChunkPos chunkPos=new ChunkPos(pos.getX()>>4,pos.getZ()>>4);
+            PermissionFlag doWhat = PermissionFlag.ATTACK_ENTITY;
+
+            boolean canDo=hasPermission(chunkPos,player,doWhat);
+            if (!canDo) {
+                event.setCanceled(true);
+                notifyPlayer(player,chunkPos,doWhat,player.world.isRemote);
             }
         }
     }
-
+    @SubscribeEvent
+    public static void onPlayerInteractEntity(PlayerInteractEvent.EntityInteract event)
+    {
+        PlayerEntity player=event.getPlayer();
+        Entity target = event.getTarget();
+        BlockPos pos=target.getPosition();
+        ChunkPos chunkPos=new ChunkPos(pos.getX()>>4,pos.getZ()>>4);
+        PermissionFlag doWhat = PermissionFlag.INTERACT_ENTITY;
+        boolean canDo=hasPermission(chunkPos,player,doWhat);
+        if (!canDo) {
+            event.setCanceled(true);
+            notifyPlayer(player,chunkPos,doWhat,player.world.isRemote);
+        }
+    }
+    private static void notifyPlayer(PlayerEntity player,ChunkPos pos,PermissionFlag flag,boolean clientSide)
+    {
+        if(!clientSide) {
+            SendMessage(player,new TranslationTextComponent("message.territory.no_permission",
+                    new TranslationTextComponent(flag.getTranslationKey())));
+        }else{
+            TerritoryInfo data=TerritoryMod.TERRITORY_INFO_HASH_MAP.get(pos);
+            OutlineRender.StartRender(data.territories,100);
+        }
+    }
     private static boolean hasPermission(ChunkPos pos, PlayerEntity player, PermissionFlag flag)
     {
         if(TerritoryMod.TERRITORY_INFO_HASH_MAP.containsKey(pos))
