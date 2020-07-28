@@ -1,11 +1,11 @@
 # Territory Mod of Minecraft
-A territory module based on Forge (currently).
+A territory mod based on Forge (currently).
 
 ## Introduction
 
 Compared with other mod and plugins, it has the following features:
 
-1. Ensure the gameplay and try not to damage the original feel of MC. The domain and enchantment are a pair of brothers:smirk:
+1. Ensure the gameplay and try not to damage the original feel of MC. The territory table and enchanting table are brothers:smirk:
 2. GUI interface.Players can configure permissions, territory area and territory name through GUI.
 3. Divide territories by chunks. This is mainly for performance considerations. Get the coordinates of the chunk where the player is located, and check it in
  the Hash Map to determine if player has permission.
