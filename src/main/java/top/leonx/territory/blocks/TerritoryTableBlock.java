@@ -34,8 +34,6 @@ public class TerritoryTableBlock extends Block {
     public TerritoryTableBlock(Properties properties) {
         super(properties);
     }
-    //public static final IntegerProperty X=IntegerProperty.create("X",Integer.MIN_VALUE,Integer.MAX_VALUE);
-    //public static final IntegerProperty Y=IntegerProperty.create("X",Integer.MIN_VALUE,Integer.MAX_VALUE);
 
 
     @Override
