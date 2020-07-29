@@ -71,7 +71,7 @@ public class TerritoryOperationMsg {
             permissions.put(uuid,flag);
         }
         int defaultPermissionCode=buffer.readInt();
-        String territoryName=buffer.readString();
+        String territoryName=buffer.readString(16);
         return new TerritoryOperationMsg(territoryName,readyAdd,readyRemove,permissions,new PermissionFlag(defaultPermissionCode));
     }
 }
