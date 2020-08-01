@@ -61,4 +61,15 @@ public class PermissionFlag {
     {
         code &= ~flag.code;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(this==obj)
+            return true;
+        if(obj instanceof PermissionFlag)
+        {
+            return ((PermissionFlag)obj).getCode()==getCode();
+        }
+        return false;
+    }
 }

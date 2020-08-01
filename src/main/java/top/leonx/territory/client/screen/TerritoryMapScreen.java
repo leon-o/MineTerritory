@@ -55,7 +55,7 @@ public class TerritoryMapScreen extends AbstractScreenPage<TerritoryTableContain
         this.addButton(new GuiButtonExt(halfW+40, halfH + 28, 70, 20, I18n.format("gui.territory.permission_btn"),
                 $ -> NavigateTo(1)
         ));
-        mapLeftTopChunkPos = new ChunkPos((container.tileEntityPos.getX() >> 4) - 4, (container.tileEntityPos.getZ() >> 4) - 4);
+
         territoryNameTextField.setText(container.territoryInfo.territoryName);
         this.children.add(territoryNameTextField);
         drawMapTexture();
@@ -89,7 +89,7 @@ public class TerritoryMapScreen extends AbstractScreenPage<TerritoryTableContain
     public boolean mouseClicked(double mouseX, double mouseY, int p_mouseClicked_5_) {
         int mouseOnChunkX = ((int) mouseX - this.parent.getGuiLeft() - mapPosLeft) / 16;
         int mouseOnChunkY = ((int) mouseY - this.parent.getGuiTop() - mapPosTop) / 16;
-        ChunkPos pos = new ChunkPos(mapLeftTopChunkPos.x + mouseOnChunkX, mapLeftTopChunkPos.z + mouseOnChunkY);
+        ChunkPos pos = new ChunkPos(container.mapLeftTopChunkPos.x + mouseOnChunkX, container.mapLeftTopChunkPos.z + mouseOnChunkY);
 
         if(mouseOnChunkX < chunkNumX && mouseOnChunkY < chunkNumY)
         {
@@ -106,7 +106,6 @@ public class TerritoryMapScreen extends AbstractScreenPage<TerritoryTableContain
 
         return super.mouseClicked(mouseX, mouseY, p_mouseClicked_5_);
     }
-    ChunkPos mapLeftTopChunkPos;
 
 
     final static int mapPosLeft = 10;
@@ -132,7 +131,7 @@ public class TerritoryMapScreen extends AbstractScreenPage<TerritoryTableContain
         {
             int chunkX = pos.x;
             int chunkZ = pos.z;
-            blit(mapPosLeft + ((chunkX - mapLeftTopChunkPos.x) << 4), mapPosTop + ((chunkZ - mapLeftTopChunkPos.z) << 4), 0, 0, 16,
+            blit(mapPosLeft + ((chunkX - container.mapLeftTopChunkPos.x) << 4), mapPosTop + ((chunkZ - container.mapLeftTopChunkPos.z) << 4), 0, 0, 16,
                     16,16,16);
         });
 
@@ -152,7 +151,7 @@ public class TerritoryMapScreen extends AbstractScreenPage<TerritoryTableContain
         int mouseOnChunkY = (mouseY - this.parent.getGuiTop() - mapPosTop) / 16;
 
         getMinecraft().getTextureManager().bindTexture(mouseOnSquareLocation);
-        ChunkPos mouseOverPos = new ChunkPos(mapLeftTopChunkPos.x + mouseOnChunkX, mapLeftTopChunkPos.z + mouseOnChunkY);
+        ChunkPos mouseOverPos = new ChunkPos(container.mapLeftTopChunkPos.x + mouseOnChunkX, container.mapLeftTopChunkPos.z + mouseOnChunkY);
         if (getContainer().removableChunkPos.contains(mouseOverPos)||
                 (container.getUsedProtectPower() < getContainer().getTotalProtectPower() && getContainer().selectableChunkPos.contains(mouseOverPos))
                 && mouseOnChunkX >= 0 && mouseOnChunkX < chunkNumX
@@ -163,15 +162,15 @@ public class TerritoryMapScreen extends AbstractScreenPage<TerritoryTableContain
         }
         getMinecraft().getTextureManager().bindTexture(forbiddenSquareLocation);
         drawOverlayByCollection(container.forbiddenChunkPos.stream().filter(
-                t->t.x>=mapLeftTopChunkPos.x&&t.x<=mapLeftTopChunkPos.x+mapSizeX/16&&t.z>=mapLeftTopChunkPos.z&&t.z<=mapLeftTopChunkPos.z+mapSizeY/16)
+                t->t.x>=container.mapLeftTopChunkPos.x&&t.x<=container.mapLeftTopChunkPos.x+mapSizeX/16&&t.z>=container.mapLeftTopChunkPos.z&&t.z<=container.mapLeftTopChunkPos.z+mapSizeY/16)
                 .collect(Collectors.toList()));
 
     }
 
     private void drawOverlayByCollection(Collection<ChunkPos> collection) {
         for (ChunkPos pos : collection) {
-            int posX = pos.x - mapLeftTopChunkPos.x;
-            int posZ = pos.z - mapLeftTopChunkPos.z;
+            int posX = pos.x - container.mapLeftTopChunkPos.x;
+            int posZ = pos.z - container.mapLeftTopChunkPos.z;
             if (posX < 0 || posZ < 0 || posX >= chunkNumX || posZ >= chunkNumY) continue;
 
             blit(mapPosLeft + (posX << 4), mapPosTop + (posZ << 4),

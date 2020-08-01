@@ -30,6 +30,7 @@ public class OutlineRender {
     static ConcurrentHashMap<EdgeEntry,Integer> edges=new ConcurrentHashMap<>();
     public static void StartRender(Set<ChunkPos> territories, double time)
     {
+        if(territories==null) return;
         if(time==0)duration=Double.MAX_VALUE;
         else
         {duration=time;usedTime=0;}

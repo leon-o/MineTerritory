@@ -1,14 +1,11 @@
 package top.leonx.territory.tileentities;
 
-import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.container.Container;
 import net.minecraft.inventory.container.INamedContainerProvider;
-import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.ListNBT;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.play.server.SUpdateTileEntityPacket;
 import net.minecraft.tileentity.ITickableTileEntity;
@@ -17,8 +14,12 @@ import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.world.World;
+import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.util.LazyOptional;
 import top.leonx.territory.container.TerritoryTableContainer;
 import top.leonx.territory.data.PermissionFlag;
 import top.leonx.territory.data.TerritoryInfo;
@@ -27,152 +28,98 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.UUID;
 
-import static top.leonx.territory.TerritoryMod.TERRITORY_INFO_HASH_MAP;
-import static top.leonx.territory.util.DataUtil.*;
+import static top.leonx.territory.capability.ModCapabilities.TERRITORY_INFO_CAPABILITY;
 
 public class TerritoryTableTileEntity extends TileEntity implements ITickableTileEntity, INamedContainerProvider {
-    public TerritoryTableTileEntity() {
-        super(ModTileEntityType.TERRITORY_TILE_ENTITY);
-    }
-    private static final String OWNER_ID_KEY="owner_id";
-    //private static final String OWNER_NAME_KEY="owner_name";
-    private static final String TERRITORY_POS_KEY ="territories";
-    private static final String PERMISSION_KEY="permission";
-    private static final String DEFAULT_PERMISSION_KEY="def_permission";
-    private static final String TERRITORY_NAME_KEY="name";
     //For renderer
     public float angle;
     public boolean rise;
-    public float scale=1/6f;
-    public float height=0.8f;
+    public float scale = 1 / 6f;
+    public float height = 0.8f;
+    private final TerritoryInfo territoryInfo=new TerritoryInfo();
+    private final LazyOptional<TerritoryInfo> territoryInfoLazyOptional = LazyOptional.of(() -> territoryInfo);
+    private final HashSet<ChunkPos> lastTerritories = new HashSet<>();
 
-    public UUID getOwnerId(){return territoryInfo.getOwnerId();}
-    public String getOwnerName(){return territoryInfo.getOwnerName();}
-    private TerritoryInfo territoryInfo;
-    public TerritoryInfo getTerritoryInfo()
-    {
-        return territoryInfo;
+    public TerritoryTableTileEntity() {
+        super(ModTileEntityType.TERRITORY_TILE_ENTITY);
+        territoryInfo.assignedTo(null,null,"",new PermissionFlag(),new HashSet<>(),new HashMap<>());
     }
-    public void setOwnerId(UUID owner_id)
-    {
-        territoryInfo.setOwnerId(owner_id);
+
+    public UUID getOwnerId() {
+        return territoryInfo.getOwnerId();
+    }
+
+    public void setOwnerId(UUID owner_id) {
+        territoryInfo.assignedTo(owner_id);
+        if(territoryInfo.territories!=null){
+            territoryInfo.territories.forEach(t -> {
+                Chunk chunk = world.getChunk(t.x, t.z);
+                TerritoryInfo info = chunk.getCapability(TERRITORY_INFO_CAPABILITY).orElse(TERRITORY_INFO_CAPABILITY.getDefaultInstance());
+                info.assignedTo(owner_id);
+            });
+        }
         markDirty();
     }
 
-    public void addTerritory(ChunkPos pos)
-    {
-        territoryInfo.territories.add(pos);
-
-        if(world.isRemote) return;
-
-        if(!TERRITORY_INFO_HASH_MAP.containsKey(pos))
-        {
-            TERRITORY_INFO_HASH_MAP.put(pos, territoryInfo);
-        }
+    public String getOwnerName() {
+        return territoryInfo.getOwnerName();
     }
 
-    public void removeJurisdiction(ChunkPos pos)
-    {
-
-        if(territoryInfo.territories.contains(pos))
-        {
-            territoryInfo.territories.remove(pos);
-            TERRITORY_INFO_HASH_MAP.remove(pos);
-        }
+    public TerritoryInfo getTerritoryInfo() {
+        return territoryInfo;
     }
-    public void updateTerritoryToHashMap()
-    {
-        territoryInfo.territories.forEach(t->{
-            if(!TERRITORY_INFO_HASH_MAP.containsKey(t))
-            {
-                TERRITORY_INFO_HASH_MAP.put(t, territoryInfo);
-            }
+
+//    public void addTerritory(ChunkPos pos) {
+//        if (territoryInfo.territories.add(pos))
+//            updateTerritoryToWorld();
+//    }
+//
+//    public void removeTerritory(ChunkPos pos) {
+//        if (territoryInfo.territories.remove(pos))
+//            updateTerritoryToWorld();
+//    }
+
+    public void updateTerritoryToWorld() {
+        if(world==null) return;
+        lastTerritories.stream().filter(t -> !territoryInfo.territories.contains(t)).forEach(t -> {
+            Chunk chunk = world.getChunk(t.x, t.z);
+            TerritoryInfo info = chunk.getCapability(TERRITORY_INFO_CAPABILITY).orElse(TERRITORY_INFO_CAPABILITY.getDefaultInstance());
+            info.deassign();
         });
-    }
-    public void setPermissionAll(Map<UUID,PermissionFlag> permissionAll)
-    {
-        territoryInfo.permissions.clear();
-        territoryInfo.permissions.putAll(permissionAll);
-    }
-    @SuppressWarnings("unused")
-    public void setPermission(UUID player, PermissionFlag flag)
-    {
-        // Ensure that the TerritoryData in TERRITORY_TILE_ENTITY_HASH_MAP and the TileEntity point to the same object
-        // The TerritoryData in TERRITORY_TILE_ENTITY_HASH_MAP and here are synchronized
-        if (territoryInfo.permissions.containsKey(player))
-        {
-            territoryInfo.permissions.replace(player,flag);
-        }else {
-            territoryInfo.permissions.put(player,flag);
-        }
-    }
+        territoryInfo.territories.forEach(t -> {
+            Chunk chunk = world.getChunk(t.x, t.z);
+            TerritoryInfo info = chunk.getCapability(TERRITORY_INFO_CAPABILITY).orElse(TERRITORY_INFO_CAPABILITY.getDefaultInstance());
+            info.assignedTo(territoryInfo.getOwnerId(), pos, territoryInfo.territoryName, territoryInfo.defaultPermission, territoryInfo.territories,
+                    territoryInfo.permissions);
+        });
 
-    @SuppressWarnings("unused")
-    public void removePermission(UUID player)
-    {
-        territoryInfo.permissions.remove(player);
+        lastTerritories.clear();
+        lastTerritories.addAll(territoryInfo.territories);
+        markDirty();
     }
 
     @Override
     public void read(@Nonnull CompoundNBT compound) {
-        readInternal(compound);
         super.read(compound);
+        readInternal(compound);
+    }
+
+    public void readInternal(@Nonnull CompoundNBT compound) {
+        TERRITORY_INFO_CAPABILITY.readNBT(territoryInfo, null, compound);
+
     }
 
     @Nonnull
     @Override
     public CompoundNBT write(@Nonnull CompoundNBT compound) {
-        compound=writeInternal(compound);
+        compound = writeInternal();
         return super.write(compound);
     }
 
-    private CompoundNBT writeInternal(CompoundNBT compound)
-    {
-        ListNBT territoryListNBT=new ListNBT();
-        territoryInfo.territories.forEach(t->{
-            CompoundNBT nbt=ConvertPosToNbt(t);
-            territoryListNBT.add(nbt);
-        });
-        compound.put(TERRITORY_POS_KEY, territoryListNBT);
-
-        ListNBT permissionListNBT=new ListNBT();
-        territoryInfo.permissions.forEach((k, v)-> permissionListNBT.add(ConvertUUIDPermissionToNbt(k,v)));
-        compound.put(PERMISSION_KEY,permissionListNBT);
-        compound.putUniqueId(OWNER_ID_KEY, territoryInfo.getOwnerId());
-        compound.putInt(DEFAULT_PERMISSION_KEY,territoryInfo.defaultPermission.getCode());
-        compound.putString(TERRITORY_NAME_KEY,territoryInfo.territoryName);
-        return compound;
-    }
-
-    private void readInternal(CompoundNBT compound)
-    {
-        UUID ownerId = compound.getUniqueId(OWNER_ID_KEY);
-        ListNBT territoryList = compound.getList(TERRITORY_POS_KEY, 10);
-        ListNBT permissionList = compound.getList(PERMISSION_KEY, 10);
-        String territoryName=compound.getString(TERRITORY_NAME_KEY);
-        HashMap<UUID,PermissionFlag> permissionFlagHashMap=new HashMap<>();
-        permissionList.forEach(t->{
-            Map.Entry<UUID, PermissionFlag> entry = ConvertNbtToUUIDPermission((CompoundNBT) t);
-            permissionFlagHashMap.put(entry.getKey(),entry.getValue());
-        });
-        PermissionFlag defPermissionFlag=new PermissionFlag(compound.getInt(DEFAULT_PERMISSION_KEY));
-        HashSet<ChunkPos> territoriesTmp=new HashSet<>();
-        territoryList.forEach(t-> territoriesTmp.add(ConvertNbtToPos((CompoundNBT) t)));
-        if(territoryInfo==null){
-            territoryInfo=new TerritoryInfo(territoryName,ownerId,territoriesTmp,permissionFlagHashMap,defPermissionFlag);
-        }else{
-            territoryInfo.setOwnerId(ownerId);
-            territoryInfo.territories.clear();
-            territoryInfo.territories.addAll(territoriesTmp);
-            setPermissionAll(permissionFlagHashMap);
-            territoryInfo.defaultPermission=defPermissionFlag;
-            territoryInfo.territoryName=territoryName;
-        }
-
-        updateTerritoryToHashMap();
+    private CompoundNBT writeInternal() {
+        return (CompoundNBT) TERRITORY_INFO_CAPABILITY.writeNBT(territoryInfo, null);
     }
 
     //Call when world loads.
@@ -181,92 +128,90 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
     public CompoundNBT getUpdateTag() {
         return write(new CompoundNBT());
     }
+
     @Override
     public void handleUpdateTag(CompoundNBT data) {
         read(data);
+        updateTerritoryToWorld();
     }
 
     //Call when invoke world::notifyBlockChange
     @Nullable
     @Override
     public SUpdateTileEntityPacket getUpdatePacket() {
-        return new SUpdateTileEntityPacket(this.pos,3,writeInternal(new CompoundNBT()));
+        return new SUpdateTileEntityPacket(this.pos, 3, writeInternal());
     }
 
     @Override
     public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket pkt) {
         readInternal(pkt.getNbtCompound());
+        updateTerritoryToWorld();// Client
     }
 
     @Override
     public void onLoad() {
         super.onLoad();
 
-        if(territoryInfo==null)
-        {
-            territoryInfo=new TerritoryInfo("",null,new HashSet<>());
-            addTerritory(new ChunkPos(this.pos.getX()>>4,this.pos.getZ()>>4));
-        }
+        if(world.isRemote) return;
+
+        territoryInfo.centerPos=pos;
+        territoryInfo.territories.add(new ChunkPos(pos.getX()>>4,pos.getZ()>>4));
     }
 
-    public ItemStack getItem(BlockState state){
-        ItemStack itemStack=new ItemStack(state.getBlock().asItem());
-        CompoundNBT tag = itemStack.getOrCreateChildTag("territory");
-        ListNBT territoryList=new ListNBT();
-        territoryInfo.territories.forEach(t-> territoryList.add(ConvertPosToNbt(t)));
-        tag.put(TERRITORY_POS_KEY, territoryList);
-
-        return itemStack;
+    @Nonnull
+    @Override
+    public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap) {
+        if (cap.equals(TERRITORY_INFO_CAPABILITY))
+            return territoryInfoLazyOptional.cast();
+        return null;
     }
+
     @Override
     public void remove() {
         super.remove();
-
-        ChunkPos pos=this.world.getChunkAt(this.pos).getPos();
-        TERRITORY_INFO_HASH_MAP.remove(pos);
+        territoryInfo.territories.clear();
+        updateTerritoryToWorld();
     }
 
     @Override
     public void tick() {
-        if(world.isRemote)
+        if (world.isRemote)
             computeAngle();
     }
+
     @OnlyIn(Dist.CLIENT)
-    private void computeAngle()
-    {
+    private void computeAngle() {
         PlayerEntity playerentity = Minecraft.getInstance().player;//this.world.getClosestPlayer((float)this.pos.getX() + 0.5F, (float)this.pos.getY() + 0.5F,
 
-        // (float)this.pos.getZ
-        // () + 0
-        // .5F);
-        if (playerentity != null && this.pos.withinDistance(playerentity.getPositionVec(),4)) {
-            rise=true;
-            double dx=playerentity.posX-this.pos.getX();
-            double dz=playerentity.posZ-this.pos.getZ();
-            angle= (float) MathHelper.atan2(dz,dx);
+        if (playerentity != null && this.pos.withinDistance(playerentity.getPositionVec(), 4)) {
+            rise = true;
+            double dx = playerentity.posX - this.pos.getX();
+            double dz = playerentity.posZ - this.pos.getZ();
+            angle = (float) MathHelper.atan2(dz, dx);
 
-            while(this.angle >= (float)Math.PI) {
-                this.angle -= ((float)Math.PI * 2F);
+            while (this.angle >= (float) Math.PI) {
+                this.angle -= ((float) Math.PI * 2F);
             }
 
-            while(this.angle < -(float)Math.PI) {
-                this.angle += ((float)Math.PI * 2F);
+            while (this.angle < -(float) Math.PI) {
+                this.angle += ((float) Math.PI * 2F);
             }
 
-            angle= (float) Math.toDegrees(angle);
-        }else {
-            rise=false;
+            angle = (float) Math.toDegrees(angle);
+        } else {
+            rise = false;
         }
     }
+
     @Nonnull
     @Override
     public ITextComponent getDisplayName() {
-        return new StringTextComponent("Territory") ;
+        return new StringTextComponent("Territory");
     }
 
     @Nullable
     @Override
     public Container createMenu(int id, @Nonnull PlayerInventory inventory, @Nonnull PlayerEntity entity) {
-        return new TerritoryTableContainer(id,inventory,this);
+        return new TerritoryTableContainer(id, inventory, this);
     }
 }

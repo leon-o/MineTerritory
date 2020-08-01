@@ -5,11 +5,9 @@ import net.minecraft.nbt.ListNBT;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraft.world.storage.WorldSavedData;
-import top.leonx.territory.TerritoryMod;
 
 import javax.annotation.Nonnull;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 
 import static top.leonx.territory.util.DataUtil.ConvertNbtToPos;
@@ -26,19 +24,15 @@ public class TerritoryWorldSavedData extends WorldSavedData {
     public void addReservedTerritory(TerritoryInfo info)
     {
         territoryInfos.add(info);
-        info.territories.forEach(t->TerritoryMod.TERRITORY_INFO_HASH_MAP.put(t,info));
         markDirty();
     }
     public void removeReservedTerritory(TerritoryInfo info)
     {
         territoryInfos.remove(info);
-        info.territories.forEach(TerritoryMod.TERRITORY_INFO_HASH_MAP::remove);
         markDirty();
     }
     public void updateReservedTerritory(TerritoryInfo oldInfo,TerritoryInfo newInfo)
     {
-        oldInfo.territories.forEach(TerritoryMod.TERRITORY_INFO_HASH_MAP::remove);
-        newInfo.territories.forEach(t->TerritoryMod.TERRITORY_INFO_HASH_MAP.put(t,newInfo));
         territoryInfos.remove(oldInfo);
         territoryInfos.add(newInfo);
         markDirty();
@@ -59,8 +53,9 @@ public class TerritoryWorldSavedData extends WorldSavedData {
                 ChunkPos pos=ConvertNbtToPos(terListNBT.getCompound(j));
                 territories.add(pos);
             }
-            @SuppressWarnings("unchecked")
-            TerritoryInfo info=new TerritoryInfo(territoryName,null,territories, Collections.EMPTY_MAP,defaultPm);
+
+            TerritoryInfo info=new TerritoryInfo();
+            info.assignedTo(null,null,territoryName,defaultPm,territories,null);
             infosTmp.add(info);
         }
         setTerritories(infosTmp);
@@ -85,8 +80,6 @@ public class TerritoryWorldSavedData extends WorldSavedData {
     }
     public void setTerritories(Collection<TerritoryInfo> infos)
     {
-        territoryInfos.forEach(t-> t.territories.forEach(TerritoryMod.TERRITORY_INFO_HASH_MAP::remove));
-        infos.forEach(t->t.territories.forEach(pos -> TerritoryMod.TERRITORY_INFO_HASH_MAP.put(pos,t)));
         territoryInfos=infos;
     }
     public static TerritoryWorldSavedData get(ServerWorld world) {

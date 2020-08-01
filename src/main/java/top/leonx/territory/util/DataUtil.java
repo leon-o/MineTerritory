@@ -12,13 +12,12 @@ public class DataUtil {
     public static CompoundNBT ConvertPosToNbt(ChunkPos pos)
     {
         CompoundNBT posNbt=new CompoundNBT();
-        posNbt.putInt("x",pos.x);
-        posNbt.putInt("z",pos.z);
+        posNbt.putLong("pos",pos.asLong());
         return posNbt;
     }
     public static ChunkPos ConvertNbtToPos(CompoundNBT nbt)
     {
-        return new ChunkPos(nbt.getInt("x"),nbt.getInt("z"));
+        return new ChunkPos(nbt.getLong("pos"));
     }
     public static CompoundNBT ConvertUUIDPermissionToNbt(UUID uuid,PermissionFlag flag)
     {

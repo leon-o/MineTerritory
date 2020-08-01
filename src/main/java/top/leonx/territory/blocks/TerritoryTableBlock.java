@@ -3,9 +3,6 @@ package top.leonx.territory.blocks;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
-import net.minecraft.block.SoundType;
-import net.minecraft.block.material.Material;
-import net.minecraft.block.material.MaterialColor;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
@@ -21,9 +18,11 @@ import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.world.Explosion;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
+import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.fml.network.NetworkHooks;
-import top.leonx.territory.TerritoryMod;
+import top.leonx.territory.capability.ModCapabilities;
 import top.leonx.territory.data.PermissionFlag;
+import top.leonx.territory.data.TerritoryInfo;
 import top.leonx.territory.tileentities.ModTileEntityType;
 import top.leonx.territory.tileentities.TerritoryTableTileEntity;
 
@@ -67,17 +66,17 @@ public class TerritoryTableBlock extends Block {
     @Override
     public BlockState getStateForPlacement(BlockItemUseContext context) {
 
-        {
-            if(TerritoryMod.TERRITORY_INFO_HASH_MAP.containsKey(context.getWorld().getChunkAt(context.getPos()).getPos() ))
-            {
-                if(!context.getWorld().isRemote)
-                {
-                    context.getPlayer().sendMessage(new StringTextComponent("Already occupied"));
-                }
 
-                return Blocks.AIR.getDefaultState();
+        Chunk chunk = context.getWorld().getChunk(context.getPos().getX() >> 4, context.getPos().getZ() >> 4);
+        TerritoryInfo info =
+                chunk.getCapability(ModCapabilities.TERRITORY_INFO_CAPABILITY).orElse(ModCapabilities.TERRITORY_INFO_CAPABILITY.getDefaultInstance());
+        if (info.IsProtected()) {
+            if (!context.getWorld().isRemote) {
+                context.getPlayer().sendMessage(new StringTextComponent("Already occupied"));
             }
+            return Blocks.AIR.getDefaultState();
         }
+
         return super.getStateForPlacement(context);
     }
 
@@ -104,15 +103,15 @@ public class TerritoryTableBlock extends Block {
         return false;
     }
 
-    @Override
-    public boolean canHarvestBlock(BlockState state, IBlockReader world, BlockPos pos, PlayerEntity player) {
-        return getTerritoryTileEntity(world,pos).getOwnerId()==player.getUniqueID();
-    }
+//    @Override
+//    public boolean canHarvestBlock(BlockState state, IBlockReader world, BlockPos pos, PlayerEntity player) {
+//        return getTerritoryTileEntity(world,pos).getOwnerId()==player.getUniqueID();
+//    }
 
-    @Override
-    public ItemStack getItem(IBlockReader worldIn, BlockPos pos, BlockState state) {
-        return getTerritoryTileEntity(worldIn,pos).getItem(state);
-    }
+//    @Override
+//    public ItemStack getItem(IBlockReader worldIn, BlockPos pos, BlockState state) {
+//        return getTerritoryTileEntity(worldIn,pos).getItem(state);
+//    }
 
 
 }

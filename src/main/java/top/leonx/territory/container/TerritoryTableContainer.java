@@ -8,16 +8,18 @@ import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.container.Container;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.*;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
+import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.fml.network.NetworkDirection;
 import net.minecraftforge.fml.network.NetworkEvent;
-import top.leonx.territory.TerritoryMod;
 import top.leonx.territory.TerritoryPacketHandler;
+import top.leonx.territory.capability.ModCapabilities;
 import top.leonx.territory.data.TerritoryInfo;
 import top.leonx.territory.data.TerritoryOperationMsg;
 import top.leonx.territory.tileentities.TerritoryTableTileEntity;
@@ -25,8 +27,6 @@ import top.leonx.territory.tileentities.TerritoryTableTileEntity;
 import javax.annotation.Nonnull;
 import java.util.*;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class TerritoryTableContainer extends Container {
 
@@ -35,6 +35,7 @@ public class TerritoryTableContainer extends Container {
     private final PlayerEntity player;
     public final BlockPos tileEntityPos;
     public final ChunkPos tileEntityChunkPos;
+    public ChunkPos mapLeftTopChunkPos;
     public final TerritoryInfo territoryInfo;
     public final Set<ChunkPos> territories = new HashSet<>();
     private final Set<ChunkPos> originalTerritories=new HashSet<>();
@@ -52,14 +53,22 @@ public class TerritoryTableContainer extends Container {
 
         tileEntityPos = tileEntity.getPos();
         tileEntityChunkPos=new ChunkPos(tileEntityPos.getX()>>4,tileEntityPos.getZ()>>4);
-
+        mapLeftTopChunkPos = new ChunkPos((tileEntityPos.getX() >> 4) - 4, (tileEntityPos.getZ() >> 4) - 4);
         territories.addAll(tileEntity.getTerritoryInfo().territories);
         originalTerritories.addAll(tileEntity.getTerritoryInfo().territories);
 
         if (Objects.requireNonNull(tileEntity.getWorld()).isRemote) {
 
-            Stream<ChunkPos> complement = TerritoryMod.TERRITORY_INFO_HASH_MAP.keySet().stream().filter(t -> !originalTerritories.contains(t));
-            forbiddenChunkPos.addAll(complement.collect(Collectors.toList()));
+            for(int x=mapLeftTopChunkPos.x;x<mapLeftTopChunkPos.x+9;x++)
+            {
+                for(int z=mapLeftTopChunkPos.z;z<mapLeftTopChunkPos.z+9;z++)
+                {
+                    Chunk chunk = tileEntity.getWorld().getChunk(x, z);
+                    TerritoryInfo info = chunk.getCapability(ModCapabilities.TERRITORY_INFO_CAPABILITY).orElse(ModCapabilities.TERRITORY_INFO_CAPABILITY.getDefaultInstance());
+                    if(info.IsProtected() && !info.equals(territoryInfo))
+                        forbiddenChunkPos.add(new ChunkPos(x,z));
+                }
+            }
 
             initChunkInfo();
         }
@@ -116,7 +125,7 @@ public class TerritoryTableContainer extends Container {
         TerritoryTableTileEntity tileEntity= (TerritoryTableTileEntity) player.world.getTileEntity(tileEntityPos);
 
         for (ChunkPos pos : msg.readyRemove) {
-            tileEntity.removeJurisdiction(pos);
+            tileEntity.getTerritoryInfo().territories.remove(pos);
         }
 
         for (ChunkPos pos : msg.readyAdd) {
@@ -133,12 +142,13 @@ public class TerritoryTableContainer extends Container {
             player.world.playSound(player, player.getPosition(), SoundEvents.BLOCK_ENCHANTMENT_TABLE_USE,
                     SoundCategory.BLOCKS, 1F, 1F);
 
-            tileEntity.addTerritory(pos);
+            tileEntity.getTerritoryInfo().territories.add(pos);
         }
 
-        tileEntity.setPermissionAll(msg.permissions);
+        tileEntity.getTerritoryInfo().permissions=msg.permissions;
         tileEntity.getTerritoryInfo().defaultPermission=msg.defaultPermission;
         tileEntity.getTerritoryInfo().territoryName=msg.territoryName;
+        tileEntity.updateTerritoryToWorld();
         tileEntity.markDirty();
         return true;
     }
