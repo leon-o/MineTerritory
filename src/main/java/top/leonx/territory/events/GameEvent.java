@@ -32,7 +32,9 @@ import top.leonx.territory.util.UserUtil;
 
 import javax.annotation.Nullable;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 @SuppressWarnings("unused")
 @Mod.EventBusSubscriber(modid = TerritoryMod.MODID)
@@ -52,7 +54,6 @@ public class GameEvent {
 
         }
     }
-
     @SubscribeEvent
     public static void onPlayerRightClickBlock(PlayerInteractEvent.RightClickBlock event)
     {
@@ -120,7 +121,7 @@ public class GameEvent {
             SendMessage(player,new TranslationTextComponent("message.territory.no_permission",
                     new TranslationTextComponent(flag.getTranslationKey())));
         }else{
-            OutlineRender.StartRender(info.territories,100);
+            OutlineRender.StartRender(TerritoryMod.TERRITORY_INFO_HASH_MAP.entrySet().stream().filter(t->t.getValue().centerPos.equals(info.centerPos)).map(Map.Entry::getKey).collect(Collectors.toSet()),100);
         }
     }
     private static boolean hasPermission(TerritoryInfo info, PlayerEntity player, PermissionFlag flag)
@@ -192,7 +193,7 @@ public class GameEvent {
                 clientPlayer.setMotion(vecAfterCollision);
                 clientPlayer.setPosition(clientPlayer.lastTickPosX,clientPlayer.lastTickPosY,clientPlayer.lastTickPosZ);
             }
-            OutlineRender.StartRender(thisTerritoryInfo.territories,100);
+            OutlineRender.StartRender(TerritoryMod.TERRITORY_INFO_HASH_MAP.entrySet().stream().filter(t->t.getValue().centerPos.equals(thisTerritoryInfo.centerPos)).map(Map.Entry::getKey).collect(Collectors.toSet()),100);
         }else if(!thisTerritoryInfo.IsProtected() && lastTerritoryInfo.IsProtected())
         {
             String ownerName = UserUtil.getNameByUUID(lastTerritoryInfo.getOwnerId());

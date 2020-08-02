@@ -10,8 +10,8 @@ import java.util.*;
 public class TerritoryInfo {
     //public final static TerritoryInfo defaultTerritoryInfo=new TerritoryInfo(null,new HashSet<>());
 
-    @Nullable
-    public Set<ChunkPos> territories;
+//    @Nullable
+//    public Set<ChunkPos> territories;
     @Nullable
     public BlockPos centerPos;
     @Nullable
@@ -30,15 +30,14 @@ public class TerritoryInfo {
         isProtected=true;
         setOwnerId(ownerId);
     }
-    public void assignedTo(UUID ownerId,BlockPos tablePos,String name,PermissionFlag defaultPer,Set<ChunkPos> associatedChunks,
-                           Map<UUID, PermissionFlag> specificPer)
+    public void assignedTo(UUID ownerId,BlockPos tablePos,String name,PermissionFlag defaultPer,Map<UUID, PermissionFlag> specificPer)
     {
         isProtected=true;
         setOwnerId(ownerId);
         centerPos=tablePos;
         territoryName=name;
         defaultPermission=defaultPer;
-        territories=associatedChunks;
+        //territories=associatedChunks;
         permissions=specificPer;
     }
     public void deassign()
@@ -46,7 +45,6 @@ public class TerritoryInfo {
         isProtected=false;
         ownerId=null;
         ownerName=null;
-        territories=null;
         territoryName=null;
         permissions=null;
         defaultPermission=null;
@@ -74,12 +72,7 @@ public class TerritoryInfo {
             return true;
         if (obj instanceof TerritoryInfo) {
             TerritoryInfo data = (TerritoryInfo) obj;
-            boolean a=Objects.equals(ownerId,data.ownerId);
-            boolean b=Objects.equals(permissions,data.permissions);
-            boolean c=Objects.equals(defaultPermission, data.defaultPermission);
-            boolean d=Objects.equals(centerPos,data.centerPos);
-            boolean e=Objects.equals(territories,data.territories);
-            return a&&b&&c&&d&&e;
+            return Objects.equals(ownerId,data.ownerId)&&Objects.equals(permissions,data.permissions)&&Objects.equals(defaultPermission, data.defaultPermission)&&Objects.equals(centerPos,data.centerPos);
         }
         return false;
     }
@@ -94,14 +87,18 @@ public class TerritoryInfo {
         info.ownerName= ownerName;
         info.defaultPermission=new PermissionFlag(defaultPermission.getCode());
         info.territoryName=territoryName;
-        info.territories=new HashSet<>(territories);
+        //info.territories=new HashSet<>(territories);
         info.permissions=flags;
         info.centerPos=centerPos;
         return info;
     }
     @Override
     public String toString() {
-        return String.format("{owner:%s,name:%s,center:%s,area:%s,defP:%d}", ownerName == null ? "NULL" : ownerName, territoryName == null ? "NULL" : territoryName, centerPos == null ?
-                        "NULL" :centerPos.toString(), territories == null ? "NULL" : territories.iterator().next().toString(), defaultPermission == null ? 0 : defaultPermission.getCode());
+        return String.format("{owner:%s,name:%s,center:%s,defP:%d}",
+                ownerName == null ? "NULL" : ownerName,
+                territoryName == null ? "NULL" :territoryName,
+                centerPos == null ?"NULL" :centerPos.toString(),
+                //territories == null ? "NULL" : territories.iterator().next().toString(),
+                defaultPermission == null ? 0 : defaultPermission.getCode());
     }
 }

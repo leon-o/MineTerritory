@@ -5,26 +5,23 @@ import net.minecraft.nbt.INBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
 import net.minecraftforge.common.capabilities.Capability;
 import top.leonx.territory.data.PermissionFlag;
 import top.leonx.territory.data.TerritoryInfo;
 
 import javax.annotation.Nullable;
-
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 
-import static top.leonx.territory.util.DataUtil.*;
-import static top.leonx.territory.util.DataUtil.ConvertNbtToPos;
+import static top.leonx.territory.util.DataUtil.ConvertNbtToUUIDPermission;
+import static top.leonx.territory.util.DataUtil.ConvertUUIDPermissionToNbt;
 
 public class TerritoryInfoCapability {
     public static class Storage implements Capability.IStorage<TerritoryInfo> {
         private static final String OWNER_ID_KEY="owner_id";
-        private static final String TERRITORY_POS_KEY ="territories";
+        //private static final String TERRITORY_POS_KEY ="territories";
         private static final String PERMISSION_KEY="permission";
         private static final String DEFAULT_PERMISSION_KEY="def_permission";
         private static final String TERRITORY_NAME_KEY="name";
@@ -35,15 +32,7 @@ public class TerritoryInfoCapability {
         @Override
         public INBT writeNBT(Capability<TerritoryInfo> capability, TerritoryInfo instance, Direction side) {
             CompoundNBT compound=new CompoundNBT();
-            ListNBT territoryListNBT=new ListNBT();
-            if(instance.territories!=null)
-            {
-                instance.territories.forEach(t->{
-                    CompoundNBT nbt=ConvertPosToNbt(t);
-                    territoryListNBT.add(nbt);
-                });
-                compound.put(TERRITORY_POS_KEY, territoryListNBT);
-            }
+
             if(instance.permissions!=null)
             {
                 ListNBT permissionListNBT=new ListNBT();
@@ -71,13 +60,6 @@ public class TerritoryInfoCapability {
             {
                 UUID ownerId=compound.getUniqueId(OWNER_ID_KEY);
 
-                HashSet<ChunkPos> territoriesTmp;
-                ListNBT territoryList = compound.getList(TERRITORY_POS_KEY, 10);
-                territoriesTmp=new HashSet<>();
-                for (INBT t : territoryList) {
-                    territoriesTmp.add(ConvertNbtToPos((CompoundNBT) t));
-                }
-
                 HashMap<UUID, PermissionFlag> permissionFlagHashMap;
                 ListNBT permissionList = compound.getList(PERMISSION_KEY, 10);
                 permissionFlagHashMap=new HashMap<>();
@@ -90,7 +72,7 @@ public class TerritoryInfoCapability {
                 PermissionFlag defPermissionFlag=new PermissionFlag(compound.getInt(DEFAULT_PERMISSION_KEY));
                 BlockPos centerPos= BlockPos.fromLong(compound.getLong(CENTER_POS));
 
-                instance.assignedTo(ownerId,centerPos,territoryName,defPermissionFlag,territoriesTmp,permissionFlagHashMap);
+                instance.assignedTo(ownerId,centerPos,territoryName,defPermissionFlag,permissionFlagHashMap);
             }
         }
     }
