@@ -1,28 +1,38 @@
 package top.leonx.territory.data;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.fml.loading.FMLEnvironment;
 import net.minecraftforge.fml.network.NetworkEvent;
 import net.minecraftforge.fml.network.PacketDistributor;
 import top.leonx.territory.TerritoryPacketHandler;
 import top.leonx.territory.util.UserUtil;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 import java.util.function.Supplier;
 
 import static top.leonx.territory.capability.ModCapabilities.TERRITORY_INFO_CAPABILITY;
 
 public class TerritoryInfoSynchronizer {
-    static {
-        TerritoryPacketHandler.registerMessage(UpdateSingleChunkMsg.class, UpdateSingleChunkMsg::encode,
-                UpdateSingleChunkMsg::decode,
-                TerritoryInfoSynchronizer::handler);
+    public static void register()
+    {
+        if(FMLEnvironment.dist==Dist.CLIENT)
+            TerritoryPacketHandler.registerMessage(0, UpdateSingleChunkMsg.class, UpdateSingleChunkMsg::encode,
+                    UpdateSingleChunkMsg::decode,
+                    TerritoryInfoSynchronizer::handlerClient);
+        else
+            TerritoryPacketHandler.registerMessage(0, UpdateSingleChunkMsg.class, UpdateSingleChunkMsg::encode,
+                    UpdateSingleChunkMsg::decode,
+                    TerritoryInfoSynchronizer::handlerServer);
     }
 
     public static void UpdateInfoToClientTracked(Chunk chunk) {
@@ -42,30 +52,30 @@ public class TerritoryInfoSynchronizer {
         TerritoryInfo info = chunk.getCapability(TERRITORY_INFO_CAPABILITY).orElse(TERRITORY_INFO_CAPABILITY.getDefaultInstance());
         TerritoryPacketHandler.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new UpdateSingleChunkMsg(chunk.getPos(), info));
     }
-    public static void UpdateInfoToClientPlayer(ChunkPos pos, TerritoryInfo info, ServerPlayerEntity player)
-    {
+
+    public static void UpdateInfoToClientPlayer(ChunkPos pos, TerritoryInfo info, ServerPlayerEntity player) {
         TerritoryPacketHandler.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new UpdateSingleChunkMsg(pos, info));
     }
 
+    @OnlyIn(Dist.CLIENT)
     // client handler
-    private static void handler(UpdateSingleChunkMsg msg, Supplier<NetworkEvent.Context> contextSupplier) {
-        contextSupplier.get().enqueueWork(() -> {
-            ServerPlayerEntity sender = contextSupplier.get().getSender();
-            if (sender == null)//client side
-            {
-                PlayerEntity player   = Minecraft.getInstance().player;
-                World        world    = player.world;
-                ChunkPos     chunkPos = msg.target;
+    private static void handlerClient(UpdateSingleChunkMsg msg, Supplier<NetworkEvent.Context> contextSupplier) {
+        contextSupplier.get().enqueueWork(() ->{
+            World    world    = Minecraft.getInstance().world;
+            ChunkPos chunkPos = msg.target;
 
-                if (msg.isProtected) {
-                    TerritoryInfoHolder.get(world).assignToChunk(chunkPos, msg.ownerId, msg.territoryId, msg.center, msg.territoryName,
-                            msg.defaultPermission, msg.permissions);
-                } else {
-                    TerritoryInfoHolder.get(world).deassignToChunk(chunkPos);
-                }
+            if (msg.isProtected) {
+                TerritoryInfoHolder.get(world).assignToChunk(chunkPos, msg.ownerId, msg.territoryId, msg.center, msg.territoryName,
+                        msg.defaultPermission, msg.permissions);
+            } else {
+                TerritoryInfoHolder.get(world).deassignToChunk(chunkPos);
             }
         });
         contextSupplier.get().setPacketHandled(true);
+    }
+
+    private static <T> void handlerServer(T t, Supplier<NetworkEvent.Context> contextSupplier) {
+        //DO NOTHING
     }
 
     public static class UpdateSingleChunkMsg {
@@ -108,7 +118,7 @@ public class TerritoryInfoSynchronizer {
         public static void encode(UpdateSingleChunkMsg msg, PacketBuffer buffer) {
             buffer.writeBoolean(msg.isProtected);
             buffer.writeLong(msg.target.asLong());
-            if (msg.isProtected) {
+            if (msg.isProtected && msg.ownerId != null && msg.territoryId != null && msg.territoryName != null && msg.defaultPermission != null) {
 
                 buffer.writeUniqueId(msg.ownerId);
                 buffer.writeUniqueId(msg.territoryId);

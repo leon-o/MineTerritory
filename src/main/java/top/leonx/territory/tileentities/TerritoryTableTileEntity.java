@@ -1,5 +1,6 @@
 package top.leonx.territory.tileentities;
 
+import com.mojang.authlib.yggdrasil.response.User;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
@@ -58,15 +59,9 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
         return territoryInfo.ownerId;
     }
 
-    public void setOwnerId(UUID owner_id) {
-        territoryInfo.assignedTo(owner_id);
-        if(territories!=null){
-            territories.forEach(t -> {
-                Chunk chunk = world.getChunk(t.x, t.z);
-                TerritoryInfo info = chunk.getCapability(TERRITORY_INFO_CAPABILITY).orElse(TERRITORY_INFO_CAPABILITY.getDefaultInstance());
-                info.assignedTo(owner_id);
-            });
-        }
+    public void initTerritoryInfo(UUID owner_id) {
+        territoryInfo.assignedTo(owner_id,UUID.randomUUID(),pos, UserUtil.getNameByUUID(owner_id)+"'s",new PermissionFlag(1),new HashMap<>());
+        updateTerritoryToWorld();
         markDirty();
     }
 
@@ -80,7 +75,9 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
 
     public void updateTerritoryToWorld() {
         if(world==null || world.isRemote) return;
-        lastTerritories.stream().filter(t -> !territories.contains(t)).forEach(t -> TerritoryInfoHolder.get(world).deassignToChunk(t));
+        lastTerritories.stream().filter(t -> !territories.contains(t)).forEach(
+                t->TerritoryInfoHolder.get(world).deassignToChunk(t)
+        );
         territories.forEach(t -> TerritoryInfoHolder.get(world).assignToChunk(t,territoryInfo));
         lastTerritories.clear();
         lastTerritories.addAll(territories);

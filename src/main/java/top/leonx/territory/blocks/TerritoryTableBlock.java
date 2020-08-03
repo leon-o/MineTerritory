@@ -83,7 +83,7 @@ public class TerritoryTableBlock extends Block {
     @Override
     public void onBlockPlacedBy(World worldIn, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
 
-        getTerritoryTileEntity(worldIn,pos).setOwnerId(placer.getUniqueID());
+        getTerritoryTileEntity(worldIn,pos).initTerritoryInfo(placer.getUniqueID());
         super.onBlockPlacedBy(worldIn, pos, state, placer, stack);
     }
 

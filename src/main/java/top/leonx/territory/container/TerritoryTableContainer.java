@@ -31,7 +31,7 @@ import java.util.function.Supplier;
 public class TerritoryTableContainer extends Container {
 
     static {
-        TerritoryPacketHandler.registerMessage(TerritoryOperationMsg.class, TerritoryOperationMsg::encode,
+        TerritoryPacketHandler.registerMessage(1,TerritoryOperationMsg.class, TerritoryOperationMsg::encode,
                 TerritoryOperationMsg::decode,
                 TerritoryTableContainer::handler);
     }

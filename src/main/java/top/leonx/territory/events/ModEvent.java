@@ -6,16 +6,20 @@ import net.minecraft.item.Item;
 import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.chunk.Chunk;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import top.leonx.territory.TerritoryPacketHandler;
 import top.leonx.territory.blocks.ModBlocks;
 import top.leonx.territory.capability.ChunkCapabilityProvider;
 import top.leonx.territory.capability.ModCapabilities;
 import top.leonx.territory.container.ModContainerTypes;
+import top.leonx.territory.data.TerritoryInfoSynchronizer;
 import top.leonx.territory.items.ModItems;
 import top.leonx.territory.tileentities.ModTileEntityType;
 
@@ -25,9 +29,15 @@ public class ModEvent {
     @SubscribeEvent
     public static void setup(final FMLCommonSetupEvent event) {
         TerritoryPacketHandler.Init();
+        TerritoryInfoSynchronizer.register();
         ModCapabilities.register();
     }
-
+    @OnlyIn(Dist.CLIENT)
+    @SubscribeEvent
+    public static void onClientStart(FMLClientSetupEvent event)
+    {
+        TerritoryInfoSynchronizer.register();
+    }
     //    private void enqueueIMC(final InterModEnqueueEvent event)
 //    {
 //        InterModComms.sendTo("examplemod", "helloworld", () -> { LOGGER.info("Hello world from the MDK"); return "Hello world";});

@@ -3,11 +3,15 @@ package top.leonx.territory.transform;
 import cpw.mods.modlauncher.api.ITransformer;
 import cpw.mods.modlauncher.api.ITransformerVotingContext;
 import cpw.mods.modlauncher.api.TransformerVoteResult;
+import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
+import net.minecraftforge.fml.network.PacketDistributor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
+import top.leonx.territory.TerritoryPacketHandler;
 import top.leonx.territory.data.TerritoryInfo;
 import top.leonx.territory.data.TerritoryInfoHolder;
 import top.leonx.territory.data.TerritoryInfoSynchronizer;
@@ -24,7 +28,7 @@ public class SendChunkDataTransform implements ITransformer<MethodNode> {
     public MethodNode transform(MethodNode input, @Nonnull ITransformerVotingContext context) {
 
         InsnList insnList=new InsnList();
-        MethodInsnNode sendNode=new MethodInsnNode(Opcodes.INVOKESTATIC,"top/leonx/territory/transform/SendChunkDataTransform","methodProxy","(Lnet/minecraft" +
+        MethodInsnNode sendNode=new MethodInsnNode(Opcodes.INVOKESTATIC,"top/leonx/territory/events/ChunkEvent","onServerChunkLoad","(Lnet/minecraft" +
                 "/util/math/ChunkPos;Lnet/minecraft/entity/player/ServerPlayerEntity;)V",false);
         insnList.add(new VarInsnNode(Opcodes.ALOAD,1));
         insnList.add(new VarInsnNode(Opcodes.ALOAD,0));
@@ -43,19 +47,7 @@ public class SendChunkDataTransform implements ITransformer<MethodNode> {
 
         return input;
     }
-    @SuppressWarnings("unused")
-    public static void methodProxy(ChunkPos pos, ServerPlayerEntity player) {
 
-        World         world = player.getEntityWorld();
-        TerritoryInfo info  = TerritoryInfoHolder.get(world).getChunkTerritoryInfo(pos);
-
-        TerritoryInfoSynchronizer.UpdateInfoToClientPlayer(pos, info, player);
-
-        if(info.IsProtected())
-            TerritoryInfoHolder.get(world).addIndex(info, pos);
-        else
-            TerritoryInfoHolder.get(world).removeIndex(info,pos);
-    }
     @Nonnull
     @Override
     public TransformerVoteResult castVote(@Nonnull ITransformerVotingContext context) {

@@ -9,6 +9,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.*;
 import net.minecraft.util.text.ITextComponent;
@@ -152,16 +153,11 @@ public class GameEvent {
         coolDown = coolDownTime;
     }
 
-    @SubscribeEvent
-    public static void serverTick(TickEvent.ServerTickEvent event) {
-        coolDown -= 1;
-    }
-
     @OnlyIn(Dist.CLIENT)
     @SubscribeEvent
     public static void clientTick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
-
+        coolDown=Math.max(0,coolDown- Minecraft.getInstance().getTickLength());
         PlayerEntity clientPlayer = Minecraft.getInstance().player;
         if (clientPlayer == null) return;
 

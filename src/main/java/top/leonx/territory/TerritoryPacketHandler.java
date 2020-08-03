@@ -13,7 +13,6 @@ import java.util.function.Supplier;
 public class TerritoryPacketHandler {
     public static SimpleChannel CHANNEL;
 
-    static int id=0;
     public static void Init()
     {
         CHANNEL = NetworkRegistry.newSimpleChannel(
@@ -23,10 +22,10 @@ public class TerritoryPacketHandler {
                 "1"::equals
         );
     }
-    public static <T> void registerMessage(Class<T> type,
+    public static <T> void registerMessage(int id,Class<T> type,
     BiConsumer<T, PacketBuffer> encoder, Function<PacketBuffer,
             T> decoder, BiConsumer<T,Supplier<NetworkEvent.Context>> handler)
     {
-       CHANNEL.registerMessage(id++,type,encoder,decoder,handler);
+       CHANNEL.registerMessage(id,type,encoder,decoder,handler);
     }
 }
