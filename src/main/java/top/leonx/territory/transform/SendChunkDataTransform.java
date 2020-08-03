@@ -5,9 +5,11 @@ import cpw.mods.modlauncher.api.ITransformerVotingContext;
 import cpw.mods.modlauncher.api.TransformerVoteResult;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.World;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
+import top.leonx.territory.data.TerritoryInfo;
+import top.leonx.territory.data.TerritoryInfoHolder;
 import top.leonx.territory.data.TerritoryInfoSynchronizer;
 
 import javax.annotation.Nonnull;
@@ -42,10 +44,17 @@ public class SendChunkDataTransform implements ITransformer<MethodNode> {
         return input;
     }
     @SuppressWarnings("unused")
-    public static void methodProxy(ChunkPos pos, ServerPlayerEntity player)
-    {
-        Chunk chunk = player.getEntityWorld().getChunk(pos.x, pos.z);
-        TerritoryInfoSynchronizer.UpdateTerritoryInfoToPlayer(chunk,player);
+    public static void methodProxy(ChunkPos pos, ServerPlayerEntity player) {
+
+        World         world = player.getEntityWorld();
+        TerritoryInfo info  = TerritoryInfoHolder.get(world).getChunkTerritoryInfo(pos);
+
+        TerritoryInfoSynchronizer.UpdateInfoToClientPlayer(pos, info, player);
+
+        if(info.IsProtected())
+            TerritoryInfoHolder.get(world).addIndex(info, pos);
+        else
+            TerritoryInfoHolder.get(world).removeIndex(info,pos);
     }
     @Nonnull
     @Override

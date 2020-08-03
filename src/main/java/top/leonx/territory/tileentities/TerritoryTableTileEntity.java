@@ -23,7 +23,9 @@ import net.minecraftforge.common.util.LazyOptional;
 import top.leonx.territory.container.TerritoryTableContainer;
 import top.leonx.territory.data.PermissionFlag;
 import top.leonx.territory.data.TerritoryInfo;
+import top.leonx.territory.data.TerritoryInfoHolder;
 import top.leonx.territory.data.TerritoryInfoSynchronizer;
+import top.leonx.territory.util.UserUtil;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -49,11 +51,11 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
 
     public TerritoryTableTileEntity() {
         super(ModTileEntityType.TERRITORY_TILE_ENTITY);
-        territoryInfo.assignedTo(null,null,"",new PermissionFlag(),new HashMap<>());
+        territoryInfo.assignedTo(null,UUID.randomUUID(),null,"",new PermissionFlag(),new HashMap<>());
     }
 
     public UUID getOwnerId() {
-        return territoryInfo.getOwnerId();
+        return territoryInfo.ownerId;
     }
 
     public void setOwnerId(UUID owner_id) {
@@ -69,7 +71,7 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
     }
 
     public String getOwnerName() {
-        return territoryInfo.getOwnerName();
+        return UserUtil.getNameByUUID(territoryInfo.ownerId);
     }
 
     public TerritoryInfo getTerritoryInfo() {
@@ -78,20 +80,8 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
 
     public void updateTerritoryToWorld() {
         if(world==null || world.isRemote) return;
-        lastTerritories.stream().filter(t -> !territories.contains(t)).forEach(t -> {
-            Chunk chunk = world.getChunk(t.x, t.z);
-            TerritoryInfo info = chunk.getCapability(TERRITORY_INFO_CAPABILITY).orElse(TERRITORY_INFO_CAPABILITY.getDefaultInstance());
-            info.deassign();
-            TerritoryInfoSynchronizer.UpdateDeassignationToTracked(chunk);
-            chunk.markDirty();
-        });
-        territories.forEach(t -> {
-            Chunk chunk = world.getChunk(t.x, t.z);
-            TerritoryInfo info = chunk.getCapability(TERRITORY_INFO_CAPABILITY).orElse(TERRITORY_INFO_CAPABILITY.getDefaultInstance());
-            info.assignedTo(territoryInfo.getOwnerId(), pos, territoryInfo.territoryName, territoryInfo.defaultPermission, territoryInfo.permissions);
-            TerritoryInfoSynchronizer.UpdateTerritoryInfoToTracked(chunk,info);
-            chunk.markDirty();
-        });
+        lastTerritories.stream().filter(t -> !territories.contains(t)).forEach(t -> TerritoryInfoHolder.get(world).deassignToChunk(t));
+        territories.forEach(t -> TerritoryInfoHolder.get(world).assignToChunk(t,territoryInfo));
         lastTerritories.clear();
         lastTerritories.addAll(territories);
         markDirty();

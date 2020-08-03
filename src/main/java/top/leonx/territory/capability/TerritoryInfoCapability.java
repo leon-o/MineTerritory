@@ -21,6 +21,7 @@ import static top.leonx.territory.util.DataUtil.ConvertUUIDPermissionToNbt;
 public class TerritoryInfoCapability {
     public static class Storage implements Capability.IStorage<TerritoryInfo> {
         private static final String OWNER_ID_KEY="owner_id";
+        private static final String TERRITORY_ID_KEY="te_id";
         //private static final String TERRITORY_POS_KEY ="territories";
         private static final String PERMISSION_KEY="permission";
         private static final String DEFAULT_PERMISSION_KEY="def_permission";
@@ -39,8 +40,10 @@ public class TerritoryInfoCapability {
                 instance.permissions.forEach((k, v)-> permissionListNBT.add(ConvertUUIDPermissionToNbt(k,v)));
                 compound.put(PERMISSION_KEY,permissionListNBT);
             }
-            if(instance.getOwnerId()!=null)
-                compound.putUniqueId(OWNER_ID_KEY, instance.getOwnerId());
+            if(instance.ownerId!=null)
+                compound.putUniqueId(OWNER_ID_KEY, instance.ownerId);
+            if(instance.territoryId!=null)
+                compound.putUniqueId(TERRITORY_ID_KEY,instance.territoryId);
             if(instance.defaultPermission!=null)
                 compound.putInt(DEFAULT_PERMISSION_KEY,instance.defaultPermission.getCode());
             if(instance.territoryName!=null)
@@ -59,7 +62,7 @@ public class TerritoryInfoCapability {
             if(isProtected)
             {
                 UUID ownerId=compound.getUniqueId(OWNER_ID_KEY);
-
+                UUID territoryId=compound.getUniqueId(TERRITORY_ID_KEY);
                 HashMap<UUID, PermissionFlag> permissionFlagHashMap;
                 ListNBT permissionList = compound.getList(PERMISSION_KEY, 10);
                 permissionFlagHashMap=new HashMap<>();
@@ -72,7 +75,7 @@ public class TerritoryInfoCapability {
                 PermissionFlag defPermissionFlag=new PermissionFlag(compound.getInt(DEFAULT_PERMISSION_KEY));
                 BlockPos centerPos= BlockPos.fromLong(compound.getLong(CENTER_POS));
 
-                instance.assignedTo(ownerId,centerPos,territoryName,defPermissionFlag,permissionFlagHashMap);
+                instance.assignedTo(ownerId,territoryId,centerPos,territoryName,defPermissionFlag,permissionFlagHashMap);
             }
         }
     }
