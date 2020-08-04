@@ -1,6 +1,7 @@
 # Territory Mod of Minecraft
 A territory mod based on Forge (currently).
 
+### [中文](https://github.com/leon-o/MineTerritory/blob/master/README_cn.md)
 ## Introduction
 
 Compared with other mod and plugins, it has the following features:
