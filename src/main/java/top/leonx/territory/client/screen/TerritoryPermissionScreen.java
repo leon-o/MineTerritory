@@ -82,6 +82,8 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryTable
         search.setSuggestion(I18n.format("gui.territory.search"));
         addPlayerBtn.active=false;
 
+        this.addButton(addPlayerBtn);
+        this.addButton(removePlayerBtn);
         this.addButton(new GuiButtonExt(halfW+40, parent.getGuiTop()+parent.getYSize()-30, 70, 20, I18n.format("gui.territory.back"),
                 $ -> NavigateTo(0)
         ));
@@ -89,8 +91,6 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryTable
         this.children.add(addTextField);
         this.children.add(search);
         this.children.add(permissionList);
-        this.addButton(addPlayerBtn);
-        this.addButton(removePlayerBtn);
 
         //permissionCheckbox.keySet().forEach(this::addButton);
     }
