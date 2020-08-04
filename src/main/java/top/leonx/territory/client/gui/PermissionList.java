@@ -17,7 +17,7 @@ public class PermissionList extends Widget {
             nextPageButton.active=true;
         }, true);
         nextPageButton = new ChangePageButton(xIn+widthIn-23, yIn + heightIn - 13, true, $ -> {
-            int maxPage=children.size()/entryCountEachPage+1;
+            int maxPage=children.size()/entryCountEachPage;
             pageNumber=Math.min(maxPage,++pageNumber);
             if(pageNumber>=maxPage)
                 nextPageButton.active=false;

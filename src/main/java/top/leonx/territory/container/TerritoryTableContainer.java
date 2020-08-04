@@ -121,27 +121,22 @@ public class TerritoryTableContainer extends Container {
             return false;
 
         TerritoryTableTileEntity tileEntity = (TerritoryTableTileEntity) player.world.getTileEntity(tileEntityPos);
-
+        if (!player.isCreative()) {
+            int experienceNeed = msg.readyAdd.length + msg.readyRemove.length;
+            if (player.experienceLevel >= experienceNeed) {
+                player.addExperienceLevel(-(msg.readyAdd.length + msg.readyRemove.length));
+            } else {
+                player.sendMessage(new TranslationTextComponent("message.territory.need_experience", Integer.toString(experienceNeed)));
+                return false;
+            }
+        }
+        player.world.playSound(player, player.getPosition(), SoundEvents.BLOCK_ENCHANTMENT_TABLE_USE,
+                SoundCategory.BLOCKS, 1F, 1F);
         for (ChunkPos pos : msg.readyRemove) {
             tileEntity.territories.remove(pos);
         }
 
-        for (ChunkPos pos : msg.readyAdd) {
-
-            if (!player.isCreative()) {
-                int experienceNeed = msg.readyAdd.length + msg.readyRemove.length;
-                if (player.experienceLevel >= experienceNeed) {
-                    player.addExperienceLevel(-(msg.readyAdd.length + msg.readyRemove.length));
-                } else {
-                    player.sendMessage(new TranslationTextComponent("message.territory.need_experience", Integer.toString(experienceNeed)));
-                    return false;
-                }
-            }
-            player.world.playSound(player, player.getPosition(), SoundEvents.BLOCK_ENCHANTMENT_TABLE_USE,
-                    SoundCategory.BLOCKS, 1F, 1F);
-
-            tileEntity.territories.add(pos);
-        }
+        Collections.addAll(tileEntity.territories, msg.readyAdd);
 
         tileEntity.getTerritoryInfo().permissions = msg.permissions;
         tileEntity.getTerritoryInfo().defaultPermission = msg.defaultPermission;

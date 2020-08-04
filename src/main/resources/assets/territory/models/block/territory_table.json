@@ -1,22 +1,21 @@
 {
 	"credit": "Made with Blockbench",
 	"textures": {
-		"0": "block/enchanting_table_top",
-		"1": "block/enchanting_table_side",
-		"2": "block/enchanting_table_bottom",
-		"particle": "block/enchanting_table_top"
+		"3": "territory:block/territory_table_bottom",
+		"4": "territory:block/territory_table_side",
+		"5": "territory:block/territory_table_top"
 	},
 	"elements": [
 		{
 			"from": [0, 0, 0],
 			"to": [16, 12, 16],
 			"faces": {
-				"north": {"uv": [0, 4, 16, 16], "texture": "#1"},
-				"east": {"uv": [0, 4, 16, 16], "texture": "#1"},
-				"south": {"uv": [0, 4, 16, 16], "texture": "#1"},
-				"west": {"uv": [0, 4, 16, 16], "texture": "#1"},
-				"up": {"uv": [0, 0, 16, 16], "texture": "#0"},
-				"down": {"uv": [0, 0, 16, 16], "texture": "#2"}
+				"north": {"uv": [0, 4, 16, 16], "texture": "#4"},
+				"east": {"uv": [0, 4, 16, 16], "texture": "#4"},
+				"south": {"uv": [0, 4, 16, 16], "texture": "#4"},
+				"west": {"uv": [0, 4, 16, 16], "texture": "#4"},
+				"up": {"uv": [0, 0, 16, 16], "texture": "#5"},
+				"down": {"uv": [0, 0, 16, 16], "texture": "#3"}
 			}
 		}
 	],
