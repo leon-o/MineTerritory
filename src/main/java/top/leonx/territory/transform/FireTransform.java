@@ -44,7 +44,7 @@ public class FireTransform implements ITransformer<MethodNode> {
         input.visitVarInsn(ALOAD,1);
         input.visitVarInsn(ALOAD,2);
         input.visitVarInsn(ALOAD,3);
-        input.visitMethodInsn(INVOKESTATIC,"top/leonx/territory/transform/CatchFireTransform","canBurn","(Lnet/minecraft/block/BlockState;" +
+        input.visitMethodInsn(INVOKESTATIC,"top/leonx/territory/transform/FireTransform","canBurn","(Lnet/minecraft/block/BlockState;" +
                 "Lnet/minecraft/world/IWorldReader;Lnet/minecraft/util/math/BlockPos;)Z",false);
         Label label0_1=new Label();
         input.visitJumpInsn(IFNE,label0_1);
