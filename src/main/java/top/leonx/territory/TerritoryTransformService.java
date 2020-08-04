@@ -3,6 +3,7 @@ package top.leonx.territory;
 import cpw.mods.modlauncher.api.IEnvironment;
 import cpw.mods.modlauncher.api.ITransformationService;
 import cpw.mods.modlauncher.api.ITransformer;
+import top.leonx.territory.transform.FireTransform;
 import top.leonx.territory.transform.SendChunkDataTransform;
 
 import javax.annotation.Nonnull;
@@ -39,6 +40,7 @@ public class TerritoryTransformService implements ITransformationService {
     public List<ITransformer> transformers() {
         List<ITransformer> list=new ArrayList<>();
         list.add(new SendChunkDataTransform());
+        list.add(new FireTransform());
         return list;
     }
 }
