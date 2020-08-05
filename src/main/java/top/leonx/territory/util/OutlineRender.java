@@ -53,16 +53,17 @@ public class OutlineRender {
 
     public static void Render(Vec3d viewPos,double partialTick)
     {
-        if(usedTime>duration) return;
+        float alpha = (float) MathHelper.clampedLerp(0, 1, 3 - 2*(usedTime / duration));
+        if(alpha<=0) return;
         usedTime+=partialTick;
 
-        Minecraft.getInstance().textureManager.bindTexture(checkerboardOverlayLocation);
+        Minecraft.getInstance().textureManager.bindTexture(checkerboardOverlayLocation); //must load once before
 
 
         GlStateManager.pushMatrix();
-        GlStateManager.depthMask(false);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GlStateManager.depthMask(true);
+        GlStateManager.enableBlend();
+        GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
         GlStateManager.translated(-viewPos.x, -viewPos.y, -viewPos.z);
         RenderUtil.enableTextureRepeat();
         Minecraft.getInstance().textureManager.bindTexture(checkerboardOverlayLocation);
@@ -70,8 +71,7 @@ public class OutlineRender {
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder bufferBuilder=tessellator.getBuffer();
         bufferBuilder.begin(GL11.GL_QUADS, DefaultVertexFormats.PARTICLE_POSITION_TEX_COLOR_LMAP);
-        edges.forEach((t,v)-> RenderUtil.drawWall(t.from,t.to,255,0,0,255,16,0xFFFFFF,(int)(0xFF*MathHelper.clampedLerp(1,0,(usedTime/ duration))) ,0xFFFFF0,
-                0xFFFFF0,
+        edges.forEach((t,v)-> RenderUtil.drawWall(t.from,t.to,255,0,0,255,16,new Vec3d(1,1,1),alpha,0xF0,0xF0,
                 bufferBuilder));
 
         tessellator.draw();
@@ -80,6 +80,7 @@ public class OutlineRender {
         //GlStateManager.enableCull();
         GlStateManager.depthMask(true);
         GlStateManager.popMatrix();
+        GlStateManager.disableBlend();
     }
 
     private static class EdgeEntry
