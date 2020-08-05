@@ -135,8 +135,8 @@ public class GameEvent {
         if (info.IsProtected()) {
             return player.hasPermissionLevel(4) ||
                     info.ownerId != null && (info.ownerId.equals(player.getUniqueID()) ||
-                            info.permissions.containsKey(player.getUniqueID()) && info.permissions.get(player.getUniqueID()).contain(flag) ||
-                            !info.permissions.containsKey(player.getUniqueID()) && info.defaultPermission.contain(flag));
+                            (info.permissions!=null && info.permissions.containsKey(player.getUniqueID()) && info.permissions.get(player.getUniqueID()).contain(flag)) ||
+                            info.defaultPermission.contain(flag));
         }
         return true;
     }

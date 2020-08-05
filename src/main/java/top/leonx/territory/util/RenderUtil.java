@@ -105,7 +105,7 @@ public class RenderUtil {
     // Normal direction = l1 x l2
     public static void drawPlane(Vec3d o,Vec3d l1,Vec3d l2,int minU,int minV,int maxU,int maxV,Vec3d col,float alpha,int skyL, int blockL, BufferBuilder buffer)
     {
-        float r=(float) col.x;//(col>>>16)& 0x000000FF;
+        float r=(float)col.x;//(col>>>16)& 0x000000FF;
         float g=(float)col.y;//(col>>>8)& 0x000000FF;
         float b=(float)col.z;//col & 0x000000FF;
         buffer.pos(o.x,o.y,o.z).tex(minU,minV).color(r,g,b,alpha).lightmap(skyL, blockL).endVertex();
