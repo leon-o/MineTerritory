@@ -83,8 +83,8 @@ public class RenderUtil {
                                            BufferBuilder buffer)
     {
         Vec3d n = l1.crossProduct(l2).normalize();
-        drawPlane(o.add(n.scale(0.01)),l1,l2,minU,minV,maxU,maxV,rgb,alpha,skyL,blockL, buffer);
-        drawPlane(o.subtract(n.scale(0.01)),l2,l1,minV,minU,maxV,maxU,rgb,alpha,skyL,blockL, buffer);
+        drawPlane(o.add(n.scale(0.02)),l1,l2,minU,minV,maxU,maxV,rgb,alpha,skyL,blockL, buffer);
+        drawPlane(o.subtract(n.scale(0.02)),l2,l1,minV,minU,maxV,maxU,rgb,alpha,skyL,blockL, buffer);
     }
 
     public static void drawPlane(Vec3d o,Vec3d l1,Vec3d l2,Vec3d rgb,float alpha,int skyL, int blockL, BufferBuilder buffer)

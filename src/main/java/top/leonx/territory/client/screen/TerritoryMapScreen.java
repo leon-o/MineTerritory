@@ -13,7 +13,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.MathHelper;
-import net.minecraftforge.fml.client.config.GuiButtonExt;
+import net.minecraftforge.fml.client.gui.widget.ExtendedButton;
 import top.leonx.territory.container.TerritoryTableContainer;
 
 import java.util.Collection;
@@ -49,10 +49,10 @@ public class TerritoryMapScreen extends AbstractScreenPage<TerritoryTableContain
         final int halfW = width / 2;
         final int halfH = height / 2;
         territoryNameTextField=new TextFieldWidget(font, parent.getGuiLeft()+160, parent.getGuiTop()+24, 80,16,"Name");
-        this.addButton(new GuiButtonExt(halfW + 40, halfH + 50, 70, 20, I18n.format("gui.territory.done_btn"),
+        this.addButton(new ExtendedButton(halfW + 40, halfH + 50, 70, 20, I18n.format("gui.territory.done_btn"),
                 $ -> container.Done()
         ));
-        this.addButton(new GuiButtonExt(halfW+40, halfH + 28, 70, 20, I18n.format("gui.territory.permission_btn"),
+        this.addButton(new ExtendedButton(halfW+40, halfH + 28, 70, 20, I18n.format("gui.territory.permission_btn"),
                 $ -> NavigateTo(1)
         ));
 
@@ -123,7 +123,7 @@ public class TerritoryMapScreen extends AbstractScreenPage<TerritoryTableContain
     private void drawChunkOverlay(int mouseX, int mouseY) {
 
         GlStateManager.enableBlend();
-        GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+        GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA.param, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA.param);
 
         getMinecraft().getTextureManager().bindTexture(territorySquareLocation);
 

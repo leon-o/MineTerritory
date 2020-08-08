@@ -1,6 +1,7 @@
 package top.leonx.territory.blocks;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.LivingEntity;
@@ -9,6 +10,7 @@ import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.BlockItemUseContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
@@ -41,9 +43,9 @@ public class TerritoryTableBlock extends Block {
     }
 
     @Override
-    public boolean onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
+    public ActionResultType onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
 
-        if(worldIn.isRemote)return false;
+        if(worldIn.isRemote)return ActionResultType.PASS;
         TerritoryTableTileEntity tileEntity=getTerritoryTileEntity(worldIn,pos);
         if(tileEntity.getOwnerId().equals(player.getUniqueID())
             ||tileEntity.getTerritoryInfo().permissions.containsKey(player.getUniqueID())&&
@@ -53,7 +55,7 @@ public class TerritoryTableBlock extends Block {
         {
             NetworkHooks.openGui((ServerPlayerEntity) player,tileEntity,pos);
         }
-        return true;
+        return ActionResultType.SUCCESS;
     }
 
     @Nullable
@@ -103,7 +105,8 @@ public class TerritoryTableBlock extends Block {
         return false;
     }
 
-//    @Override
+
+    //    @Override
 //    public boolean canHarvestBlock(BlockState state, IBlockReader world, BlockPos pos, PlayerEntity player) {
 //        return getTerritoryTileEntity(world,pos).getOwnerId()==player.getUniqueID();
 //    }

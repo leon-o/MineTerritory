@@ -2,7 +2,7 @@ package top.leonx.territory.client.gui;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.widget.Widget;
-import net.minecraftforge.fml.client.config.GuiUtils;
+import net.minecraftforge.fml.client.gui.GuiUtils;
 
 import javax.annotation.Nullable;
 import java.util.function.Consumer;
@@ -47,7 +47,7 @@ public class PermissionToggleButton extends Widget {
             Minecraft mc = Minecraft.getInstance();
             this.isHovered = mouseX >= this.x && mouseY >= this.y && mouseX < this.x + this.width && mouseY < this.y + this.height;
             int k = this.getYImage(this.isHovered);
-            GuiUtils.drawContinuousTexturedBox(WIDGETS_LOCATION, this.x, this.y, 0, 46 + k * 20, this.width, this.height, 200, 20, 2, 3, 2, 2, this.blitOffset);
+            GuiUtils.drawContinuousTexturedBox(WIDGETS_LOCATION, this.x, this.y, 0, 46 + k * 20, this.width, this.height, 200, 20, 2, 3, 2, 2, this.getBlitOffset());
             this.renderBg(mc, mouseX, mouseY);
             int color = 0xa0a0a0;
 

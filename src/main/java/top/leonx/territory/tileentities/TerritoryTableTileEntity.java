@@ -50,6 +50,7 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
     private final HashSet<ChunkPos> lastTerritories = new HashSet<>();
     private static final String TERRITORY_POS_KEY ="ter";
 
+
     public TerritoryTableTileEntity() {
         super(ModTileEntityType.TERRITORY_TILE_ENTITY);
         territoryInfo.assignedTo(null,UUID.randomUUID(),null,"",new PermissionFlag(),new HashMap<>());
@@ -179,8 +180,8 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
 
         if (playerentity != null && this.pos.withinDistance(playerentity.getPositionVec(), 4)) {
             rise = true;
-            double dx = playerentity.posX - this.pos.getX();
-            double dz = playerentity.posZ - this.pos.getZ();
+            double dx = playerentity.getPosX() - this.pos.getX();
+            double dz = playerentity.getPosZ() - this.pos.getZ();
             angle = (float) MathHelper.atan2(dz, dx);
 
             while (this.angle >= (float) Math.PI) {

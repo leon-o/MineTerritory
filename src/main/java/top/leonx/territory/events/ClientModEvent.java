@@ -10,6 +10,7 @@ import top.leonx.territory.TerritoryMod;
 import top.leonx.territory.client.renderer.TerritoryTableTileEntityRenderer;
 import top.leonx.territory.client.screen.TerritoryScreen;
 import top.leonx.territory.container.ModContainerTypes;
+import top.leonx.territory.tileentities.ModTileEntityType;
 import top.leonx.territory.tileentities.TerritoryTableTileEntity;
 
 @Mod.EventBusSubscriber(modid = TerritoryMod.MODID,bus = Mod.EventBusSubscriber.Bus.MOD,value = Dist.CLIENT)
@@ -18,6 +19,6 @@ public class ClientModEvent {
     public static void onFMLClientSetupEvent(final FMLClientSetupEvent event)
     {
         ScreenManager.registerFactory(ModContainerTypes.TERRITORY_CONTAINER, TerritoryScreen::new);
-        ClientRegistry.bindTileEntitySpecialRenderer(TerritoryTableTileEntity.class,new TerritoryTableTileEntityRenderer());
+        ClientRegistry.bindTileEntityRenderer(ModTileEntityType.TERRITORY_TILE_ENTITY, TerritoryTableTileEntityRenderer::new);
     }
 }

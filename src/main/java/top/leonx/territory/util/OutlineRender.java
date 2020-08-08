@@ -1,6 +1,7 @@
 package top.leonx.territory.util;
 
 import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.Tessellator;
@@ -51,7 +52,7 @@ public class OutlineRender {
         });
     }
 
-    public static void Render(Vec3d viewPos,double partialTick)
+    public static void Render(Vec3d viewPos,float pitch,float yaw ,double partialTick)
     {
         float alpha = (float) MathHelper.clampedLerp(0, 1, 3 - 2*(usedTime / duration));
         if(alpha<=0) return;
@@ -60,11 +61,16 @@ public class OutlineRender {
         Minecraft.getInstance().textureManager.bindTexture(checkerboardOverlayLocation); //must load once before
 
 
-        GlStateManager.pushMatrix();
-        GlStateManager.depthMask(true);
-        GlStateManager.enableBlend();
-        GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        GlStateManager.translated(-viewPos.x, -viewPos.y, -viewPos.z);
+        RenderSystem.pushMatrix();
+        RenderSystem.depthMask(true);
+        RenderSystem.enableBlend();
+        RenderSystem.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+
+
+        RenderSystem.rotatef(pitch,1,0,0);
+        RenderSystem.rotatef(yaw-180,0,1,0);
+        RenderSystem.translated(-viewPos.x, -viewPos.y, -viewPos.z);
+
         RenderUtil.enableTextureRepeat();
         Minecraft.getInstance().textureManager.bindTexture(checkerboardOverlayLocation);
 
@@ -78,9 +84,9 @@ public class OutlineRender {
 
         RenderUtil.disableTextureRepeat();
         //GlStateManager.enableCull();
-        GlStateManager.depthMask(true);
-        GlStateManager.popMatrix();
-        GlStateManager.disableBlend();
+        RenderSystem.depthMask(true);
+        RenderSystem.popMatrix();
+        RenderSystem.disableBlend();
     }
 
     private static class EdgeEntry
