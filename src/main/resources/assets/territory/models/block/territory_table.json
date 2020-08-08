@@ -3,7 +3,8 @@
 	"textures": {
 		"3": "territory:block/territory_table_bottom",
 		"4": "territory:block/territory_table_side",
-		"5": "territory:block/territory_table_top"
+		"5": "territory:block/territory_table_top",
+		"particle": "territory:block/territory_table_side"
 	},
 	"elements": [
 		{
