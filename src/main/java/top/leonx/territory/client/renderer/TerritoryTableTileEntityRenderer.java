@@ -99,10 +99,10 @@ public class TerritoryTableTileEntityRenderer extends TileEntityRenderer<Territo
 
         float fontSize = 1 / 96f;
 
-        matrixStackIn.translate(0, -0.5 + height, 0);
-        matrixStackIn.translate(0, 1, 1 / 12f);
+
+        matrixStackIn.translate(0, height, 1 / 12f);
         matrixStackIn.rotate(new Quaternion(new Vector3f(1, 0, 0), flag.rotateAngleX, false));
-        matrixStackIn.translate(0, -1, 0);
+        matrixStackIn.translate(0, -0.5, 0);
 
         matrixStackIn.scale(fontSize, -fontSize, fontSize);
         String owner_string = I18n.format("gui.territory.owner");
