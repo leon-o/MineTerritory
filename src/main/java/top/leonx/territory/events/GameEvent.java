@@ -1,6 +1,5 @@
 package top.leonx.territory.events;
 
-import com.mojang.authlib.yggdrasil.response.User;
 import net.minecraft.block.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
@@ -9,11 +8,13 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.server.MinecraftServer;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Hand;
+import net.minecraft.util.concurrent.TickDelayedTask;
 import net.minecraft.util.math.*;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.api.distmarker.Dist;
@@ -22,7 +23,7 @@ import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingDamageEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
-import net.minecraftforge.event.world.ExplosionEvent;
+import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import top.leonx.territory.TerritoryMod;
@@ -31,13 +32,12 @@ import top.leonx.territory.data.PermissionFlag;
 import top.leonx.territory.data.TerritoryInfo;
 import top.leonx.territory.data.TerritoryInfoHolder;
 import top.leonx.territory.items.ModItems;
+import top.leonx.territory.tileentities.TerritoryTableTileEntity;
 import top.leonx.territory.util.OutlineRender;
 import top.leonx.territory.util.UserUtil;
 
 import javax.annotation.Nullable;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 @SuppressWarnings("unused")
 @Mod.EventBusSubscriber(modid = TerritoryMod.MODID)
@@ -108,6 +108,56 @@ public class GameEvent {
     }
 
     @SubscribeEvent
+    public static void onBlockBreak(BlockEvent.BreakEvent event) {
+        if(event.getWorld().isRemote()) return;
+        if (event.getState().getBlock() instanceof BannerBlock) {
+            Set<TileEntity> tileEntityNear = getTileEntityNear(event.getWorld(), event.getPos());
+            tileEntityNear.forEach(t -> {
+                if (t instanceof TerritoryTableTileEntity) {
+                    TerritoryTableTileEntity tileEntity = (TerritoryTableTileEntity) t;
+                    tileEntity.getWorld().getServer().enqueue(new TickDelayedTask(1, tileEntity::notifyBannerDestroy));
+                }
+            });
+        }
+    }
+
+    @SubscribeEvent
+    public static void onBlockPlace(BlockEvent.EntityPlaceEvent event) {
+        if(event.getWorld().isRemote()) return;
+        if (event.getState().getBlock() instanceof BannerBlock) {
+            Set<TileEntity> tileEntityNear = getTileEntityNear(event.getWorld(), event.getPos());
+            tileEntityNear.forEach(t -> {
+                if (t instanceof TerritoryTableTileEntity) {
+                    TerritoryTableTileEntity tileEntity = (TerritoryTableTileEntity) t;
+                    tileEntity.getWorld().getServer().enqueue(new TickDelayedTask(1, tileEntity::notifyBannerPlace));
+                }
+            });
+        }
+    }
+
+    private static Set<TileEntity> getTileEntityNear(IWorld world, BlockPos pos) {
+            Set<TileEntity> tileEntities = new HashSet<>();
+
+            for (int k = -1; k <= 1; ++k) {
+                for (int l = -1; l <= 1; ++l) {
+                    if ((k != 0 || l != 0) && world.isAirBlock(pos.add(l, 0, k)) && world.isAirBlock(pos.add(l, 1, k))) {
+                        tileEntities.add(world.getTileEntity(pos.add(l * 2, 0, k * 2)));
+                        tileEntities.add(world.getTileEntity(pos.add(l * 2, 1, k * 2)));
+
+                        if (l != 0 && k != 0) {
+                            tileEntities.add(world.getTileEntity(pos.add(l * 2, 0, k)));
+                            tileEntities.add(world.getTileEntity(pos.add(l * 2, 1, k)));
+                            tileEntities.add(world.getTileEntity(pos.add(l, 0, k * 2)));
+                            tileEntities.add(world.getTileEntity(pos.add(l, 1, k * 2)));
+                        }
+                    }
+                }
+            }
+
+            return tileEntities;
+    }
+
+    @SubscribeEvent
     public static void onPlayerInteractEntity(PlayerInteractEvent.EntityInteract event) {
         PlayerEntity   player   = event.getPlayer();
         Entity         target   = event.getTarget();
@@ -124,8 +174,7 @@ public class GameEvent {
 
     private static void notifyPlayer(TerritoryInfo info, PlayerEntity player, PermissionFlag flag, boolean clientSide) {
         if (!clientSide) {
-            SendMessage(player, new TranslationTextComponent("message.territory.no_permission",
-                    new TranslationTextComponent(flag.getTranslationKey())));
+            SendMessage(player, new TranslationTextComponent("message.territory.no_permission", new TranslationTextComponent(flag.getTranslationKey())));
         } else {
             OutlineRender.StartRender(TerritoryInfoHolder.get(player.world).getAssociatedTerritory(info), 100);
         }
@@ -133,10 +182,9 @@ public class GameEvent {
 
     private static boolean hasPermission(TerritoryInfo info, PlayerEntity player, PermissionFlag flag) {
         if (info.IsProtected()) {
-            return player.hasPermissionLevel(4) ||
-                    info.ownerId != null && (info.ownerId.equals(player.getUniqueID()) ||
-                            (info.permissions!=null && info.permissions.containsKey(player.getUniqueID()) && info.permissions.get(player.getUniqueID()).contain(flag)) ||
-                            info.defaultPermission.contain(flag));
+            return player.hasPermissionLevel(4) || info.ownerId != null && (info.ownerId.equals(
+                    player.getUniqueID()) || (info.permissions != null && info.permissions.containsKey(player.getUniqueID()) && info.permissions.get(
+                    player.getUniqueID()).contain(flag)) || info.defaultPermission.contain(flag));
         }
         return true;
     }
@@ -157,7 +205,7 @@ public class GameEvent {
     @SubscribeEvent
     public static void clientTick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
-        coolDown=Math.max(0,coolDown- Minecraft.getInstance().getTickLength());
+        coolDown = Math.max(0, coolDown - Minecraft.getInstance().getTickLength());
         PlayerEntity clientPlayer = Minecraft.getInstance().player;
         if (clientPlayer == null) return;
 
@@ -174,15 +222,14 @@ public class GameEvent {
             String ownerName = UserUtil.getNameByUUID(thisTerritoryInfo.ownerId);
 
             if (hasPermission(thisTerritoryInfo, clientPlayer, PermissionFlag.ENTER)) {
-                if(UserUtil.DEFAULT_UUID.equals(thisTerritoryInfo.ownerId))
+                if (UserUtil.DEFAULT_UUID.equals(thisTerritoryInfo.ownerId))
                     SendMessage(clientPlayer, new TranslationTextComponent("message.territory.enter_public_territory", thisTerritoryInfo.territoryName));
-                else
-                    SendMessage(clientPlayer, new TranslationTextComponent("message.territory.enter_territory", ownerName, thisTerritoryInfo.territoryName));
+                else SendMessage(clientPlayer, new TranslationTextComponent("message.territory.enter_territory", ownerName, thisTerritoryInfo.territoryName));
 
             } else {
 
                 SendMessage(clientPlayer, new TranslationTextComponent("message.territory.no_permission",
-                        new TranslationTextComponent(PermissionFlag.ENTER.getTranslationKey())));
+                                                                       new TranslationTextComponent(PermissionFlag.ENTER.getTranslationKey())));
 
                 Vec3d vec               = clientPlayer.getMotion();
                 Vec3d vecAfterCollision = lastTickPos.x != thisTickPos.x ? new Vec3d(-vec.x, vec.y, vec.z) : new Vec3d(vec.x, vec.y, -vec.z);
@@ -194,10 +241,9 @@ public class GameEvent {
             OutlineRender.StartRender(TerritoryInfoHolder.get(clientPlayer.world).getAssociatedTerritory(thisTerritoryInfo), 100);
         } else if (!thisTerritoryInfo.IsProtected() && lastTerritoryInfo.IsProtected()) {
 
-            if(UserUtil.DEFAULT_UUID.equals(lastTerritoryInfo.ownerId))
+            if (UserUtil.DEFAULT_UUID.equals(lastTerritoryInfo.ownerId))
                 SendMessage(clientPlayer, new TranslationTextComponent("message.territory.exit_public_territory", lastTerritoryInfo.territoryName));
-            else
-            {
+            else {
                 String ownerName = UserUtil.getNameByUUID(lastTerritoryInfo.ownerId);
                 SendMessage(clientPlayer, new TranslationTextComponent("message.territory.exit_territory", ownerName, lastTerritoryInfo.territoryName));
             }
@@ -206,9 +252,9 @@ public class GameEvent {
         ItemStack heldItem = clientPlayer.getHeldItem(Hand.MAIN_HAND);
         if (heldItem.getItem() == ModItems.TerritoryBlockItem) {
             ClientPlayerEntity player = Minecraft.getInstance().player;
-            BlockRayTraceResult blockRayTraceResult = Minecraft.getInstance().world.rayTraceBlocks(new RayTraceContext(player.getEyePosition(0),
-                    player.getEyePosition(0).add(player.getLookVec().scale(4)),
-                    RayTraceContext.BlockMode.COLLIDER, RayTraceContext.FluidMode.ANY, player));
+            BlockRayTraceResult blockRayTraceResult = Minecraft.getInstance().world.rayTraceBlocks(
+                    new RayTraceContext(player.getEyePosition(0), player.getEyePosition(0).add(player.getLookVec().scale(4)),
+                                        RayTraceContext.BlockMode.COLLIDER, RayTraceContext.FluidMode.ANY, player));
             BlockPos pos          = blockRayTraceResult.getPos();
             ChunkPos thisChunkPos = new ChunkPos(pos.getX() >> 4, pos.getZ() >> 4);
 
@@ -227,7 +273,7 @@ public class GameEvent {
         Vec3d projectedView = Minecraft.getInstance().gameRenderer.getActiveRenderInfo().getProjectedView();
         float pitch         = Minecraft.getInstance().gameRenderer.getActiveRenderInfo().getPitch();
         float yaw           = Minecraft.getInstance().gameRenderer.getActiveRenderInfo().getYaw();
-        OutlineRender.Render(projectedView,pitch,yaw, event.getPartialTicks());
+        OutlineRender.Render(projectedView, pitch, yaw, event.getPartialTicks());
     }
 
 }

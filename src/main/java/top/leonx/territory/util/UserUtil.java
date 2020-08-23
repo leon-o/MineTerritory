@@ -1,7 +1,13 @@
 package top.leonx.territory.util;
 
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.player.AbstractClientPlayerEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.UsernameCache;
+import net.minecraftforge.fml.loading.FMLEnvironment;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -16,11 +22,24 @@ public class UserUtil {
     public static String getNameByUUID(UUID uuid)
     {
         if(uuid==null)return DEFAULT_NAME;
+        if(FMLEnvironment.dist.isClient())
+        {
+            PlayerEntity player = Minecraft.getInstance().world.getPlayerByUuid(uuid);
+            if(player!=null)
+                return player.getName().getString();
+        }
         String lastKnownUsername = UsernameCache.getLastKnownUsername(uuid);
         return lastKnownUsername==null?DEFAULT_NAME:lastKnownUsername;
     }
     public static UUID getUUIDByName(String name)
     {
+        if(FMLEnvironment.dist== Dist.CLIENT)
+        {
+            List<AbstractClientPlayerEntity> players = Minecraft.getInstance().world.getPlayers();
+            Optional<AbstractClientPlayerEntity> first = players.stream().filter(t -> t.getName().toString().equals(name)).findFirst();
+            if(first.isPresent())
+                return first.get().getUniqueID();
+        }
         if(name.equals(DEFAULT_NAME))
             return DEFAULT_UUID;
         Optional<Map.Entry<UUID, String>> first = UsernameCache.getMap().entrySet().stream().filter(entry -> name.equals(entry.getValue())).findFirst();
@@ -31,10 +50,25 @@ public class UserUtil {
     }
     public static boolean hasPlayer(UUID uuid)
     {
-        return UsernameCache.containsUUID(uuid);
+        if(UsernameCache.containsUUID(uuid))
+            return true;
+
+        if(FMLEnvironment.dist.isClient())
+        {
+            PlayerEntity player = Minecraft.getInstance().world.getPlayerByUuid(uuid);
+            return player!=null;
+        }
+        return false;
     }
     public static boolean hasPlayer(String name)
     {
-        return UsernameCache.getMap().values().stream().anyMatch(name::equals);
+        if(UsernameCache.getMap().values().stream().anyMatch(name::equals))
+            return true;
+        if(FMLEnvironment.dist.isClient())
+        {
+            return Minecraft.getInstance().world.getPlayers().stream().anyMatch(t->t.getName().toString().equals(name));
+        }
+
+        return false;
     }
 }

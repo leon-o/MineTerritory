@@ -44,7 +44,8 @@ public class TerritoryTableBlock extends Block {
 
     @Override
     public ActionResultType onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
-
+        if(handIn==Hand.MAIN_HAND)
+            getTerritoryTileEntity(worldIn,pos).mapStack=player.getHeldItem(handIn);
         if(worldIn.isRemote)return ActionResultType.PASS;
         TerritoryTableTileEntity tileEntity=getTerritoryTileEntity(worldIn,pos);
         if(tileEntity.getOwnerId().equals(player.getUniqueID())
@@ -85,7 +86,9 @@ public class TerritoryTableBlock extends Block {
     @Override
     public void onBlockPlacedBy(World worldIn, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
 
-        getTerritoryTileEntity(worldIn,pos).initTerritoryInfo(placer.getUniqueID());
+        TerritoryTableTileEntity tileEntity = getTerritoryTileEntity(worldIn, pos);
+        tileEntity.initTerritoryInfo(placer.getUniqueID());
+        tileEntity.drawMapData();
         super.onBlockPlacedBy(worldIn, pos, state, placer, stack);
     }
 
@@ -105,6 +108,10 @@ public class TerritoryTableBlock extends Block {
         return false;
     }
 
+//    @Override
+//    public BlockRenderType getRenderType(BlockState state) {
+//        return BlockRenderType.INVISIBLE;
+//    }
 
     //    @Override
 //    public boolean canHarvestBlock(BlockState state, IBlockReader world, BlockPos pos, PlayerEntity player) {

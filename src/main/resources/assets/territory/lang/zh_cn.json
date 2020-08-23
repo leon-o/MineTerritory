@@ -6,6 +6,8 @@
   "message.territory.exit_territory": "你离开了%s的领地: %s",
   "message.territory.exit_public_territory": "你已离开 %s",
   "message.territory.need_experience": "需要%s级经验",
+  "message.territory.insufficient_protect_power": "保护能力不足，一些领地将会丢失",
+  "message.territory.territory_restore": "保护能力已满足, %s 已恢复",
   "permission.territory.enter": "进入",
   "permission.territory.attack_entity": "攻击",
   "permission.territory.break_block": "破坏方块",
@@ -25,5 +27,6 @@
   "gui.territory.back": "返回",
   "gui.territory.owner": "拥有者",
   "gui.territory.all_player": "所有人",
-  "gui.territory.territory_name": "领地名称"
+  "gui.territory.territory_name": "领地名称",
+  "gui.territory.protect_power": "保护能力"
 }

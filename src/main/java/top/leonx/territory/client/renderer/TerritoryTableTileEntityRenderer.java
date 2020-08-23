@@ -15,10 +15,14 @@ import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
 import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.item.DyeColor;
+import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.tileentity.BannerPattern;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.world.storage.MapData;
 import top.leonx.territory.tileentities.TerritoryTableTileEntity;
 
 import java.util.ArrayList;
@@ -26,23 +30,11 @@ import java.util.List;
 
 public class TerritoryTableTileEntityRenderer extends TileEntityRenderer<TerritoryTableTileEntity> {
 
-    private final ModelRenderer flag        = new ModelRenderer(64, 64, 0, 0);
-    private final ModelRenderer stickBottom = new ModelRenderer(64, 64, 44, 0);
-    private final ModelRenderer stickTop    = new ModelRenderer(64, 64, 0, 42);
-    float wave = 0;
-
-    //BannerModel bannerModel=new BannerModel();
-    List<Pair<BannerPattern, DyeColor>> patterns = new ArrayList<>();
+    private static final RenderType MAP_BACKGROUND = RenderType.getText(new ResourceLocation("textures/map/map_background.png"));
+    private static final RenderType COMPASS_ADDITION = RenderType.getText(new ResourceLocation("territory","textures/block/compass.png"));
 
     public TerritoryTableTileEntityRenderer(TileEntityRendererDispatcher dispatcher) {
         super(dispatcher);
-        patterns.add(new Pair<>(BannerPattern.BASE, DyeColor.WHITE));
-        patterns.add(new Pair<>(BannerPattern.GRADIENT_UP, DyeColor.ORANGE));
-        patterns.add(new Pair<>(BannerPattern.GRADIENT, DyeColor.PINK));
-
-        this.stickBottom.addBox(-1.0F, -30.0F, -1.0F, 2.0F, 42.0F, 2.0F, 0.0F);
-        this.stickTop.addBox(-10.0F, -32.0F, -1.0F, 20.0F, 2.0F, 2.0F, 0.0F);
-        this.flag.addBox(-10.0F, 0.0F, -2.0F, 20.0F, 40.0F, 1.0F, 0.0F);
     }
 
     public static void renderFlag(MatrixStack matrixStack, IRenderTypeBuffer buffer, int packedLightIn, int packedOverlayIn, ModelRenderer modelRenderer, Material material, boolean isBanner, List<Pair<BannerPattern, DyeColor>> pairs) {
@@ -65,14 +57,13 @@ public class TerritoryTableTileEntityRenderer extends TileEntityRenderer<Territo
     @SuppressWarnings("NullableProblems")
     @Override
     public void render(TerritoryTableTileEntity tileEntityIn, float partialTicks, MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int combinedLightIn, int combinedOverlayIn) {
-        wave += 0.07 * partialTicks;
-        wave %= Math.PI * 2;
+
         if (tileEntityIn.rise) {
-            tileEntityIn.height += 0.09 * partialTicks;
-            tileEntityIn.scale += 0.06f * partialTicks;
+            tileEntityIn.height += 0.06 * partialTicks;
+            tileEntityIn.scale += 0.04f * partialTicks;
         } else {
-            tileEntityIn.height -= 0.09 * partialTicks;
-            tileEntityIn.scale -= 0.06f * partialTicks;
+            tileEntityIn.height -= 0.06 * partialTicks;
+            tileEntityIn.scale -= 0.04f * partialTicks;
         }
         tileEntityIn.height = MathHelper.clamp(tileEntityIn.height, 0, 1f);
         tileEntityIn.scale = MathHelper.clamp(tileEntityIn.scale, 0, 1f);
@@ -81,28 +72,43 @@ public class TerritoryTableTileEntityRenderer extends TileEntityRenderer<Territo
         float scale = EasingLerp(1 / 4f, 1 / 2f, tileEntityIn.scale);
 
         matrixStackIn.push();
-        matrixStackIn.translate(0.5, height, 0.5);
-        matrixStackIn.rotate(new Quaternion(new Vector3f(0, 1, 0), 90 - tileEntityIn.angle, true));
+        matrixStackIn.translate(0.5, 0, 0.5);
+
+        IVertexBuilder compassBuffer = bufferIn.getBuffer(COMPASS_ADDITION);
+        Matrix4f matrix4f = matrixStackIn.getLast().getMatrix();
+        compassBuffer.pos(matrix4f, -0.5F, 0.752F,0.5F).color(255, 255, 255, 255).tex(0.0F, 1.0F).lightmap(combinedLightIn).endVertex();
+        compassBuffer.pos(matrix4f, 0.5F,0.752F, 0.5F).color(255, 255, 255, 255).tex(1.0F, 1.0F).lightmap(combinedLightIn).endVertex();
+        compassBuffer.pos(matrix4f, 0.5F, 0.752F,-0.5F).color(255, 255, 255, 255).tex(1.0F, 0.0F).lightmap(combinedLightIn).endVertex();
+        compassBuffer.pos(matrix4f, -0.5F, 0.752F,-0.5F).color(255, 255, 255, 255).tex(0.0F, 0.0F).lightmap(combinedLightIn).endVertex();
+
+        matrixStackIn.translate(0, height, 0);
+        float angleLerp=MathHelper.interpolateAngle(partialTicks,tileEntityIn.angleLastTick,tileEntityIn.angle);
+        matrixStackIn.rotate(new Quaternion(new Vector3f(0, 1, 0), 90 - angleLerp, true));
+
         matrixStackIn.push();
         RenderSystem.enableRescaleNormal();
-        matrixStackIn.scale(scale, -scale, -scale);
+        matrixStackIn.scale(scale,scale,scale);
+        matrixStackIn.rotate(new Quaternion(new Quaternion(new Vector3f(1, 0, 0),30*(3*scale-0.5f),true)));
 
-        IVertexBuilder ivertexbuilder = ModelBakery.LOCATION_BANNER_BASE.getBuffer(bufferIn, RenderType::getEntitySolid);
-        this.stickBottom.render(matrixStackIn, ivertexbuilder, combinedLightIn, combinedOverlayIn);
-        this.stickTop.render(matrixStackIn, ivertexbuilder, combinedLightIn, combinedOverlayIn);
+        IVertexBuilder mapBackBuffer = bufferIn.getBuffer(MAP_BACKGROUND);
+        matrix4f = matrixStackIn.getLast().getMatrix();
+        mapBackBuffer.pos(matrix4f, -0.6F, 0.0F,0.6F).color(255, 255, 255, 255).tex(0.0F, 1.0F).lightmap(combinedLightIn).endVertex();
+        mapBackBuffer.pos(matrix4f, 0.6F,0.0F, 0.6F).color(255, 255, 255, 255).tex(1.0F, 1.0F).lightmap(combinedLightIn).endVertex();
+        mapBackBuffer.pos(matrix4f, 0.6F, 0.0F,-0.6F).color(255, 255, 255, 255).tex(1.0F, 0.0F).lightmap(combinedLightIn).endVertex();
+        mapBackBuffer.pos(matrix4f, -0.6F, 0.0F,-0.6F).color(255, 255, 255, 255).tex(0.0F, 0.0F).lightmap(combinedLightIn).endVertex();
 
-        matrixStackIn.translate(0, -2, 0);
-        this.flag.rotateAngleX = (-0.0125F + 0.01F * MathHelper.cos(wave) * (float) Math.PI);
-        renderFlag(matrixStackIn, bufferIn, combinedLightIn, combinedOverlayIn, this.flag, ModelBakery.LOCATION_BANNER_BASE, true, this.patterns);
+        IVertexBuilder mapBuffer=bufferIn.getBuffer(tileEntityIn.mapRenderType);
+        mapBuffer.pos(matrix4f, -0.55F, 0.002F,0.55F).color(255, 255, 255, 255).tex(0.0F, 1.0F).lightmap(combinedLightIn).endVertex();
+        mapBuffer.pos(matrix4f, 0.55F,0.002F, 0.55F).color(255, 255, 255, 255).tex(1.0F, 1.0F).lightmap(combinedLightIn).endVertex();
+        mapBuffer.pos(matrix4f, 0.55F, 0.002F,-0.55F).color(255, 255, 255, 255).tex(1.0F, 0.0F).lightmap(combinedLightIn).endVertex();
+        mapBuffer.pos(matrix4f, -0.55F, 0.002F,-0.55F).color(255, 255, 255, 255).tex(0.0F, 0.0F).lightmap(combinedLightIn).endVertex();
 
         matrixStackIn.pop();
 
         float fontSize = 1 / 96f;
 
 
-        matrixStackIn.translate(0, height, 1 / 12f);
-        matrixStackIn.rotate(new Quaternion(new Vector3f(1, 0, 0), flag.rotateAngleX, false));
-        matrixStackIn.translate(0, -0.5, 0);
+        matrixStackIn.translate(0, height-0.5, 1 / 12f);
 
         matrixStackIn.scale(fontSize, -fontSize, fontSize);
         String owner_string = I18n.format("gui.territory.owner");

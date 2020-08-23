@@ -6,9 +6,9 @@ import net.minecraft.client.gui.widget.button.ChangePageButton;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PermissionList extends Widget {
+public class WrapList extends Widget {
 
-    public PermissionList(int xIn, int yIn, int widthIn, int heightIn, String msg) {
+    public WrapList(int xIn, int yIn, int widthIn, int heightIn, String msg) {
         super(xIn, yIn, widthIn, heightIn, msg);
         prevPageButton = new ChangePageButton(xIn, yIn + heightIn - 13, false, $ -> {
             pageNumber=Math.max(0,--pageNumber);
@@ -26,10 +26,11 @@ public class PermissionList extends Widget {
     }
     ChangePageButton prevPageButton,nextPageButton;
     public final List<Widget> children=new ArrayList<>();
-    public int entryCountEachPage=6;
+    public int entryCountEachPage=4;
     public int pageNumber=0;
     public int marginRight=8;
-    public int marginTop=6;
+    public int marginLeft=8;
+    public int marginTop=4;
     @Override
     public void render(int mouseX, int mouseY, float partialTick) {
         //super.render(mouseX, mouseY, partialTick);
@@ -43,7 +44,7 @@ public class PermissionList extends Widget {
                 maxHeightThisLine=0;
             }
             maxHeightThisLine=Math.max(widget.getHeight(),maxHeightThisLine);
-            widget.x=super.x+left;
+            widget.x=super.x+left+marginLeft;
             widget.y=super.y+top;
             widget.render(mouseX, mouseY, partialTick);
             left+=widget.getWidth()+marginRight;

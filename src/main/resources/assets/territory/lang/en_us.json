@@ -6,6 +6,8 @@
   "message.territory.exit_territory": "You exited %s's territory: %s",
   "message.territory.exit_public_territory": "You entered %s",
   "message.territory.need_experience": "%s level experience required",
+  "message.territory.insufficient_protect_power": "Insufficient protect power. Some territories has lost.",
+  "message.territory.territory_restore": "Enough power, %s has been restored",
   "permission.territory.enter": "Enter",
   "permission.territory.attack_entity": "Attack",
   "permission.territory.break_block": "Break Block",
@@ -25,5 +27,6 @@
   "gui.territory.back": "Back",
   "gui.territory.owner": "Owner",
   "gui.territory.all_player": "All Player",
-  "gui.territory.territory_name": "Territory Name"
+  "gui.territory.territory_name": "Territory Name",
+  "gui.territory.protect_power": "Protect Power"
 }

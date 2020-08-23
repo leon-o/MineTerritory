@@ -2,8 +2,11 @@ package top.leonx.territory.util;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.IVertexBuilder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.ResourceLocation;
@@ -74,11 +77,11 @@ public class OutlineRender {
         RenderUtil.enableTextureRepeat();
         Minecraft.getInstance().textureManager.bindTexture(checkerboardOverlayLocation);
 
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder bufferBuilder=tessellator.getBuffer();
-        bufferBuilder.begin(GL11.GL_QUADS, DefaultVertexFormats.PARTICLE_POSITION_TEX_COLOR_LMAP);
-        edges.forEach((t,v)-> RenderUtil.drawWall(t.from,t.to,255,0,0,255,16,new Vec3d(1,1,1),alpha,0xF0,0xF0,
-                bufferBuilder));
+        Tessellator       tessellator = Tessellator.getInstance();
+        IRenderTypeBuffer.Impl renderTypeBuffer   = IRenderTypeBuffer.getImpl(tessellator.getBuffer());
+        IVertexBuilder buffer = renderTypeBuffer.getBuffer(RenderType.getSolid());
+        //BufferBuilder bufferBuilder=bufferBuilder.begin(GL11.GL_QUADS, DefaultVertexFormats.PARTICLE_POSITION_TEX_COLOR_LMAP);
+        edges.forEach((t,v)-> RenderUtil.drawWall(t.from,t.to,255,0,0,255,16,new Vec3d(1,1,1),alpha,0xF0,0xF0, buffer));
 
         tessellator.draw();
 

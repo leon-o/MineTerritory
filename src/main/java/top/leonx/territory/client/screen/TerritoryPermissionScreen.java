@@ -1,13 +1,12 @@
 package top.leonx.territory.client.screen;
 
-import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.resources.I18n;
 import net.minecraftforge.common.UsernameCache;
 import net.minecraftforge.fml.client.gui.widget.*;
-import top.leonx.territory.client.gui.PermissionList;
+import top.leonx.territory.client.gui.WrapList;
 import top.leonx.territory.client.gui.PlayerList;
 import top.leonx.territory.client.gui.PermissionToggleButton;
 import top.leonx.territory.container.TerritoryTableContainer;
@@ -22,8 +21,8 @@ import java.util.function.Consumer;
 
 public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryTableContainer> {
 
-    private PlayerList playerList;
-    private PermissionList permissionList;
+    private PlayerList      playerList;
+    private WrapList        permissionList;
     private TextFieldWidget search;
     private TextFieldWidget addTextField;
 
@@ -51,13 +50,13 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryTable
                 t-> addNewPlayer());
         removePlayerBtn=new ExtendedButton(parent.getGuiLeft()+120,parent.getGuiTop()+8,24,16,I18n.format("gui.territory.remove_player_btn"),
                 t-> removePlayer());
-        permissionList=new PermissionList(parent.getGuiLeft()+120,parent.getGuiTop()+30,110,100,"permission_list");
-
+        permissionList=new WrapList(parent.getGuiLeft()+120, parent.getGuiTop()+30, 110, 104, "permission_list");
+        permissionList.marginLeft=6;
         playerList.children().add(defaultPlayerEntry);
         container.territoryInfo.permissions.forEach((k,v)-> playerList.children().add(new PlayerList.PlayerEntry(k,playerList,this::onPlayerEntrySelected)));
         playerList.setSelected(defaultPlayerEntry);
 
-        int checkboxWidth=50;
+        int checkboxWidth=100;
         int checkboxHeight=20;
         for (PermissionFlag flag : PermissionFlag.basicFlag) {
             PermissionToggleButton btn=new PermissionToggleButton(0,0,checkboxWidth, checkboxHeight,

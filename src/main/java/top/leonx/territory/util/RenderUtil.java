@@ -1,7 +1,9 @@
 package top.leonx.territory.util;
 
 import com.mojang.blaze3d.platform.GlStateManager;
-import net.minecraft.client.renderer.BufferBuilder;
+import com.mojang.blaze3d.vertex.IVertexBuilder;
+import net.minecraft.client.renderer.Vector3f;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -26,7 +28,7 @@ public class RenderUtil {
 //        //GlStateManager.color4f(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha());
 //        Minecraft.getInstance().textureManager.bindTexture(edgeSquareLocation);
 //        Tessellator tessellator = Tessellator.getInstance();
-//        BufferBuilder bufferBuilder = tessellator.getBuffer();
+//        IVertexBuilder bufferBuilder = tessellator.getBuffer();
 //        bufferBuilder.begin(GL11.GL_QUADS, DefaultVertexFormats.PARTICLE_POSITION_TEX_COLOR_LMAP);
 //
 //        int skyLight = 0xFFFFF0;
@@ -65,29 +67,29 @@ public class RenderUtil {
 //        //GL11.glPopAttrib();
 //    }
 
-    public static void drawWall(Vec3d from,Vec3d to,double height,Vec3d rgb,float alpha,int skyL, int blockL, BufferBuilder buffer)
+    public static void drawWall(Vec3d from,Vec3d to,double height,Vec3d rgb,float alpha,int skyL, int blockL, IVertexBuilder buffer)
     {
         drawDoubleSidePlane(from,to.subtract(from),new Vec3d(0,height,0),rgb,alpha,skyL,blockL,buffer);
     }
     public static void drawWall(Vec3d from,Vec3d to,double height,int minU,int minV,int maxU,int maxV,Vec3d rgb,float alpha,int skyL, int blockL,
-                                BufferBuilder buffer)
+                                IVertexBuilder buffer)
     {
         drawDoubleSidePlane(from,to.subtract(from),new Vec3d(0,height,0),minU,minV,maxU,maxV,rgb,alpha,skyL,blockL,buffer);
     }
-    public static void drawDoubleSidePlane(Vec3d o,Vec3d l1,Vec3d l2,Vec3d rgb,float alpha,int skyL, int blockL, BufferBuilder buffer)
+    public static void drawDoubleSidePlane(Vec3d o,Vec3d l1,Vec3d l2,Vec3d rgb,float alpha,int skyL, int blockL, IVertexBuilder buffer)
     {
         drawDoubleSidePlane(o,l1,l2,0,0,1,1,rgb,alpha,skyL,blockL,buffer);
     }
 
     public static void drawDoubleSidePlane(Vec3d o,Vec3d l1,Vec3d l2,int minU,int minV,int maxU,int maxV,Vec3d rgb,float alpha,int skyL, int blockL,
-                                           BufferBuilder buffer)
+                                           IVertexBuilder buffer)
     {
         Vec3d n = l1.crossProduct(l2).normalize();
         drawPlane(o.add(n.scale(0.02)),l1,l2,minU,minV,maxU,maxV,rgb,alpha,skyL,blockL, buffer);
         drawPlane(o.subtract(n.scale(0.02)),l2,l1,minV,minU,maxV,maxU,rgb,alpha,skyL,blockL, buffer);
     }
 
-    public static void drawPlane(Vec3d o,Vec3d l1,Vec3d l2,Vec3d rgb,float alpha,int skyL, int blockL, BufferBuilder buffer)
+    public static void drawPlane(Vec3d o,Vec3d l1,Vec3d l2,Vec3d rgb,float alpha,int skyL, int blockL, IVertexBuilder buffer)
     {
         drawPlane(o,l1,l2,0,0,1,1,rgb,alpha,skyL,blockL,buffer);
     }
@@ -103,15 +105,17 @@ public class RenderUtil {
      * @param buffer Buffer Builder
      */
     // Normal direction = l1 x l2
-    public static void drawPlane(Vec3d o,Vec3d l1,Vec3d l2,int minU,int minV,int maxU,int maxV,Vec3d col,float alpha,int skyL, int blockL, BufferBuilder buffer)
+    public static void drawPlane(Vec3d o,Vec3d l1,Vec3d l2,int minU,int minV,int maxU,int maxV,Vec3d col,float alpha,int skyL, int blockL, IVertexBuilder buffer)
     {
         float r=(float)col.x;//(col>>>16)& 0x000000FF;
         float g=(float)col.y;//(col>>>8)& 0x000000FF;
         float b=(float)col.z;//col & 0x000000FF;
-        buffer.pos(o.x,o.y,o.z).tex(minU,minV).color(r,g,b,alpha).lightmap(skyL, blockL).endVertex();
-        buffer.pos(o.x+l1.x,o.y+l1.y,o.z+l1.z).tex(minU,maxV).color(r,g,b,alpha).lightmap(skyL, blockL).endVertex();
-        buffer.pos(o.x+l1.x+l2.x,o.y+l1.y+l2.y,o.z+l1.z+l2.z).tex(maxU,maxV).color(r,g,b,alpha).lightmap(skyL, blockL).endVertex();
-        buffer.pos(o.x+l2.x,o.y+l2.y,o.z+l2.z).tex(maxU,minV).color(r,g,b,alpha).lightmap(skyL, blockL).endVertex();
+        Vec3d normal = l1.crossProduct(l2).normalize();
+        Vector3f nf=new Vector3f((float) normal.x,(float)normal.y,(float)normal.z);
+        buffer.pos(o.x,o.y,o.z).color(r,g,b,alpha).tex(minU,minV).lightmap(skyL, blockL).normal(nf.getX(),nf.getY(),nf.getZ()).overlay(OverlayTexture.NO_OVERLAY).endVertex();
+        buffer.pos(o.x+l1.x,o.y+l1.y,o.z+l1.z).color(r,g,b,alpha).tex(minU,maxV).lightmap(skyL, blockL).normal(nf.getX(),nf.getY(),nf.getZ()).overlay(OverlayTexture.NO_OVERLAY).endVertex();
+        buffer.pos(o.x+l1.x+l2.x,o.y+l1.y+l2.y,o.z+l1.z+l2.z).color(r,g,b,alpha).tex(maxU,maxV).lightmap(skyL, blockL).normal(nf.getX(),nf.getY(),nf.getZ()).overlay(OverlayTexture.NO_OVERLAY).endVertex();
+        buffer.pos(o.x+l2.x,o.y+l2.y,o.z+l2.z).color(r,g,b,alpha).tex(maxU,minV).lightmap(skyL, blockL).normal(nf.getX(),nf.getY(),nf.getZ()).overlay(OverlayTexture.NO_OVERLAY).endVertex();
     }
 
     public static void enableTextureRepeat() {

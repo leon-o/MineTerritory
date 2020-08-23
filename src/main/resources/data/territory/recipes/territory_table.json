@@ -1,13 +1,16 @@
 {
   "type": "minecraft:crafting_shaped",
   "pattern": [
-    " B ",
+    "ABA",
     "D#D",
     "###"
   ],
   "key": {
+    "A": {
+      "item": "minecraft:paper"
+    },
     "B": {
-      "tag": "minecraft:banners"
+      "item": "minecraft:compass"
     },
     "#": {
       "item": "minecraft:obsidian"

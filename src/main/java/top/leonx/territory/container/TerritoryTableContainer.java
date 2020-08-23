@@ -8,14 +8,16 @@ import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.container.Container;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.loading.FMLEnvironment;
 import net.minecraftforge.fml.network.NetworkDirection;
 import net.minecraftforge.fml.network.NetworkEvent;
 import top.leonx.territory.TerritoryPacketHandler;
@@ -23,6 +25,8 @@ import top.leonx.territory.capability.ModCapabilities;
 import top.leonx.territory.data.PermissionFlag;
 import top.leonx.territory.data.TerritoryInfo;
 import top.leonx.territory.tileentities.TerritoryTableTileEntity;
+import top.leonx.territory.util.MessageUtil;
+import top.leonx.territory.util.TerritoryUtil;
 
 import javax.annotation.Nonnull;
 import java.util.*;
@@ -45,6 +49,7 @@ public class TerritoryTableContainer extends Container {
     public final Set<ChunkPos> forbiddenChunkPos = new HashSet<>();
     private final PlayerEntity player;
     private final Set<ChunkPos> originalTerritories = new HashSet<>();
+    public ResourceLocation mapLocation;
     public ChunkPos mapLeftTopChunkPos;
     public int protectPower;
 
@@ -78,7 +83,9 @@ public class TerritoryTableContainer extends Container {
 
             initChunkInfo();
         }
-        protectPower = computeProtectPower();
+        protectPower = tileEntity.computeProtectPower();
+        if(FMLEnvironment.dist== Dist.CLIENT)
+            mapLocation=tileEntity.mapLocation;
     }
 
     private static TerritoryTableTileEntity getTileEntity(PlayerInventory inventory, PacketBuffer buffer) {
@@ -122,11 +129,11 @@ public class TerritoryTableContainer extends Container {
 
         TerritoryTableTileEntity tileEntity = (TerritoryTableTileEntity) player.world.getTileEntity(tileEntityPos);
         if (!player.isCreative()) {
-            int experienceNeed = msg.readyAdd.length + msg.readyRemove.length;
+            int experienceNeed = msg.readyAdd.length;
             if (player.experienceLevel >= experienceNeed) {
                 player.addExperienceLevel(-(msg.readyAdd.length + msg.readyRemove.length));
             } else {
-                player.sendMessage(new TranslationTextComponent("message.territory.need_experience", Integer.toString(experienceNeed)));
+                player.sendMessage(new TranslationTextComponent("message.territory.need_experience", Integer.toString(experienceNeed)).setStyle(MessageUtil.YELLOW));
                 return false;
             }
         }
@@ -184,83 +191,8 @@ public class TerritoryTableContainer extends Container {
         removableChunkPos.clear();
 
         removableChunkPos.addAll(territories);
-        removableChunkPos.removeAll(computeCutChunk(tileEntityChunkPos, territories));
+        removableChunkPos.removeAll(TerritoryUtil.computeCutChunk(tileEntityChunkPos, territories));
         removableChunkPos.remove(tileEntityChunkPos); // Player cant remove the chunkPos where the tileEntity is located.
-    }
-
-    // Calculate cut vertex https://www.cnblogs.com/en-heng/p/4002658.html
-    private HashSet<ChunkPos> computeCutChunk(ChunkPos center, Collection<ChunkPos> chunks) {
-        HashMap<ChunkPos, Boolean> visit = new HashMap<>();
-        HashMap<ChunkPos, ChunkPos> parent = new HashMap<>();
-        HashMap<ChunkPos, Integer> dfn = new HashMap<>();
-        HashMap<ChunkPos, Integer> low = new HashMap<>();
-        chunks.forEach(t -> {
-            visit.put(t, false);
-            parent.put(t, null);
-            dfn.put(t, 0);
-            low.put(t, 0);
-        });
-        HashSet<ChunkPos> result = new HashSet<>();
-        computeCutChunk(center, chunks, visit, parent, dfn, low, 0, result);
-        return result;
-    }
-
-    private void computeCutChunk(ChunkPos current, Collection<ChunkPos> chunks, Map<ChunkPos, Boolean> visit, Map<ChunkPos, ChunkPos> parent, Map<ChunkPos,
-            Integer> dfn, Map<ChunkPos, Integer> low, int dfsCount, HashSet<ChunkPos> result) {
-        dfsCount++;
-        int children = 0;
-        int chunkX = current.x;
-        int chunkZ = current.z;
-        ChunkPos right = new ChunkPos(chunkX + 1, chunkZ);
-        ChunkPos up = new ChunkPos(chunkX, chunkZ + 1);
-        ChunkPos left = new ChunkPos(chunkX - 1, chunkZ);
-        ChunkPos down = new ChunkPos(chunkX, chunkZ - 1);
-        List<ChunkPos> linked = Arrays.asList(left, up, right, down);
-        visit.replace(current, true);
-        dfn.replace(current, dfsCount);
-        low.replace(current, dfsCount);
-        for (ChunkPos pos : linked) {
-            if (!chunks.contains(pos)) continue;
-            if (!visit.get(pos)) {
-                children++;
-                parent.replace(pos, current);
-                computeCutChunk(pos, chunks, visit, parent, dfn, low, dfsCount, result);
-                low.replace(current, Math.min(low.get(pos), low.get(current)));
-                if (parent.get(current) == null && children > 1 || parent.get(current) != null && low.get(pos) >= dfn.get(current)) {
-                    result.add(current);
-                }
-            } else if (pos != parent.get(current)) {
-                low.replace(current, Math.min(low.get(current), dfn.get(pos)));
-            }
-        }
-    }
-
-    public int getBlockPower(IWorld world, BlockPos pos) {
-        String banner_name = Objects.requireNonNull(world.getBlockState(pos).getBlock().getRegistryName()).getPath();
-        return banner_name.contains("banner") ? 1 : 0;
-    }
-
-    private int computeProtectPower() {
-        int power = 0;
-        BlockPos pos = tileEntityPos;
-        IWorld world = player.world;
-        for (int k = -1; k <= 1; ++k) {
-            for (int l = -1; l <= 1; ++l) {
-                if ((k != 0 || l != 0) && world.isAirBlock(pos.add(l, 0, k)) && world.isAirBlock(pos.add(l, 1, k))) {
-                    power += getBlockPower(world, pos.add(l * 2, 0, k * 2));
-                    power += getBlockPower(world, pos.add(l * 2, 1, k * 2));
-
-                    if (l != 0 && k != 0) {
-                        power += getBlockPower(world, pos.add(l * 2, 0, k));
-                        power += getBlockPower(world, pos.add(l * 2, 1, k));
-                        power += getBlockPower(world, pos.add(l, 0, k * 2));
-                        power += getBlockPower(world, pos.add(l, 1, k * 2));
-                    }
-                }
-            }
-        }
-
-        return power + 1;
     }
 
     public int getTotalProtectPower() {
