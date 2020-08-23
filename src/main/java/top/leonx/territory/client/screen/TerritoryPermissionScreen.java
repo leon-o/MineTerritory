@@ -1,6 +1,7 @@
 package top.leonx.territory.client.screen;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.resources.I18n;
@@ -200,11 +201,12 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryTable
     {
         if(addTextField.getText().length()>0)
         {
-            Optional<Map.Entry<UUID, String>> first =
-                    UsernameCache.getMap().entrySet().stream().filter(t -> t.getValue().indexOf(addTextField.getText())==0).findFirst();
+            String selfName = Minecraft.getInstance().player.getName().toString();
+            Optional<String> first =
+                    UserUtil.getAllPlayerName().stream().filter(t -> !t.equals(selfName)&&t.indexOf(addTextField.getText())==0).findFirst();
             if(first.isPresent())
             {
-                addTextFieldSuggestion=first.get().getValue().replace(addTextField.getText(),"");
+                addTextFieldSuggestion=first.get().replace(addTextField.getText(),"");
                 addPlayerBtn.active=true;
             }else{
                 addPlayerBtn.active=false;

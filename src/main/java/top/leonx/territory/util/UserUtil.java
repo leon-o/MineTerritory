@@ -7,10 +7,8 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.UsernameCache;
 import net.minecraftforge.fml.loading.FMLEnvironment;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.lang.reflect.Array;
+import java.util.*;
 
 public class UserUtil {
     public static final String DEFAULT_NAME="All";
@@ -70,5 +68,14 @@ public class UserUtil {
         }
 
         return false;
+    }
+    public static List<String> getAllPlayerName()
+    {
+        List<String> result = new ArrayList<>(UsernameCache.getMap().values());
+        if(FMLEnvironment.dist.isClient())
+        {
+            Collections.addAll(result,Minecraft.getInstance().world.getServer().getPlayerList().getOnlinePlayerNames());
+        }
+        return result;
     }
 }

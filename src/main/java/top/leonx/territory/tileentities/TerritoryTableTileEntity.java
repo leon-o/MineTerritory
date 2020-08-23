@@ -36,6 +36,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
+import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
 import top.leonx.territory.container.TerritoryTableContainer;
 import top.leonx.territory.data.PermissionFlag;
 import top.leonx.territory.data.TerritoryInfo;
@@ -140,7 +141,7 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
         ListNBT     listNBT = new ListNBT();
         territories.forEach(t -> listNBT.add(ConvertPosToNbt(t)));
         nbt.put(TERRITORY_POS_KEY, listNBT);
-        if (mapColor.length == 0) mapColor = drawMapData();
+        if (mapColor.length == 0) drawMapData();
         nbt.putByteArray(MAP_COLOR, mapColor);
         return nbt;
     }
@@ -197,7 +198,6 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
         territories.clear();
         updateTerritoryToWorld();
     }
-
     @Override
     public void tick() {
         if (world.isRemote) {
@@ -324,10 +324,10 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
     }
 
     @SuppressWarnings({"deprecation", "UnstableApiUsage"})
-    public byte[] drawMapData() {
+    public void drawMapData() {
+        mapColor    = new byte[mapSize * mapSize];
         ChunkPos chunkPos  = new ChunkPos(pos.getX() >> 4, pos.getZ() >> 4);
         BlockPos centerPos = chunkPos.asBlockPos().add(8, 0, 8);
-        byte[]   colors    = new byte[mapSize * mapSize];
         int      i         = 1;
         int      xCenter   = centerPos.getX();
         int      yCenter   = centerPos.getZ();
@@ -337,10 +337,6 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
         if (world.dimension.isNether()) {
             j1 /= 2;
         }
-
-        //MapData.MapInfo mapdata$mapinfo = data.getMapInfo((PlayerEntity)viewer);
-        //++mapdata$mapinfo.step;
-        //boolean flag = false;
 
         for (int k1 = l - j1 + 1; k1 < l + j1; ++k1) {
             if (true/*(k1 & 0b1111) == (mapdata$mapinfo.step & 0b1111) || flag*/) {
@@ -442,14 +438,13 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
 
                                 byte b1 = (byte) (materialcolor.colorIndex * 4 + i5);
 
-                                colors[k1 + l1 * mapSize] = b1;
+                                mapColor[k1 + l1 * mapSize] = b1;
                             }
                         }
                     }
                 }
             }
         }
-        return colors;
     }
 
     private BlockState getFluidState(World worldIn, BlockState state, BlockPos pos) {

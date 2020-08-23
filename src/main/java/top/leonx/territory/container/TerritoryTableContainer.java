@@ -137,8 +137,8 @@ public class TerritoryTableContainer extends Container {
                 return false;
             }
         }
-        player.world.playSound(player, player.getPosition(), SoundEvents.BLOCK_ENCHANTMENT_TABLE_USE,
-                SoundCategory.BLOCKS, 1F, 1F);
+        player.world.playSound(null, player.getPosition(), SoundEvents.BLOCK_ENCHANTMENT_TABLE_USE,
+                               SoundCategory.BLOCKS, 2F, 1F);
         for (ChunkPos pos : msg.readyRemove) {
             tileEntity.territories.remove(pos);
         }
