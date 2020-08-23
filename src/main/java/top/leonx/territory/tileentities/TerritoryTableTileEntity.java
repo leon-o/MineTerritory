@@ -32,15 +32,22 @@ import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.gen.Heightmap;
+import net.minecraft.world.server.ServerWorld;
+import net.minecraft.world.storage.loot.LootContext;
+import net.minecraft.world.storage.loot.LootParameters;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.fml.loading.FMLEnvironment;
 import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
+import top.leonx.territory.config.TerritoryConfig;
 import top.leonx.territory.container.TerritoryTableContainer;
 import top.leonx.territory.data.PermissionFlag;
+import top.leonx.territory.data.PowerProvider;
 import top.leonx.territory.data.TerritoryInfo;
 import top.leonx.territory.data.TerritoryInfoHolder;
+import top.leonx.territory.util.DataUtil;
 import top.leonx.territory.util.MessageUtil;
 import top.leonx.territory.util.TerritoryUtil;
 import top.leonx.territory.util.UserUtil;
@@ -63,7 +70,7 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
     private final        List<ChunkPos>              territoriesLostDueToPower = new ArrayList<>();
     private final        int                         mapSize                   = 144;
     public               ResourceLocation            mapLocation               = null;
-    public RenderType mapRenderType=null;
+    public               RenderType                  mapRenderType             = null;
     public               ItemStack                   mapStack;
     //For renderer
     public               float                       angle;
@@ -125,8 +132,7 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
         }
         mapColor = compound.getByteArray(MAP_COLOR);
 
-        if (world!=null && world.isRemote && mapColor!=null && mapColor.length == mapSize*mapSize)
-            updateMapTexture();
+        if (world != null && world.isRemote && mapColor != null && mapColor.length == mapSize * mapSize) updateMapTexture();
     }
 
     @Nonnull
@@ -176,8 +182,9 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
 
         if (world.isRemote) {
             mapTexture = new DynamicTexture(mapSize, mapSize, true);
-            mapLocation = Minecraft.getInstance().getTextureManager().getDynamicTextureLocation("map_dynamic" + MathHelper.nextInt(new Random(), 0, mapSize), mapTexture);
-            mapRenderType=RenderType.getText(mapLocation);
+            mapLocation = Minecraft.getInstance().getTextureManager().getDynamicTextureLocation("map_dynamic" + MathHelper.nextInt(new Random(), 0, mapSize),
+                                                                                                mapTexture);
+            mapRenderType = RenderType.getText(mapLocation);
         }
         //drawMapData();
         territoryInfo.centerPos = pos;
@@ -198,6 +205,7 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
         territories.clear();
         updateTerritoryToWorld();
     }
+
     @Override
     public void tick() {
         if (world.isRemote) {
@@ -211,9 +219,9 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
 
         if (player != null && this.pos.withinDistance(player.getPositionVec(), 4)) {
             rise = true;
-            double dx = player.chasingPosX - (this.pos.getX()+0.5);
-            double dz = player.chasingPosZ - (this.pos.getZ()+0.5);
-            float angleRadian = (float) MathHelper.atan2(dz, dx);
+            double dx          = player.chasingPosX - (this.pos.getX() + 0.5);
+            double dz          = player.chasingPosZ - (this.pos.getZ() + 0.5);
+            float  angleRadian = (float) MathHelper.atan2(dz, dx);
 
             while (angleRadian >= (float) Math.PI) {
                 angleRadian -= ((float) Math.PI * 2F);
@@ -222,7 +230,7 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
             while (angleRadian < -(float) Math.PI) {
                 angleRadian += ((float) Math.PI * 2F);
             }
-            angleLastTick=angle;
+            angleLastTick = angle;
             angle = (float) Math.toDegrees(angleRadian);
         } else {
             rise = false;
@@ -235,44 +243,43 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
         int fade         = usedPower - protectPower;
         if (fade > 0) {
             ChunkPos centerPos = new ChunkPos(pos.getX() >> 4, pos.getZ() >> 4);
-            List<ChunkPos> removable = territories.stream().filter(t -> !TerritoryUtil.computeCutChunk(centerPos, territories).contains(t)).collect(
-                    Collectors.toList());
+            List<ChunkPos> removable = territories.stream().sorted(
+                    Comparator.comparingInt(a -> (a.x - centerPos.x) * (a.x - centerPos.x) + (a.z - centerPos.z) * (a.z - centerPos.z))).collect(Collectors.toList());//.filter
+
             removable.remove(centerPos);
-            Random random = new Random(System.currentTimeMillis());
             for (int i = 0; i < fade; i++) {
-                int      removeIndex = random.nextInt(removable.size());
-                ChunkPos pos         = removable.get(removeIndex);
-                removable.remove(removeIndex);
+                ChunkPos pos         = removable.get(removable.size()-1);
+                removable.remove(removable.size()-1);
                 territories.remove(pos);
                 territoriesLostDueToPower.add(pos);
             }
             updateTerritoryToWorld();
             world.notifyBlockUpdate(pos, world.getBlockState(pos), world.getBlockState(pos), 2);
-            world.getServer().getPlayerList().getPlayerByUUID(getOwnerId()).sendMessage(new TranslationTextComponent("message.territory" +
-                                                                                                                             ".insufficient_protect_power").setStyle(MessageUtil.RED));
+            world.getServer().getPlayerList().getPlayerByUUID(getOwnerId()).sendMessage(
+                    new TranslationTextComponent("message.territory" + ".insufficient_protect_power").setStyle(MessageUtil.RED));
         }
     }
+
     public void notifyBannerPlace() {
         int usedPower    = territories.size();
         int protectPower = computeProtectPower();
-        for(int i=0;i<territoriesLostDueToPower.size() && usedPower<protectPower;i++)
-        {
-            ChunkPos chunkPos=territoriesLostDueToPower.get(territoriesLostDueToPower.size()-1);
-            if(territories.add(chunkPos))
-            {
-                world.getServer().getPlayerList().getPlayerByUUID(getOwnerId()).sendMessage(new TranslationTextComponent("message.territory.territory_restore",
-                                                                                                                         chunkPos.toString()).setStyle(MessageUtil.GREEN));
+        while (territoriesLostDueToPower.size()>0 && usedPower < protectPower) {
+            ChunkPos chunkPos = territoriesLostDueToPower.get(territoriesLostDueToPower.size() - 1);
+            if (territories.add(chunkPos)) {
+                world.getServer().getPlayerList().getPlayerByUUID(getOwnerId()).sendMessage(
+                        new TranslationTextComponent("message.territory.territory_restore", chunkPos.toString()).setStyle(MessageUtil.GREEN));
             }
-            usedPower=territories.size();
-            territoriesLostDueToPower.remove(territoriesLostDueToPower.size()-1);
+            usedPower = territories.size();
+            territoriesLostDueToPower.remove(territoriesLostDueToPower.size() - 1);
 
         }
         updateTerritoryToWorld();
         world.notifyBlockUpdate(pos, world.getBlockState(pos), world.getBlockState(pos), 2);
     }
-    public int getBlockPower(IWorld world, BlockPos pos) {
-        String banner_name = Objects.requireNonNull(world.getBlockState(pos).getBlock().getRegistryName()).getPath();
-        return banner_name.contains("banner") ? 1 : 0;
+
+    public double getBlockPower(IWorld world, BlockPos pos) {
+        BlockState state = world.getBlockState(pos);
+        return DataUtil.getBlockStateProtectPower(state, world, pos);
     }
 
     public int computeProtectPower() {
@@ -325,14 +332,14 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
 
     @SuppressWarnings({"deprecation", "UnstableApiUsage"})
     public void drawMapData() {
-        mapColor    = new byte[mapSize * mapSize];
+        mapColor = new byte[mapSize * mapSize];
         ChunkPos chunkPos  = new ChunkPos(pos.getX() >> 4, pos.getZ() >> 4);
         BlockPos centerPos = chunkPos.asBlockPos().add(8, 0, 8);
         int      i         = 1;
         int      xCenter   = centerPos.getX();
         int      yCenter   = centerPos.getZ();
-        int      l         = MathHelper.floor(pos.getX() - (double) xCenter) / i + mapSize/2;
-        int      i1        = MathHelper.floor(pos.getZ() - (double) yCenter) / i + mapSize/2;
+        int      l         = MathHelper.floor(pos.getX() - (double) xCenter) / i + mapSize / 2;
+        int      i1        = MathHelper.floor(pos.getZ() - (double) yCenter) / i + mapSize / 2;
         int      j1        = mapSize / i;
         if (world.dimension.isNether()) {
             j1 /= 2;
@@ -348,8 +355,8 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
                         int                     i2       = k1 - l;
                         int                     j2       = l1 - i1;
                         boolean                 flag1    = i2 * i2 + j2 * j2 > (j1 - 2) * (j1 - 2);
-                        int                     k2       = (xCenter / i + k1 - mapSize/2) * i;
-                        int                     l2       = (yCenter / i + l1 - mapSize/2) * i;
+                        int                     k2       = (xCenter / i + k1 - mapSize / 2) * i;
+                        int                     l2       = (yCenter / i + l1 - mapSize / 2) * i;
                         Multiset<MaterialColor> multiset = LinkedHashMultiset.create();
                         Chunk                   chunk    = world.getChunkAt(new BlockPos(k2, 0, l2));
                         if (!chunk.isEmpty()) {

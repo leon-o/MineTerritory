@@ -17,6 +17,7 @@ import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
@@ -28,12 +29,14 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import top.leonx.territory.TerritoryMod;
 import top.leonx.territory.capability.ModCapabilities;
+import top.leonx.territory.config.TerritoryConfig;
 import top.leonx.territory.data.PermissionFlag;
 import top.leonx.territory.data.TerritoryInfo;
 import top.leonx.territory.data.TerritoryInfoHolder;
 import top.leonx.territory.items.ModItems;
 import top.leonx.territory.tileentities.TerritoryTableTileEntity;
-import top.leonx.territory.util.OutlineRender;
+import top.leonx.territory.util.BoundaryRender;
+import top.leonx.territory.util.DataUtil;
 import top.leonx.territory.util.UserUtil;
 
 import javax.annotation.Nullable;
@@ -109,9 +112,13 @@ public class GameEvent {
 
     @SubscribeEvent
     public static void onBlockBreak(BlockEvent.BreakEvent event) {
-        if(event.getWorld().isRemote()) return;
-        if (event.getState().getBlock() instanceof BannerBlock) {
-            Set<TileEntity> tileEntityNear = getTileEntityNear(event.getWorld(), event.getPos());
+        IWorld world = event.getWorld();
+        if(world.isRemote()) return;
+        BlockState state = event.getState();
+        if(!TerritoryConfig.powerProvider.containsKey(state.getBlock().asItem())) return;
+
+        if (DataUtil.getBlockStateProtectPower(state,world,event.getPos())>0) {
+            Set<TileEntity> tileEntityNear = getTileEntityNear(world, event.getPos());
             tileEntityNear.forEach(t -> {
                 if (t instanceof TerritoryTableTileEntity) {
                     TerritoryTableTileEntity tileEntity = (TerritoryTableTileEntity) t;
@@ -124,7 +131,11 @@ public class GameEvent {
     @SubscribeEvent
     public static void onBlockPlace(BlockEvent.EntityPlaceEvent event) {
         if(event.getWorld().isRemote()) return;
-        if (event.getState().getBlock() instanceof BannerBlock) {
+
+        BlockState state = event.getPlacedBlock();
+        if(!TerritoryConfig.powerProvider.containsKey(state.getBlock().asItem())) return;
+
+        if (DataUtil.getBlockStateProtectPower(state,event.getWorld(),event.getPos())>0) {
             Set<TileEntity> tileEntityNear = getTileEntityNear(event.getWorld(), event.getPos());
             tileEntityNear.forEach(t -> {
                 if (t instanceof TerritoryTableTileEntity) {
@@ -175,8 +186,8 @@ public class GameEvent {
     private static void notifyPlayer(TerritoryInfo info, PlayerEntity player, PermissionFlag flag, boolean clientSide) {
         if (!clientSide) {
             SendMessage(player, new TranslationTextComponent("message.territory.no_permission", new TranslationTextComponent(flag.getTranslationKey())));
-        } else {
-            OutlineRender.StartRender(TerritoryInfoHolder.get(player.world).getAssociatedTerritory(info), 100);
+        } else if(TerritoryConfig.displayBoundary){
+            BoundaryRender.StartRender(TerritoryInfoHolder.get(player.world).getAssociatedTerritory(info), 100);
         }
     }
 
@@ -238,7 +249,8 @@ public class GameEvent {
                 clientPlayer.setMotion(vecAfterCollision);
                 clientPlayer.setPosition(clientPlayer.lastTickPosX, clientPlayer.lastTickPosY, clientPlayer.lastTickPosZ);
             }
-            OutlineRender.StartRender(TerritoryInfoHolder.get(clientPlayer.world).getAssociatedTerritory(thisTerritoryInfo), 100);
+            if(TerritoryConfig.displayBoundary)
+                BoundaryRender.StartRender(TerritoryInfoHolder.get(clientPlayer.world).getAssociatedTerritory(thisTerritoryInfo), 100);
         } else if (!thisTerritoryInfo.IsProtected() && lastTerritoryInfo.IsProtected()) {
 
             if (UserUtil.DEFAULT_UUID.equals(lastTerritoryInfo.ownerId))
@@ -261,8 +273,11 @@ public class GameEvent {
             if (!thisChunkPos.equals(lastLookedPos)) {
                 HashSet<ChunkPos> set = new HashSet<>();
                 set.add(thisChunkPos);
-                OutlineRender.StartRender(set, 100);
+
                 lastLookedPos = thisChunkPos;
+
+                if(TerritoryConfig.displayBoundary)
+                    BoundaryRender.StartRender(set, 100);
             }
         }
     }
@@ -270,10 +285,11 @@ public class GameEvent {
     @OnlyIn(Dist.CLIENT)
     @SubscribeEvent
     public static void onRenderWorld(RenderWorldLastEvent event) {
+        if(!TerritoryConfig.displayBoundary)return;
         Vec3d projectedView = Minecraft.getInstance().gameRenderer.getActiveRenderInfo().getProjectedView();
         float pitch         = Minecraft.getInstance().gameRenderer.getActiveRenderInfo().getPitch();
         float yaw           = Minecraft.getInstance().gameRenderer.getActiveRenderInfo().getYaw();
-        OutlineRender.Render(projectedView, pitch, yaw, event.getPartialTicks());
+        BoundaryRender.Render(projectedView, pitch, yaw, event.getPartialTicks());
     }
 
 }

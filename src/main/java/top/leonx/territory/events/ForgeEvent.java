@@ -12,13 +12,16 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.event.world.ExplosionEvent;
+import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import net.minecraftforge.fml.event.server.FMLServerStartedEvent;
 import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 import top.leonx.territory.capability.ChunkCapabilityProvider;
 import top.leonx.territory.command.TerritoryCommand;
 import top.leonx.territory.TerritoryMod;
+import top.leonx.territory.config.TerritoryConfig;
 import top.leonx.territory.data.TerritoryInfo;
 import top.leonx.territory.data.TerritoryInfoHolder;
 import top.leonx.territory.data.TerritoryInfoSynchronizer;
@@ -33,12 +36,19 @@ public class ForgeEvent {
     }
 
     @SubscribeEvent
+    public static void onServerStarted(FMLServerStartedEvent event)
+    {
+        TerritoryConfig.ConfigHelper.processPowerProvider();
+    }
+    @SubscribeEvent
     public static void attachCapabilitiesToChunk(final AttachCapabilitiesEvent<Chunk> event) {
         event.addCapability(new ResourceLocation("territory_info_cap"), new ChunkCapabilityProvider());
     }
 
     @SubscribeEvent
     public static void onExplosionCreated(ExplosionEvent.Detonate event){
+        if(!TerritoryConfig.preventExplosion)
+            return;
         List<BlockPos>      affectedBlocks = event.getAffectedBlocks();
         TerritoryInfoHolder holder         = TerritoryInfoHolder.get(event.getWorld());
         affectedBlocks.removeIf(t->{
@@ -49,6 +59,9 @@ public class ForgeEvent {
     @SubscribeEvent
     public static void onFluidSpread(BlockEvent.FluidPlaceBlockEvent event)
     {
+        if(!TerritoryConfig.preventFire)
+            return;
+
         BlockPos      pos = event.getLiquidPos();
         if(event.getNewState().getFluidState() instanceof LavaFluid || event.getNewState().getBlock() instanceof FireBlock)
         {

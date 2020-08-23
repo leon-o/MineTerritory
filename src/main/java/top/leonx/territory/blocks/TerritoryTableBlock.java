@@ -140,12 +140,13 @@ public void animateTick(BlockState stateIn, World worldIn, BlockPos pos, Random 
             if (rand.nextInt(16) == 0) {
                 for(int k = 0; k <= 1; ++k) {
                     BlockPos blockpos = pos.add(i, k, j);
-                    if (tileEntity.getBlockPower(worldIn,blockpos) > 0) {
+                    double   power = tileEntity.getBlockPower(worldIn, blockpos);
+                    if (power > 0) {
                         if (!worldIn.isAirBlock(pos.add(i / 2, 0, j / 2))) {
                             break;
                         }
-
-                        worldIn.addParticle(ParticleTypes.ENCHANT, (double)pos.getX() + 0.5D, (double)pos.getY() + 2.0D, (double)pos.getZ() + 0.5D, (double)((float)i + rand.nextFloat()) - 0.5D,
+                        for(int t=0;t<power;t++)
+                            worldIn.addParticle(ParticleTypes.ENCHANT, (double)pos.getX() + 0.5D, (double)pos.getY() + 2.0D, (double)pos.getZ() + 0.5D, (double)((float)i + rand.nextFloat()) - 0.5D,
                                             (float)k - rand.nextFloat() - 1.0F, (double)((float)j + rand.nextFloat()) - 0.5D);
                     }
                 }

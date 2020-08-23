@@ -10,14 +10,17 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.RegistryEvent;
+import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import top.leonx.territory.TerritoryMod;
 import top.leonx.territory.TerritoryPacketHandler;
 import top.leonx.territory.blocks.ModBlocks;
-import top.leonx.territory.capability.ChunkCapabilityProvider;
 import top.leonx.territory.capability.ModCapabilities;
+import top.leonx.territory.config.TerritoryConfig;
 import top.leonx.territory.container.ModContainerTypes;
 import top.leonx.territory.data.TerritoryInfoSynchronizer;
 import top.leonx.territory.items.ModItems;
@@ -32,23 +35,25 @@ public class ModEvent {
         TerritoryInfoSynchronizer.register();
         ModCapabilities.register();
     }
+
     @OnlyIn(Dist.CLIENT)
     @SubscribeEvent
     public static void onClientStart(FMLClientSetupEvent event)
     {
         TerritoryInfoSynchronizer.register();
     }
-    //    private void enqueueIMC(final InterModEnqueueEvent event)
-//    {
-//        InterModComms.sendTo("examplemod", "helloworld", () -> { LOGGER.info("Hello world from the MDK"); return "Hello world";});
-//    }
-//
-//    private void processIMC(final InterModProcessEvent event)
-//    {
-//        LOGGER.info("Got IMC {}", event.getIMCStream().
-//                map(m->m.getMessageSupplier().get()).
-//                collect(Collectors.toList()));
-//    }
+
+    @SubscribeEvent
+    public static void onModConfigEvent(final ModConfig.ModConfigEvent event) {
+        final ModConfig config = event.getConfig();
+        if (config.getSpec() == TerritoryConfig.ConfigHolder.CLIENT_SPEC) {
+            TerritoryConfig.ConfigHelper.bakeClient(config);
+            TerritoryMod.LOGGER.debug("Load territory client config");
+        } else if (config.getSpec() == TerritoryConfig.ConfigHolder.SERVER_SPEC) {
+            TerritoryConfig.ConfigHelper.bakeServer(config);
+            TerritoryMod.LOGGER.debug("Load territory server config");
+        }
+    }
 
     @SubscribeEvent
     public static void onBlocksRegistry(final RegistryEvent.Register<Block> blockRegistryEvent) {

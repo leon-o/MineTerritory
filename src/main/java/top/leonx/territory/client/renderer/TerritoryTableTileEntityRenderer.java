@@ -23,6 +23,7 @@ import net.minecraft.tileentity.BannerPattern;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.storage.MapData;
+import top.leonx.territory.config.TerritoryConfig;
 import top.leonx.territory.tileentities.TerritoryTableTileEntity;
 
 import java.util.ArrayList;
@@ -105,20 +106,20 @@ public class TerritoryTableTileEntityRenderer extends TileEntityRenderer<Territo
 
         matrixStackIn.pop();
 
-        float fontSize = 1 / 96f;
+        if(TerritoryConfig.displayOwnerName)
+        {
+            float fontSize = 1 / 96f;
+            matrixStackIn.translate(0, height-0.5, 1 / 12f);
+            matrixStackIn.scale(fontSize, -fontSize, fontSize);
 
+            String owner_string = I18n.format("gui.territory.owner");
 
-        matrixStackIn.translate(0, height-0.5, 1 / 12f);
+            renderDispatcher.fontRenderer.renderString(owner_string, -renderDispatcher.fontRenderer.getStringWidth(owner_string) / 2f, 0, 0XFFFFFFFF, false,
+                                                       matrixStackIn.getLast().getMatrix(), bufferIn, false, 0, combinedLightIn);
 
-        matrixStackIn.scale(fontSize, -fontSize, fontSize);
-        String owner_string = I18n.format("gui.territory.owner");
-
-
-        renderDispatcher.fontRenderer.renderString(owner_string, -renderDispatcher.fontRenderer.getStringWidth(owner_string) / 2f, 0, 0XFFFFFFFF, false,
-                                                   matrixStackIn.getLast().getMatrix(), bufferIn, false, 0, combinedLightIn);
-
-        renderDispatcher.fontRenderer.renderString(tileEntityIn.getOwnerName(), -renderDispatcher.fontRenderer.getStringWidth(tileEntityIn.getOwnerName()) / 2f,
-                                                   15f, 0XFFFFFFFF, false, matrixStackIn.getLast().getMatrix(), bufferIn, false, 0, combinedLightIn);
+            renderDispatcher.fontRenderer.renderString(tileEntityIn.getOwnerName(), -renderDispatcher.fontRenderer.getStringWidth(tileEntityIn.getOwnerName()) / 2f,
+                                                       15f, 0XFFFFFFFF, false, matrixStackIn.getLast().getMatrix(), bufferIn, false, 0, combinedLightIn);
+        }
 
         matrixStackIn.pop();
     }

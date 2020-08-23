@@ -22,6 +22,7 @@ import net.minecraftforge.fml.network.NetworkDirection;
 import net.minecraftforge.fml.network.NetworkEvent;
 import top.leonx.territory.TerritoryPacketHandler;
 import top.leonx.territory.capability.ModCapabilities;
+import top.leonx.territory.config.TerritoryConfig;
 import top.leonx.territory.data.PermissionFlag;
 import top.leonx.territory.data.TerritoryInfo;
 import top.leonx.territory.tileentities.TerritoryTableTileEntity;
@@ -129,9 +130,9 @@ public class TerritoryTableContainer extends Container {
 
         TerritoryTableTileEntity tileEntity = (TerritoryTableTileEntity) player.world.getTileEntity(tileEntityPos);
         if (!player.isCreative()) {
-            int experienceNeed = msg.readyAdd.length;
+            int experienceNeed = (int) Math.round(msg.readyAdd.length* TerritoryConfig.expNeededPerChunk);
             if (player.experienceLevel >= experienceNeed) {
-                player.addExperienceLevel(-(msg.readyAdd.length + msg.readyRemove.length));
+                player.addExperienceLevel(-experienceNeed);
             } else {
                 player.sendMessage(new TranslationTextComponent("message.territory.need_experience", Integer.toString(experienceNeed)).setStyle(MessageUtil.YELLOW));
                 return false;

@@ -201,7 +201,7 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryTable
     {
         if(addTextField.getText().length()>0)
         {
-            String selfName = Minecraft.getInstance().player.getName().toString();
+            String selfName = Minecraft.getInstance().player.getName().getString();
             Optional<String> first =
                     UserUtil.getAllPlayerName().stream().filter(t -> !t.equals(selfName)&&t.indexOf(addTextField.getText())==0).findFirst();
             if(first.isPresent())

@@ -9,6 +9,7 @@ import net.minecraftforge.fml.loading.FMLEnvironment;
 
 import java.lang.reflect.Array;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class UserUtil {
     public static final String DEFAULT_NAME="All";
@@ -74,7 +75,9 @@ public class UserUtil {
         List<String> result = new ArrayList<>(UsernameCache.getMap().values());
         if(FMLEnvironment.dist.isClient())
         {
-            Collections.addAll(result,Minecraft.getInstance().world.getServer().getPlayerList().getOnlinePlayerNames());
+            for (AbstractClientPlayerEntity player : Minecraft.getInstance().world.getPlayers()) {
+                result.add(player.getName().getString());
+            }
         }
         return result;
     }

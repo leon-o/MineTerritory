@@ -31,6 +31,7 @@ public class WrapList extends Widget {
     public int marginRight=8;
     public int marginLeft=8;
     public int marginTop=4;
+
     @Override
     public void render(int mouseX, int mouseY, float partialTick) {
         //super.render(mouseX, mouseY, partialTick);
@@ -57,7 +58,9 @@ public class WrapList extends Widget {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int btn) {
-        children.forEach(t->t.mouseClicked(mouseX,mouseY,btn));
+        for (int i=pageNumber*entryCountEachPage;i<Math.min(children.size(),(pageNumber+1)*entryCountEachPage);i++) {
+            children.get(i).mouseClicked(mouseX,mouseY,btn);
+        }
         prevPageButton.mouseClicked(mouseX,mouseY,btn);
         nextPageButton.mouseClicked(mouseX,mouseY,btn);
         return true;
