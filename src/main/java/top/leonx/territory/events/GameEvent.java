@@ -17,7 +17,6 @@ import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
@@ -122,7 +121,7 @@ public class GameEvent {
             tileEntityNear.forEach(t -> {
                 if (t instanceof TerritoryTableTileEntity) {
                     TerritoryTableTileEntity tileEntity = (TerritoryTableTileEntity) t;
-                    tileEntity.getWorld().getServer().enqueue(new TickDelayedTask(1, tileEntity::notifyBannerDestroy));
+                    tileEntity.getWorld().getServer().enqueue(new TickDelayedTask(1, tileEntity::notifyPowerProviderDestroy));
                 }
             });
         }
@@ -140,7 +139,7 @@ public class GameEvent {
             tileEntityNear.forEach(t -> {
                 if (t instanceof TerritoryTableTileEntity) {
                     TerritoryTableTileEntity tileEntity = (TerritoryTableTileEntity) t;
-                    tileEntity.getWorld().getServer().enqueue(new TickDelayedTask(1, tileEntity::notifyBannerPlace));
+                    tileEntity.getWorld().getServer().enqueue(new TickDelayedTask(1, tileEntity::notifyPowerProviderPlace));
                 }
             });
         }
