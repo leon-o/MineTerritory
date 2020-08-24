@@ -1,5 +1,8 @@
 package top.leonx.territory.data;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class PermissionFlag {
     public enum Type{
         PLAYER,
@@ -16,8 +19,6 @@ public class PermissionFlag {
     public final static PermissionFlag CREATE_EXPLOSION=new PermissionFlag(1<<8,"create_explosion");
     public final static PermissionFlag FIRE_SPREAD=new PermissionFlag(1<<8,"fire_spread");
     public final static PermissionFlag MANAGE =new PermissionFlag(1<<31,"use_table");
-    @SuppressWarnings("unused")
-    public final static PermissionFlag DEFAULT_PERMISSION=new PermissionFlag(1);
     public final static PermissionFlag[] basicFlag={
             ENTER,
             ATTACK_ENTITY,
@@ -46,6 +47,11 @@ public class PermissionFlag {
 
     public int getCode(){return code;}
     public String getTranslationKey(){return String.format("permission.territory.%s",name_key);}
+
+    public String getNameKey() {
+        return name_key;
+    }
+
     public boolean contain(PermissionFlag flag)
     {
         return (code&flag.code)!=0;

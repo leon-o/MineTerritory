@@ -84,7 +84,7 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
 
     public TerritoryTableTileEntity() {
         super(ModTileEntityType.TERRITORY_TILE_ENTITY);
-        territoryInfo.assignedTo(null, UUID.randomUUID(), null, "", new PermissionFlag(), new HashMap<>());
+        //territoryInfo.assignedTo(null, UUID.randomUUID(), null, "", TerritoryConfig.defaultPermission, new HashMap<>());
     }
 
     public UUID getOwnerId() {
@@ -92,7 +92,7 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
     }
 
     public void initTerritoryInfo(UUID owner_id) {
-        territoryInfo.assignedTo(owner_id, UUID.randomUUID(), pos, UserUtil.getNameByUUID(owner_id) + "'s", new PermissionFlag(1), new HashMap<>());
+        territoryInfo.assignedTo(owner_id, UUID.randomUUID(), pos, UserUtil.getNameByUUID(owner_id) + "'s", TerritoryConfig.defaultPermission, new HashMap<>());
         updateTerritoryToWorld();
         markDirty();
     }

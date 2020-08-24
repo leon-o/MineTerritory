@@ -10,6 +10,7 @@ import net.minecraftforge.fml.client.gui.widget.*;
 import top.leonx.territory.client.gui.WrapList;
 import top.leonx.territory.client.gui.PlayerList;
 import top.leonx.territory.client.gui.PermissionToggleButton;
+import top.leonx.territory.config.TerritoryConfig;
 import top.leonx.territory.container.TerritoryTableContainer;
 import top.leonx.territory.data.PermissionFlag;
 import top.leonx.territory.util.UserUtil;
@@ -59,7 +60,7 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryTable
 
         int checkboxWidth=100;
         int checkboxHeight=20;
-        for (PermissionFlag flag : PermissionFlag.basicFlag) {
+        for (PermissionFlag flag : TerritoryConfig.usablePermission) {
             PermissionToggleButton btn=new PermissionToggleButton(0,0,checkboxWidth, checkboxHeight,
                     I18n.format(flag.getTranslationKey()),container.territoryInfo.defaultPermission.contain(flag));
 
@@ -174,7 +175,7 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryTable
             playerList.setSelected(playerList.children().stream().filter(t->t.getUUID().equals(finalUuid)).findFirst().get());
         }
         else{
-            container.territoryInfo.permissions.put(uuid,new PermissionFlag());
+            container.territoryInfo.permissions.put(uuid, TerritoryConfig.defaultPermission);
             playerList.children().add(new PlayerList.PlayerEntry(uuid,name,playerList,this::onPlayerEntrySelected));
         }
     }
