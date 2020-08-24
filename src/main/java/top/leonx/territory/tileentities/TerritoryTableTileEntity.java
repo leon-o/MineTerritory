@@ -264,6 +264,7 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
             territoriesLostDueToPower.remove(territoriesLostDueToPower.size() - 1);
 
         }
+        if(count==0) return;
         updateTerritoryToWorld();
         world.notifyBlockUpdate(pos, world.getBlockState(pos), world.getBlockState(pos), 2);
         world.getServer().getPlayerList().getPlayerByUUID(getOwnerId()).sendMessage(
