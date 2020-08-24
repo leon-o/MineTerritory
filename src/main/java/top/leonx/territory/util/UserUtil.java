@@ -7,9 +7,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.UsernameCache;
 import net.minecraftforge.fml.loading.FMLEnvironment;
 
-import java.lang.reflect.Array;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class UserUtil {
     public static final String DEFAULT_NAME="All";

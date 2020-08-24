@@ -54,6 +54,7 @@ public final class TerritoryConfig {
         }
     }
 
+    @SuppressWarnings("FieldCanBeLocal")
     public final static class ConfigHelper {
 
 

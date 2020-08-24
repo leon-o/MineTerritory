@@ -32,7 +32,6 @@ import top.leonx.territory.util.UserUtil;
 import javax.annotation.Nonnull;
 import java.io.File;
 import java.util.*;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 

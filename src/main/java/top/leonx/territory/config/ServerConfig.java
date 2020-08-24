@@ -5,8 +5,6 @@ import top.leonx.territory.TerritoryMod;
 import top.leonx.territory.data.PermissionFlag;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 final class ServerConfig {

@@ -14,7 +14,6 @@ import static top.leonx.territory.capability.ModCapabilities.TERRITORY_INFO_CAPA
 
 public class TerritoryInfoHolder {
     public final ConcurrentHashMap<TerritoryInfo,HashSet<ChunkPos>>  TERRITORY_CHUNKS=new ConcurrentHashMap<>();
-    //public final ConcurrentHashMap<ChunkPos, TerritoryInfo> CHUNKPOS_TO_TERRITORY_INFO = new ConcurrentHashMap<>();
 
     private final World world;
 

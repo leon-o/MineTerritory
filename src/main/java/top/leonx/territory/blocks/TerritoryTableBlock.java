@@ -33,7 +33,6 @@ import top.leonx.territory.tileentities.ModTileEntityType;
 import top.leonx.territory.tileentities.TerritoryTableTileEntity;
 
 import javax.annotation.Nullable;
-import java.awt.*;
 import java.util.Random;
 
 @SuppressWarnings({"NullableProblems", "deprecation"})

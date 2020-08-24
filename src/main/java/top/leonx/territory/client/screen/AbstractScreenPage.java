@@ -34,6 +34,7 @@ public abstract class AbstractScreenPage<T extends Container> extends Screen {
     public List<? extends IGuiEventListener> children() {
         return this.children;
     }
+    @SuppressWarnings("deprecation")
     public void render(final int mouseX, final int mouseY, final float partialTicks){
         RenderHelper.disableStandardItemLighting();
         GlStateManager.disableLighting();

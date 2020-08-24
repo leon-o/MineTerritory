@@ -7,10 +7,6 @@ import javax.annotation.Nullable;
 import java.util.*;
 
 public class TerritoryInfo {
-    //public final static TerritoryInfo defaultTerritoryInfo=new TerritoryInfo(null,new HashSet<>());
-
-//    @Nullable
-//    public Set<ChunkPos> territories;
     @Nullable
     public BlockPos centerPos;
     @Nullable
@@ -25,6 +21,7 @@ public class TerritoryInfo {
     public UUID territoryId;
 
     private boolean isProtected=false;
+    @SuppressWarnings("unused")
     public void assignedTo(UUID ownerId)
     {
         isProtected=true;

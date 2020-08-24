@@ -12,6 +12,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.lwjgl.opengl.GL11;
 
+@SuppressWarnings("unused")
 @OnlyIn(Dist.CLIENT)
 public class RenderUtil {
     private static       BufferBuilder buffer;

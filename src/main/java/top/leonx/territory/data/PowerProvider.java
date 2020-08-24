@@ -6,9 +6,9 @@ import net.minecraft.nbt.CompoundNBT;
 import java.util.Objects;
 
 public class PowerProvider {
-    private Item item;
-    private CompoundNBT tag;
-    private double power;
+    private final Item        item;
+    private final CompoundNBT tag;
+    private final double      power;
 
     public PowerProvider(Item item, CompoundNBT tag, double power) {
         this.item = item;

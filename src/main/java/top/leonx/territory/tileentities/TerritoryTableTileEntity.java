@@ -24,7 +24,9 @@ import net.minecraft.tileentity.ITickableTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Direction;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.*;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
@@ -32,24 +34,16 @@ import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.gen.Heightmap;
-import net.minecraft.world.server.ServerWorld;
-import net.minecraft.world.storage.loot.LootContext;
-import net.minecraft.world.storage.loot.LootParameters;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.fml.loading.FMLEnvironment;
-import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
 import top.leonx.territory.config.TerritoryConfig;
 import top.leonx.territory.container.TerritoryTableContainer;
-import top.leonx.territory.data.PermissionFlag;
-import top.leonx.territory.data.PowerProvider;
 import top.leonx.territory.data.TerritoryInfo;
 import top.leonx.territory.data.TerritoryInfoHolder;
 import top.leonx.territory.util.DataUtil;
 import top.leonx.territory.util.MessageUtil;
-import top.leonx.territory.util.TerritoryUtil;
 import top.leonx.territory.util.UserUtil;
 
 import javax.annotation.Nonnull;
@@ -273,6 +267,7 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
             territoriesLostDueToPower.remove(territoriesLostDueToPower.size() - 1);
 
         }
+        if(count==0) return;
         updateTerritoryToWorld();
         world.notifyBlockUpdate(pos, world.getBlockState(pos), world.getBlockState(pos), 2);
         world.getServer().getPlayerList().getPlayerByUUID(getOwnerId()).sendMessage(

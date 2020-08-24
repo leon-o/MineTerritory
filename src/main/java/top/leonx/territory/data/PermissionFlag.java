@@ -1,8 +1,5 @@
 package top.leonx.territory.data;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class PermissionFlag {
     public enum Type{
         PLAYER,
