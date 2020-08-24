@@ -73,13 +73,10 @@ public class BoundaryRender {
         RenderUtil.enableTextureRepeat();
         Minecraft.getInstance().textureManager.bindTexture(checkerboardOverlayLocation);
 
-        Tessellator       tessellator = Tessellator.getInstance();
-        IRenderTypeBuffer.Impl renderTypeBuffer   = IRenderTypeBuffer.getImpl(tessellator.getBuffer());
-        IVertexBuilder buffer = renderTypeBuffer.getBuffer(RenderType.getSolid());
-        //BufferBuilder bufferBuilder=bufferBuilder.begin(GL11.GL_QUADS, DefaultVertexFormats.PARTICLE_POSITION_TEX_COLOR_LMAP);
-        edges.forEach((t,v)-> RenderUtil.drawWall(t.from,t.to,255,0,0,255,16,new Vec3d(1,1,1),alpha,0xF0,0xF0, buffer));
+        RenderUtil.startDraw();
+        edges.forEach((t,v)-> RenderUtil.drawWall(t.from,t.to,255,0,0,255,16,new Vec3d(1,1,1),alpha,0xF0,0xF0));
 
-        tessellator.draw();
+        RenderUtil.endDraw();
 
         RenderUtil.disableTextureRepeat();
         //GlStateManager.enableCull();

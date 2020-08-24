@@ -1,33 +1,16 @@
 package top.leonx.territory.client.renderer;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
-import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
-import com.mojang.datafixers.util.Pair;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.*;
-import net.minecraft.client.renderer.model.ItemCameraTransforms;
-import net.minecraft.client.renderer.model.Material;
-import net.minecraft.client.renderer.model.ModelBakery;
-import net.minecraft.client.renderer.model.ModelRenderer;
 import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
 import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
 import net.minecraft.client.resources.I18n;
-import net.minecraft.item.DyeColor;
-import net.minecraft.item.FilledMapItem;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.tileentity.BannerPattern;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.storage.MapData;
 import top.leonx.territory.config.TerritoryConfig;
 import top.leonx.territory.tileentities.TerritoryTableTileEntity;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class TerritoryTableTileEntityRenderer extends TileEntityRenderer<TerritoryTableTileEntity> {
 
@@ -38,18 +21,6 @@ public class TerritoryTableTileEntityRenderer extends TileEntityRenderer<Territo
         super(dispatcher);
     }
 
-    public static void renderFlag(MatrixStack matrixStack, IRenderTypeBuffer buffer, int packedLightIn, int packedOverlayIn, ModelRenderer modelRenderer, Material material, boolean isBanner, List<Pair<BannerPattern, DyeColor>> pairs) {
-        modelRenderer.render(matrixStack, material.getBuffer(buffer, RenderType::getEntitySolid), packedLightIn, packedOverlayIn);
-
-        for (int i = 0; i < 17 && i < pairs.size(); ++i) {
-            Pair<BannerPattern, DyeColor> pair   = pairs.get(i);
-            float[]                       afloat = pair.getSecond().getColorComponentValues();
-            Material material2 = new Material(isBanner ? Atlases.BANNER_ATLAS : Atlases.SHIELD_ATLAS, pair.getFirst().func_226957_a_(isBanner));
-            modelRenderer.render(matrixStack, material2.getBuffer(buffer, RenderType::getEntityNoOutline), packedLightIn, packedOverlayIn, afloat[0], afloat[1],
-                                 afloat[2], 1.0F);
-        }
-
-    }
 
     private float EasingLerp(float min, float max, float x) {
         return (float) ((-Math.pow(x - 1, 4) + 1) * (max - min) + min);//POWER 3
