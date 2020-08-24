@@ -7,7 +7,7 @@
   "message.territory.exit_public_territory": "You entered %s",
   "message.territory.need_experience": "%s level experience required",
   "message.territory.insufficient_protect_power": "Insufficient protect power. Some territories has lost.",
-  "message.territory.territory_restore": "Enough power, %s has been restored",
+  "message.territory.territory_restore": "Enough power, regained %s chunks",
   "permission.territory.enter": "Enter",
   "permission.territory.attack_entity": "Attack",
   "permission.territory.break_block": "Break Block",

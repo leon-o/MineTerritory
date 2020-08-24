@@ -228,7 +228,7 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
         }
     }
 
-    public void notifyBannerDestroy() {
+    public void notifyPowerProviderDestroy() {
         int usedPower    = territories.size();
         int protectPower = computeProtectPower();
         int fade         = usedPower - protectPower;
@@ -251,14 +251,14 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
         }
     }
 
-    public void notifyBannerPlace() {
+    public void notifyPowerProviderPlace() {
         int usedPower    = territories.size();
         int protectPower = computeProtectPower();
+        int count=0;
         while (territoriesLostDueToPower.size()>0 && usedPower < protectPower) {
             ChunkPos chunkPos = territoriesLostDueToPower.get(territoriesLostDueToPower.size() - 1);
             if (territories.add(chunkPos)) {
-                world.getServer().getPlayerList().getPlayerByUUID(getOwnerId()).sendMessage(
-                        new TranslationTextComponent("message.territory.territory_restore", chunkPos.toString()).setStyle(MessageUtil.GREEN));
+                count++;
             }
             usedPower = territories.size();
             territoriesLostDueToPower.remove(territoriesLostDueToPower.size() - 1);
@@ -266,6 +266,8 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
         }
         updateTerritoryToWorld();
         world.notifyBlockUpdate(pos, world.getBlockState(pos), world.getBlockState(pos), 2);
+        world.getServer().getPlayerList().getPlayerByUUID(getOwnerId()).sendMessage(
+                new TranslationTextComponent("message.territory.territory_restore", Integer.toString(count)).setStyle(MessageUtil.GREEN));
     }
 
     public double getBlockPower(IWorld world, BlockPos pos) {
