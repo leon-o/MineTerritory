@@ -46,7 +46,7 @@ public class DataUtil {
         if(FMLEnvironment.dist.isClient())
             stack = state.getBlock().getPickBlock(state,null,world,pos,null);
         else {
-            List<ItemStack> drops = state.getBlock().getDrops(state, (ServerWorld) world, pos, world.getTileEntity(pos));
+            List<ItemStack> drops = state.getBlock().func_220070_a(state, (ServerWorld) world, pos, world.getTileEntity(pos));
             if(drops.size()>0)
                 stack = drops.get(0);
             else

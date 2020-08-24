@@ -19,6 +19,6 @@ public class ClientModEvent {
     public static void onFMLClientSetupEvent(final FMLClientSetupEvent event)
     {
         ScreenManager.registerFactory(ModContainerTypes.TERRITORY_CONTAINER, TerritoryScreen::new);
-        ClientRegistry.bindTileEntityRenderer(ModTileEntityType.TERRITORY_TILE_ENTITY, TerritoryTableTileEntityRenderer::new);
+        ClientRegistry.bindTileEntitySpecialRenderer(TerritoryTableTileEntity.class, new TerritoryTableTileEntityRenderer());
     }
 }

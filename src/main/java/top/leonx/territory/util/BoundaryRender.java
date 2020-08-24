@@ -1,11 +1,10 @@
 package top.leonx.territory.util;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.IVertexBuilder;
+import com.mojang.blaze3d.platform.GlStateManager;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.IRenderTypeBuffer;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.MathHelper;
@@ -19,12 +18,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @OnlyIn(Dist.CLIENT)
 public class BoundaryRender {
-    //private static final ResourceLocation testLocation = new ResourceLocation("minecraft", "textures/block" +
-    //        "/birch_leaves.png");
+
     private static final ResourceLocation checkerboardOverlayLocation = new ResourceLocation("territory", "textures/gui" +
             "/checkerboard_overlay.png");
-    //private static final ResourceLocation edgeSquareLocation = new ResourceLocation("territory", "textures/gui" +
-    //        "/slash_overlay.png");
+
     static double duration=0;
     static double usedTime=0;
     static ConcurrentHashMap<EdgeEntry,Integer> edges=new ConcurrentHashMap<>();
@@ -60,32 +57,22 @@ public class BoundaryRender {
         Minecraft.getInstance().textureManager.bindTexture(checkerboardOverlayLocation); //must load once before
 
 
-        RenderSystem.pushMatrix();
-        RenderSystem.depthMask(true);
-        RenderSystem.enableBlend();
-        RenderSystem.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GlStateManager.pushMatrix();
+        GlStateManager.depthMask(true);
+        GlStateManager.enableBlend();
+        GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 
+        GlStateManager.translated(-viewPos.x, -viewPos.y, -viewPos.z);
 
-        RenderSystem.rotatef(pitch,1,0,0);
-        RenderSystem.rotatef(yaw-180,0,1,0);
-        RenderSystem.translated(-viewPos.x, -viewPos.y, -viewPos.z);
-
-        RenderUtil.enableTextureRepeat();
-        Minecraft.getInstance().textureManager.bindTexture(checkerboardOverlayLocation);
-
-        Tessellator       tessellator = Tessellator.getInstance();
-        IRenderTypeBuffer.Impl renderTypeBuffer   = IRenderTypeBuffer.getImpl(tessellator.getBuffer());
-        IVertexBuilder buffer = renderTypeBuffer.getBuffer(RenderType.getSolid());
-        //BufferBuilder bufferBuilder=bufferBuilder.begin(GL11.GL_QUADS, DefaultVertexFormats.PARTICLE_POSITION_TEX_COLOR_LMAP);
-        edges.forEach((t,v)-> RenderUtil.drawWall(t.from,t.to,255,0,0,255,16,new Vec3d(1,1,1),alpha,0xF0,0xF0, buffer));
-
-        tessellator.draw();
+        RenderUtil.startDraw();
+        edges.forEach((t,v)-> RenderUtil.drawWall(t.from,t.to,255,0,0,255,16,new Vec3d(1,1,1),alpha,0xF0,0xF0));
+        RenderUtil.endDraw();
 
         RenderUtil.disableTextureRepeat();
         //GlStateManager.enableCull();
-        RenderSystem.depthMask(true);
-        RenderSystem.popMatrix();
-        RenderSystem.disableBlend();
+        GlStateManager.depthMask(true);
+        GlStateManager.popMatrix();
+        GlStateManager.disableBlend();
     }
 
     private static class EdgeEntry

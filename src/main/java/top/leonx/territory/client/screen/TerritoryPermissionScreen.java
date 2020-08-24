@@ -1,12 +1,12 @@
 package top.leonx.territory.client.screen;
 
-import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.platform.GlStateManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.resources.I18n;
 import net.minecraftforge.common.UsernameCache;
-import net.minecraftforge.fml.client.gui.widget.*;
+import net.minecraftforge.fml.client.config.GuiButtonExt;
 import top.leonx.territory.client.gui.WrapList;
 import top.leonx.territory.client.gui.PlayerList;
 import top.leonx.territory.client.gui.PermissionToggleButton;
@@ -29,8 +29,8 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryTable
     private TextFieldWidget addTextField;
 
     private final Map<PermissionToggleButton,PermissionFlag> permissionCheckbox=new HashMap<>();
-    private ExtendedButton addPlayerBtn;
-    private ExtendedButton removePlayerBtn;
+    private       GuiButtonExt                               addPlayerBtn;
+    private       GuiButtonExt                               removePlayerBtn;
     PlayerList.PlayerEntry defaultPlayerEntry;
     public TerritoryPermissionScreen(TerritoryTableContainer container,
                                      ContainerScreen<TerritoryTableContainer> parent, Consumer<Integer> changePage) {
@@ -48,9 +48,9 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryTable
         defaultPlayerEntry.canDelete=false;
         search=new TextFieldWidget(font, parent.getGuiLeft()+10, parent.getGuiTop()+8, 100,16,I18n.format("gui.territory.search"));
         addTextField=new TextFieldWidget(font, parent.getGuiLeft()+10, parent.getGuiTop()+parent.getYSize()-24, 80,16,I18n.format("gui.territory.add_player"));
-        addPlayerBtn=new ExtendedButton(parent.getGuiLeft()+90,parent.getGuiTop()+parent.getYSize()-24,20,16,"+",
+        addPlayerBtn=new GuiButtonExt(parent.getGuiLeft()+90,parent.getGuiTop()+parent.getYSize()-24,20,16,"+",
                 t-> addNewPlayer());
-        removePlayerBtn=new ExtendedButton(parent.getGuiLeft()+120,parent.getGuiTop()+8,24,16,I18n.format("gui.territory.remove_player_btn"),
+        removePlayerBtn=new GuiButtonExt(parent.getGuiLeft()+120,parent.getGuiTop()+8,24,16,I18n.format("gui.territory.remove_player_btn"),
                 t-> removePlayer());
         permissionList=new WrapList(parent.getGuiLeft()+120, parent.getGuiTop()+30, 110, 104, "permission_list");
         permissionList.marginLeft=6;
@@ -86,7 +86,7 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryTable
 
         this.addButton(addPlayerBtn);
         this.addButton(removePlayerBtn);
-        this.addButton(new ExtendedButton(halfW+40, parent.getGuiTop()+parent.getYSize()-30, 70, 20, I18n.format("gui.territory.back"),
+        this.addButton(new GuiButtonExt(halfW+40, parent.getGuiTop()+parent.getYSize()-30, 70, 20, I18n.format("gui.territory.back"),
                 $ -> NavigateTo(0)
         ));
         this.children.add(playerList);
@@ -111,10 +111,10 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryTable
 
         String title=I18n.format("gui.territory.all_player");
         if(playerList.getSelected()!=null) title=playerList.getSelected().getName();
-        RenderSystem.pushMatrix();
-        RenderSystem.scaled(1.2,1.2,1.2);
+        GlStateManager.pushMatrix();
+        GlStateManager.scaled(1.2,1.2,1.2);
         font.drawString(title, (int)((this.parent.getGuiLeft()+150)/1.2),parent.getGuiTop()+4,0xFFFFF0);
-        RenderSystem.popMatrix();
+        GlStateManager.popMatrix();
     }
 
     @Override

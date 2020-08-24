@@ -1,9 +1,12 @@
 package top.leonx.territory.util;
 
 import com.mojang.blaze3d.platform.GlStateManager;
-import com.mojang.blaze3d.vertex.IVertexBuilder;
+
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.Vector3f;
-import net.minecraft.client.renderer.texture.OverlayTexture;
+
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -11,87 +14,41 @@ import org.lwjgl.opengl.GL11;
 
 @OnlyIn(Dist.CLIENT)
 public class RenderUtil {
-//    private static final ResourceLocation edgeSquareLocation = new ResourceLocation("territory", "textures/gui" +
-//            "/slash_overlay.png");
-//    public static  void drawWall(Vec3d player_pos, Vec3d posA, Vec3d posB)
-//    {
-//        //GL11.glPushAttrib(GL11.GL_ENABLE_BIT);
-//        GlStateManager.disableCull();
-//        //GlStateManager.disableLighting();
-//        //GL11.glDisable(GL11.GL_TEXTURE_2D);
-//        GlStateManager.depthMask(false);
-////        GL11.glEnable(GL11.GL_BLEND);
-////        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-//        GlStateManager.pushMatrix();
-//        GlStateManager.translated(-player_pos.x, -player_pos.y, -player_pos.z);
-//        Color c = new Color(255, 255, 255, 155);
-//        //GlStateManager.color4f(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha());
-//        Minecraft.getInstance().textureManager.bindTexture(edgeSquareLocation);
-//        Tessellator tessellator = Tessellator.getInstance();
-//        IVertexBuilder bufferBuilder = tessellator.getBuffer();
-//        bufferBuilder.begin(GL11.GL_QUADS, DefaultVertexFormats.PARTICLE_POSITION_TEX_COLOR_LMAP);
-//
-//        int skyLight = 0xFFFFF0;
-//        int blockLight =  0xFFFFF0;
-//
-//        int r=c.getRed();
-//        int g=c.getGreen();
-//        int b=c.getBlue();
-//        int a=c.getAlpha();
-//        bufferBuilder.pos(posA.x,posA.y,posA.z).tex(0,0).color(r,g,b,a).lightmap(skyLight, blockLight).endVertex();
-//        bufferBuilder.pos(posA.x,posB.y,posA.z).tex(0,1).color(r,g,b,a).lightmap(skyLight, blockLight).endVertex();
-//        bufferBuilder.pos(posA.x,posB.y,posB.z).tex(1,1).color(r,g,b,a).lightmap(skyLight, blockLight).endVertex();
-//        bufferBuilder.pos(posA.x,posA.y,posB.z).tex(1,0).color(r,g,b,a).lightmap(skyLight, blockLight).endVertex();
-//
-//        bufferBuilder.pos(posA.x,posA.y,posA.z).tex(0,0).color(r,g,b,a).lightmap(skyLight, blockLight).endVertex();
-//        bufferBuilder.pos(posA.x,posB.y,posA.z).tex(0,1).color(r,g,b,a).lightmap(skyLight, blockLight).endVertex();
-//        bufferBuilder.pos(posB.x,posB.y,posA.z).tex(1,1).color(r,g,b,a).lightmap(skyLight, blockLight).endVertex();
-//        bufferBuilder.pos(posB.x,posA.y,posA.z).tex(1,0).color(r,g,b,a).lightmap(skyLight, blockLight).endVertex();
-//
-//        bufferBuilder.pos(posB.x,posA.y,posA.z).tex(0,0).color(r,g,b,a).lightmap(skyLight, blockLight).endVertex();
-//        bufferBuilder.pos(posB.x,posB.y,posA.z).tex(0,1).color(r,g,b,a).lightmap(skyLight, blockLight).endVertex();
-//        bufferBuilder.pos(posB.x,posB.y,posB.z).tex(1,1).color(r,g,b,a).lightmap(skyLight, blockLight).endVertex();
-//        bufferBuilder.pos(posB.x,posA.y,posB.z).tex(1,0).color(r,g,b,a).lightmap(skyLight, blockLight).endVertex();
-//
-//        bufferBuilder.pos(posA.x,posA.y,posB.z).tex(0,0).color(r,g,b,a).lightmap(skyLight, blockLight).endVertex();
-//        bufferBuilder.pos(posA.x,posB.y,posB.z).tex(0,1).color(r,g,b,a).lightmap(skyLight, blockLight).endVertex();
-//        bufferBuilder.pos(posB.x,posB.y,posB.z).tex(1,1).color(r,g,b,a).lightmap(skyLight, blockLight).endVertex();
-//        bufferBuilder.pos(posB.x,posA.y,posB.z).tex(1,0).color(r,g,b,a).lightmap(skyLight, blockLight).endVertex();
-//
-//        tessellator.draw();
-//
-//        GlStateManager.popMatrix();
-//        //GL11.glEnable(GL11.GL_TEXTURE_2D);
-//        GlStateManager.depthMask(true);
-//        GlStateManager.enableCull();
-//        //GL11.glPopAttrib();
-//    }
+    private static BufferBuilder buffer;
+    private static Tessellator           tessellator   = Tessellator.getInstance();
+    public static void startDraw()
+    {
 
-    public static void drawWall(Vec3d from,Vec3d to,double height,Vec3d rgb,float alpha,int skyL, int blockL, IVertexBuilder buffer)
-    {
-        drawDoubleSidePlane(from,to.subtract(from),new Vec3d(0,height,0),rgb,alpha,skyL,blockL,buffer);
+        buffer=tessellator.getBuffer();
+        buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_LMAP_COLOR);
     }
-    public static void drawWall(Vec3d from,Vec3d to,double height,int minU,int minV,int maxU,int maxV,Vec3d rgb,float alpha,int skyL, int blockL,
-                                IVertexBuilder buffer)
+    public static void endDraw()
     {
-        drawDoubleSidePlane(from,to.subtract(from),new Vec3d(0,height,0),minU,minV,maxU,maxV,rgb,alpha,skyL,blockL,buffer);
+        tessellator.draw();
     }
-    public static void drawDoubleSidePlane(Vec3d o,Vec3d l1,Vec3d l2,Vec3d rgb,float alpha,int skyL, int blockL, IVertexBuilder buffer)
+    public static void drawWall(Vec3d from,Vec3d to,double height,Vec3d rgb,float alpha,int skyL, int blockL)
     {
-        drawDoubleSidePlane(o,l1,l2,0,0,1,1,rgb,alpha,skyL,blockL,buffer);
+        drawDoubleSidePlane(from,to.subtract(from),new Vec3d(0,height,0),rgb,alpha,skyL,blockL);
+    }
+    public static void drawWall(Vec3d from,Vec3d to,double height,int minU,int minV,int maxU,int maxV,Vec3d rgb,float alpha,int skyL, int blockL)
+    {
+        drawDoubleSidePlane(from,to.subtract(from),new Vec3d(0,height,0),minU,minV,maxU,maxV,rgb,alpha,skyL,blockL);
+    }
+    public static void drawDoubleSidePlane(Vec3d o,Vec3d l1,Vec3d l2,Vec3d rgb,float alpha,int skyL, int blockL)
+    {
+        drawDoubleSidePlane(o,l1,l2,0,0,1,1,rgb,alpha,skyL,blockL);
     }
 
-    public static void drawDoubleSidePlane(Vec3d o,Vec3d l1,Vec3d l2,int minU,int minV,int maxU,int maxV,Vec3d rgb,float alpha,int skyL, int blockL,
-                                           IVertexBuilder buffer)
+    public static void drawDoubleSidePlane(Vec3d o,Vec3d l1,Vec3d l2,int minU,int minV,int maxU,int maxV,Vec3d rgb,float alpha,int skyL, int blockL)
     {
         Vec3d n = l1.crossProduct(l2).normalize();
-        drawPlane(o.add(n.scale(0.02)),l1,l2,minU,minV,maxU,maxV,rgb,alpha,skyL,blockL, buffer);
-        drawPlane(o.subtract(n.scale(0.02)),l2,l1,minV,minU,maxV,maxU,rgb,alpha,skyL,blockL, buffer);
+        drawPlane(o.add(n.scale(0.02)),l1,l2,minU,minV,maxU,maxV,rgb,alpha,skyL,blockL);
+        drawPlane(o.subtract(n.scale(0.02)),l2,l1,minV,minU,maxV,maxU,rgb,alpha,skyL,blockL);
     }
 
-    public static void drawPlane(Vec3d o,Vec3d l1,Vec3d l2,Vec3d rgb,float alpha,int skyL, int blockL, IVertexBuilder buffer)
+    public static void drawPlane(Vec3d o,Vec3d l1,Vec3d l2,Vec3d rgb,float alpha,int skyL, int blockL)
     {
-        drawPlane(o,l1,l2,0,0,1,1,rgb,alpha,skyL,blockL,buffer);
+        drawPlane(o,l1,l2,0,0,1,1,rgb,alpha,skyL,blockL);
     }
 
     /**
@@ -102,20 +59,19 @@ public class RenderUtil {
      * @param col color RGB
      * @param skyL skylight color RGB
      * @param blockL block light color RGB
-     * @param buffer Buffer Builder
      */
     // Normal direction = l1 x l2
-    public static void drawPlane(Vec3d o,Vec3d l1,Vec3d l2,int minU,int minV,int maxU,int maxV,Vec3d col,float alpha,int skyL, int blockL, IVertexBuilder buffer)
+    public static void drawPlane(Vec3d o,Vec3d l1,Vec3d l2,int minU,int minV,int maxU,int maxV,Vec3d col,float alpha,int skyL, int blockL)
     {
         float r=(float)col.x;//(col>>>16)& 0x000000FF;
         float g=(float)col.y;//(col>>>8)& 0x000000FF;
         float b=(float)col.z;//col & 0x000000FF;
         Vec3d normal = l1.crossProduct(l2).normalize();
         Vector3f nf=new Vector3f((float) normal.x,(float)normal.y,(float)normal.z);
-        buffer.pos(o.x,o.y,o.z).color(r,g,b,alpha).tex(minU,minV).lightmap(skyL, blockL).normal(nf.getX(),nf.getY(),nf.getZ()).overlay(OverlayTexture.NO_OVERLAY).endVertex();
-        buffer.pos(o.x+l1.x,o.y+l1.y,o.z+l1.z).color(r,g,b,alpha).tex(minU,maxV).lightmap(skyL, blockL).normal(nf.getX(),nf.getY(),nf.getZ()).overlay(OverlayTexture.NO_OVERLAY).endVertex();
-        buffer.pos(o.x+l1.x+l2.x,o.y+l1.y+l2.y,o.z+l1.z+l2.z).color(r,g,b,alpha).tex(maxU,maxV).lightmap(skyL, blockL).normal(nf.getX(),nf.getY(),nf.getZ()).overlay(OverlayTexture.NO_OVERLAY).endVertex();
-        buffer.pos(o.x+l2.x,o.y+l2.y,o.z+l2.z).color(r,g,b,alpha).tex(maxU,minV).lightmap(skyL, blockL).normal(nf.getX(),nf.getY(),nf.getZ()).overlay(OverlayTexture.NO_OVERLAY).endVertex();
+        buffer.pos(o.x,o.y,o.z).tex(minU,minV).lightmap(skyL, blockL).color(r,g,b,alpha).endVertex();
+        buffer.pos(o.x+l1.x,o.y+l1.y,o.z+l1.z).tex(minU,maxV).lightmap(skyL, blockL).color(r,g,b,alpha).endVertex();
+        buffer.pos(o.x+l1.x+l2.x,o.y+l1.y+l2.y,o.z+l1.z+l2.z).tex(maxU,maxV).lightmap(skyL, blockL).color(r,g,b,alpha).endVertex();
+        buffer.pos(o.x+l2.x,o.y+l2.y,o.z+l2.z).tex(maxU,minV).lightmap(skyL, blockL).color(r,g,b,alpha).endVertex();
     }
 
     public static void enableTextureRepeat() {

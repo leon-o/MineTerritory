@@ -222,7 +222,7 @@ public class GameEvent {
 
         World    world       = clientPlayer.getEntityWorld();
         ChunkPos lastTickPos = new ChunkPos((int) (clientPlayer.lastTickPosX - 0.5) >> 4, (int) (clientPlayer.lastTickPosZ - 0.5) >> 4);
-        ChunkPos thisTickPos = new ChunkPos((int) (clientPlayer.getPosX() - 0.5) >> 4, (int) (clientPlayer.getPosZ() - 0.5) >> 4);
+        ChunkPos thisTickPos = new ChunkPos((int) (clientPlayer.posX - 0.5) >> 4, (int) (clientPlayer.posZ - 0.5) >> 4);
         if (lastTickPos == null) lastTickPos = thisTickPos;
 
         TerritoryInfo lastTerritoryInfo = TerritoryInfoHolder.get(world).getChunkTerritoryInfo(lastTickPos);

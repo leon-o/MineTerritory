@@ -49,9 +49,9 @@ public class TerritoryTableBlock extends Block {
     }
 
     @Override
-    public ActionResultType onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
+    public boolean onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
         if (handIn == Hand.MAIN_HAND) getTerritoryTileEntity(worldIn, pos).mapStack = player.getHeldItem(handIn);
-        if (worldIn.isRemote) return ActionResultType.PASS;
+        if (worldIn.isRemote) return false;
         TerritoryTableTileEntity tileEntity = getTerritoryTileEntity(worldIn, pos);
         if (tileEntity.getOwnerId().equals(player.getUniqueID()) || tileEntity.getTerritoryInfo().permissions.containsKey(
                 player.getUniqueID()) && tileEntity.getTerritoryInfo().permissions.get(player.getUniqueID()).contain(
@@ -60,7 +60,7 @@ public class TerritoryTableBlock extends Block {
             tileEntity.drawMapData();
             NetworkHooks.openGui((ServerPlayerEntity) player, tileEntity, pos);
         }
-        return ActionResultType.SUCCESS;
+        return true;
     }
 
     @Nullable

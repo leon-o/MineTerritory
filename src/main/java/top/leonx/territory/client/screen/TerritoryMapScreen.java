@@ -1,23 +1,15 @@
 package top.leonx.territory.client.screen;
 
 import com.mojang.blaze3d.platform.GlStateManager;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.material.MaterialColor;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraftforge.fml.client.gui.widget.ExtendedButton;
+import net.minecraftforge.fml.client.config.GuiButtonExt;
 import top.leonx.territory.container.TerritoryTableContainer;
 
 import java.util.Collection;
-import java.util.Random;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -48,8 +40,8 @@ public class TerritoryMapScreen extends AbstractScreenPage<TerritoryTableContain
         final int halfW = width / 2;
         final int halfH = height / 2;
         territoryNameTextField = new TextFieldWidget(font, parent.getGuiLeft() + 160, parent.getGuiTop() + 24, 80, 16, "Name");
-        this.addButton(new ExtendedButton(halfW + 40, halfH + 50, 70, 20, I18n.format("gui.territory.done_btn"), $ -> container.Done()));
-        this.addButton(new ExtendedButton(halfW + 40, halfH + 28, 70, 20, I18n.format("gui.territory.permission_btn"), $ -> NavigateTo(1)));
+        this.addButton(new GuiButtonExt(halfW + 40, halfH + 50, 70, 20, I18n.format("gui.territory.done_btn"), $ -> container.Done()));
+        this.addButton(new GuiButtonExt(halfW + 40, halfH + 28, 70, 20, I18n.format("gui.territory.permission_btn"), $ -> NavigateTo(1)));
 
         territoryNameTextField.setText(container.territoryInfo.territoryName);
         this.children.add(territoryNameTextField);
@@ -107,7 +99,7 @@ public class TerritoryMapScreen extends AbstractScreenPage<TerritoryTableContain
     private void drawChunkOverlay(int mouseX, int mouseY) {
 
         GlStateManager.enableBlend();
-        GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA.param, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA.param);
+        GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
 
         getMinecraft().getTextureManager().bindTexture(territorySquareLocation);
 
