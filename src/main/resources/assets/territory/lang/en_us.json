@@ -8,6 +8,7 @@
   "message.territory.need_experience": "%s level experience required",
   "message.territory.insufficient_protect_power": "Insufficient protect power. Some territories has lost.",
   "message.territory.territory_restore": "Enough power, regained %s chunks",
+  "message.territory.already_occupied": "This chunk has been occupied.",
   "permission.territory.enter": "Enter",
   "permission.territory.attack_entity": "Attack",
   "permission.territory.break_block": "Break Block",

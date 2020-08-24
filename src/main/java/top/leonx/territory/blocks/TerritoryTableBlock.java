@@ -19,6 +19,7 @@ import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.Explosion;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
@@ -31,6 +32,7 @@ import top.leonx.territory.data.PermissionFlag;
 import top.leonx.territory.data.TerritoryInfo;
 import top.leonx.territory.tileentities.ModTileEntityType;
 import top.leonx.territory.tileentities.TerritoryTableTileEntity;
+import top.leonx.territory.util.MessageUtil;
 
 import javax.annotation.Nullable;
 import java.awt.*;
@@ -79,7 +81,7 @@ public class TerritoryTableBlock extends Block {
                 ModCapabilities.TERRITORY_INFO_CAPABILITY.getDefaultInstance());
         if (info.IsProtected()) {
             if (!context.getWorld().isRemote) {
-                context.getPlayer().sendMessage(new StringTextComponent("Already occupied"));
+                context.getPlayer().sendMessage(new TranslationTextComponent("message.territory.already_occupied").setStyle(MessageUtil.YELLOW));
             }
             return Blocks.AIR.getDefaultState();
         }
