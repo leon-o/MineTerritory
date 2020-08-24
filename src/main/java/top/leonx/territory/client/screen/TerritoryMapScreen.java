@@ -1,6 +1,7 @@
 package top.leonx.territory.client.screen;
 
 import com.mojang.blaze3d.platform.GlStateManager;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.resources.I18n;
@@ -37,10 +38,12 @@ public class TerritoryMapScreen extends AbstractScreenPage<TerritoryTableContain
     public void init() {
 
         final int halfW = width / 2;
-        final int halfH = height / 2;
         territoryNameTextField = new TextFieldWidget(font, parent.getGuiLeft() + 160, parent.getGuiTop() + 24, 80, 16, "Name");
-        this.addButton(new GuiButtonExt(halfW + 40, halfH + 50, 70, 20, I18n.format("gui.territory.done_btn"), $ -> container.Done()));
-        this.addButton(new GuiButtonExt(halfW + 40, halfH + 28, 70, 20, I18n.format("gui.territory.permission_btn"), $ -> NavigateTo(1)));
+        doneButton = new GuiButtonExt(halfW + 40, parent.getGuiTop() + parent.getYSize() - 30, 70, 20,
+                                        I18n.format("gui.territory.done_btn"), $ -> container.Done());
+        this.addButton(doneButton);
+        this.addButton(new GuiButtonExt(halfW + 40, parent.getGuiTop()+parent.getYSize()-52, 70, 20, I18n.format("gui.territory.permission_btn"),
+                                          $ -> NavigateTo(1)));
 
         territoryNameTextField.setText(container.territoryInfo.territoryName);
         this.children.add(territoryNameTextField);
