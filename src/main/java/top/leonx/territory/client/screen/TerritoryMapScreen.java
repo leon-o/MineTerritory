@@ -1,23 +1,16 @@
 package top.leonx.territory.client.screen;
 
 import com.mojang.blaze3d.platform.GlStateManager;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.material.MaterialColor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.fml.client.gui.widget.ExtendedButton;
 import top.leonx.territory.container.TerritoryTableContainer;
 
 import java.util.Collection;
-import java.util.Random;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -29,16 +22,15 @@ public class TerritoryMapScreen extends AbstractScreenPage<TerritoryTableContain
     final static         int              mapSizeY                = 144;
     final static         int              chunkNumX               = mapSizeX / 16;
     final static         int              chunkNumY               = mapSizeY / 16;
-    private static final ResourceLocation territorySquareLocation = new ResourceLocation("minecraft", "textures/block" + "/blue_stained_glass.png");
-    private static final ResourceLocation edgeSquareLocation      = new ResourceLocation("territory", "textures/gui" + "/point_overlay.png");
-    private static final ResourceLocation mouseOnSquareLocation   = new ResourceLocation("minecraft", "textures/block" + "/light_blue_stained_glass.png");
-    private static final ResourceLocation expandSquareLocation    = new ResourceLocation("minecraft", "textures/block" + "/cyan_stained_glass.png");
-    private static final ResourceLocation forbiddenSquareLocation = new ResourceLocation("minecraft", "textures/block" + "/red_stained_glass.png");
-    //private final        DynamicTexture   mapTexture              = new DynamicTexture(256, 256, true);
-    //private final        ResourceLocation mapLocation             = Minecraft.getInstance().getTextureManager().getDynamicTextureLocation(
-    //        "map_dynamic" + MathHelper.nextInt(new Random(), 0, 128), mapTexture);
-    private              TextFieldWidget  territoryNameTextField;
-
+    private static final ResourceLocation territorySquareLocation = new ResourceLocation("minecraft", "textures/block/blue_stained_glass.png");
+    private static final ResourceLocation edgeSquareLocation      = new ResourceLocation("territory", "textures/gui/point_overlay.png");
+    private static final ResourceLocation mouseOnSquareLocation   = new ResourceLocation("minecraft", "textures/block/light_blue_stained_glass.png");
+    private static final ResourceLocation expandSquareLocation    = new ResourceLocation("minecraft", "textures/block/cyan_stained_glass.png");
+    private static final ResourceLocation forbiddenSquareLocation = new ResourceLocation("minecraft", "textures/block/red_stained_glass.png");
+    private static final ResourceLocation xpIconLocation          = new ResourceLocation("territory", "textures/gui/xp_icon.png");
+    private              TextFieldWidget territoryNameTextField;
+    private ExtendedButton               doneButton;
+    private int xpRequired;
     public TerritoryMapScreen(TerritoryTableContainer container, ContainerScreen<TerritoryTableContainer> parent, Consumer<Integer> changePage) {
         super(container, parent, changePage);
     }
@@ -48,35 +40,49 @@ public class TerritoryMapScreen extends AbstractScreenPage<TerritoryTableContain
         final int halfW = width / 2;
         final int halfH = height / 2;
         territoryNameTextField = new TextFieldWidget(font, parent.getGuiLeft() + 160, parent.getGuiTop() + 24, 80, 16, "Name");
-        this.addButton(new ExtendedButton(halfW + 40, halfH + 50, 70, 20, I18n.format("gui.territory.done_btn"), $ -> container.Done()));
-        this.addButton(new ExtendedButton(halfW + 40, halfH + 28, 70, 20, I18n.format("gui.territory.permission_btn"), $ -> NavigateTo(1)));
+        doneButton = new ExtendedButton(halfW + 40, parent.getGuiTop() + parent.getYSize() - 30, 70, 20,
+                                        I18n.format("gui.territory.done_btn"), $ -> container.Done());
+        this.addButton(doneButton);
+        this.addButton(new ExtendedButton(halfW + 40, parent.getGuiTop()+parent.getYSize()-52, 70, 20, I18n.format("gui.territory.permission_btn"),
+                                          $ -> NavigateTo(1)));
 
         territoryNameTextField.setText(container.territoryInfo.territoryName);
         this.children.add(territoryNameTextField);
-        //drawMapTexture();
-
     }
 
     @Override
     public void renderInternal(final int mouseX, final int mouseY, final float partialTicks) {
-        //playerList.render(mouseX,mouseY,partialTicks);
         territoryNameTextField.render(mouseX, mouseY, partialTicks);
         territoryNameTextField.renderButton(mouseX, mouseY, partialTicks);
-        font.drawString(I18n.format("gui.territory.territory_name"), parent.getGuiLeft() + 160, parent.getGuiTop() + 8, 0xFFFFFF);
     }
 
     @Override
     public void drawGuiContainerForegroundLayer(int mouseX, int mouseY) {
         drawMap();
         drawChunkOverlay(mouseX, mouseY);
+        font.drawString(I18n.format("gui.territory.territory_name"),  160, 8, 0xFFFFFF);
 
-        this.font.drawString(I18n.format("gui.territory.protect_power"),  160,  50, 0xFFFFFFFF);
+        font.drawString(I18n.format("gui.territory.protect_power"),  160,  50, 0xFFFFFFFF);
 
-        this.font.drawString(Integer.toString(container.getUsedProtectPower()),  160,  65,
+        font.drawString(Integer.toString(container.getUsedProtectPower()),  160,  65,
                              container.getUsedProtectPower() < container.getTotalProtectPower() ? 0xFF00BF4D : 0xFFFFFFFF);
-        this.font.drawString("/" + container.getTotalProtectPower(),
+        font.drawString("/" + container.getTotalProtectPower(),
                              160 + this.font.getStringWidth(Integer.toString(container.getUsedProtectPower())),  65,
                              0xFFFFFFFF);
+
+        if(xpRequired>0)
+        {
+            if(xpRequired>container.getPlayerLevel())
+            {
+                Minecraft.getInstance().textureManager.bindTexture(xpIconLocation);
+                blit(157,84,(Math.min(xpRequired,3)-1)*16,16,16,16,48,32);
+                font.drawString(Integer.toString(xpRequired),  174,  88,0x8c605d);
+            }else {
+                Minecraft.getInstance().textureManager.bindTexture(xpIconLocation);
+                blit(157,84,(Math.min(xpRequired,3)-1)*16,0,16,16,48,32);
+                font.drawString(Integer.toString(xpRequired),  174,  88,0xc8ff8f);
+            }
+        }
     }
 
     @Override
@@ -161,5 +167,7 @@ public class TerritoryMapScreen extends AbstractScreenPage<TerritoryTableContain
     public void tick() {
         super.tick();
         container.territoryInfo.territoryName = territoryNameTextField.getText();
+        xpRequired = container.getXpRequired();
+        doneButton.active= xpRequired<=container.getPlayerLevel();
     }
 }

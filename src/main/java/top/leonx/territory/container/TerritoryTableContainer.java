@@ -130,7 +130,7 @@ public class TerritoryTableContainer extends Container {
 
         TerritoryTableTileEntity tileEntity = (TerritoryTableTileEntity) player.world.getTileEntity(tileEntityPos);
         if (!player.isCreative()) {
-            int experienceNeed = (int) Math.round(msg.readyAdd.length* TerritoryConfig.expNeededPerChunk);
+            int experienceNeed = (int) Math.round((msg.readyAdd.length-msg.readyRemove.length)* TerritoryConfig.expNeededPerChunk);
             if (player.experienceLevel >= experienceNeed) {
                 player.addExperienceLevel(-experienceNeed);
             } else {
@@ -153,7 +153,14 @@ public class TerritoryTableContainer extends Container {
         tileEntity.updateTerritoryToWorld();
         return true;
     }
-
+    public int getXpRequired()
+    {
+        if (!player.isCreative()) {
+            return  (int) Math.round((territories.size()- originalTerritories.size())* TerritoryConfig.expNeededPerChunk);
+        }
+        return 0;
+    }
+    public int getPlayerLevel(){return player.experienceLevel;}
     @Override
     public void onContainerClosed(@Nonnull PlayerEntity playerIn) {
 
