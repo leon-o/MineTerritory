@@ -64,7 +64,9 @@ public class BoundaryRender {
 
         GlStateManager.translated(-viewPos.x, -viewPos.y, -viewPos.z);
 
+        RenderUtil.enableTextureRepeat();
         RenderUtil.startDraw();
+        Minecraft.getInstance().textureManager.bindTexture(checkerboardOverlayLocation);
         edges.forEach((t,v)-> RenderUtil.drawWall(t.from,t.to,255,0,0,255,16,new Vec3d(1,1,1),alpha,0xF0,0xF0));
         RenderUtil.endDraw();
 
