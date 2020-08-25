@@ -24,7 +24,7 @@ displayURL="https://github.com/leon-o/MineTerritory" #optional
 # A file name (in the root of the mod JAR) containing a logo for display
 # logoFile="examplemod.png" #optional
 # A text field displayed in the mod UI
-credits="Thanks for this example mod goes to Java" #optional
+# credits="Thanks for this example mod goes to Java" #optional
 # A text field displayed in the mod UI
 authors="Leon" #optional
 # The description text for the mod (multi line!) (#mandatory)
@@ -32,7 +32,7 @@ description='''
 A mod of minecraft which allows player to declare territory whit GUI.
 '''
 # A dependency - use the . to indicate dependency for a specific modid. Dependencies are optional.
-[[dependencies.examplemod]] #optional
+[[dependencies.territory]] #optional
     # the modid of the dependency
     modId="forge" #mandatory
     # Does this dependency have to exist - if not, ordering below must be specified
@@ -44,7 +44,7 @@ A mod of minecraft which allows player to declare territory whit GUI.
     # Side this dependency is applied on - BOTH, CLIENT or SERVER
     side="BOTH"
 # Here's another dependency
-[[dependencies.examplemod]]
+[[dependencies.territory]]
     modId="minecraft"
     mandatory=true
     versionRange="[1.14.4]"
