@@ -28,6 +28,7 @@ public class TerritoryMapScreen extends AbstractScreenPage<TerritoryTableContain
     private static final ResourceLocation expandSquareLocation    = new ResourceLocation("minecraft", "textures/block/cyan_stained_glass.png");
     private static final ResourceLocation forbiddenSquareLocation = new ResourceLocation("minecraft", "textures/block/red_stained_glass.png");
     private static final ResourceLocation xpIconLocation          = new ResourceLocation("territory", "textures/gui/xp_icon.png");
+    private static final int              foregroundColor         = 0x293134;
     private              TextFieldWidget territoryNameTextField;
     private GuiButtonExt               doneButton;
     private int xpRequired;
@@ -59,27 +60,30 @@ public class TerritoryMapScreen extends AbstractScreenPage<TerritoryTableContain
     public void drawGuiContainerForegroundLayer(int mouseX, int mouseY) {
         drawMap();
         drawChunkOverlay(mouseX, mouseY);
-        font.drawString(I18n.format("gui.territory.territory_name"),  160, 8, 0xFFFFFF);
+        font.drawString(I18n.format("gui.territory.territory_name"),  160, 8, foregroundColor);
 
-        font.drawString(I18n.format("gui.territory.protect_power"),  160,  50, 0xFFFFFFFF);
+        String protectPowerTranslation=I18n.format("gui.territory.protect_power");
+        font.drawString(protectPowerTranslation,  160,  50, foregroundColor);
 
-        font.drawString(Integer.toString(container.getUsedProtectPower()),  160,  65,
-                             container.getUsedProtectPower() < container.getTotalProtectPower() ? 0xFF00BF4D : 0xFFFFFFFF);
+        font.drawString(Integer.toString(container.getUsedProtectPower()),  160,  64,
+                             container.getUsedProtectPower() < container.getTotalProtectPower() ? 0x00A838 : foregroundColor);
         font.drawString("/" + container.getTotalProtectPower(),
-                             160 + this.font.getStringWidth(Integer.toString(container.getUsedProtectPower())),  65,
-                             0xFFFFFFFF);
+                        160 + this.font.getStringWidth(Integer.toString(container.getUsedProtectPower())), 64,
+                        foregroundColor);
 
         if(xpRequired>0)
         {
+            String xpRequiredTranslation=I18n.format("gui.territory.xp_required");
+            font.drawString(xpRequiredTranslation,160,79, foregroundColor);
             if(xpRequired>container.getPlayerLevel())
             {
                 Minecraft.getInstance().textureManager.bindTexture(xpIconLocation);
-                blit(157,84,(Math.min(xpRequired,3)-1)*16,16,16,16,48,32);
-                font.drawString(Integer.toString(xpRequired),  174,  88,0x8c605d);
+                blit(157,89,(Math.min(xpRequired,3)-1)*16,16,16,16,48,32);
+                font.drawString(Integer.toString(xpRequired),  173,  93,0x8c605d);
             }else {
                 Minecraft.getInstance().textureManager.bindTexture(xpIconLocation);
-                blit(157,84,(Math.min(xpRequired,3)-1)*16,0,16,16,48,32);
-                font.drawString(Integer.toString(xpRequired),  174,  88,0xc8ff8f);
+                blit(157,89,(Math.min(xpRequired,3)-1)*16,0,16,16,48,32);
+                font.drawString(Integer.toString(xpRequired),  173,  93,0xc8ff8f);
             }
         }
     }
