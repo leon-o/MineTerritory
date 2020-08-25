@@ -12,7 +12,7 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.fluid.IFluidState;
+import net.minecraft.fluid.FluidState;
 import net.minecraft.inventory.container.Container;
 import net.minecraft.inventory.container.INamedContainerProvider;
 import net.minecraft.item.ItemStack;
@@ -109,8 +109,8 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
     }
 
     @Override
-    public void read(@Nonnull CompoundNBT compound) {
-        super.read(compound);
+    public void func_230337_a_(@Nonnull BlockState state, @Nonnull CompoundNBT compound) {
+        super.func_230337_a_(state,compound);
         readInternal(compound);
     }
 
@@ -154,8 +154,8 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
     }
 
     @Override
-    public void handleUpdateTag(CompoundNBT data) {
-        read(data);
+    public void handleUpdateTag(BlockState state, CompoundNBT tag) {
+        func_230337_a_(state,tag);
     }
 
     //Call when invoke world::notifyBlockChange
@@ -250,7 +250,7 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
             updateTerritoryToWorld();
             world.notifyBlockUpdate(pos, world.getBlockState(pos), world.getBlockState(pos), 2);
             world.getServer().getPlayerList().getPlayerByUUID(getOwnerId()).sendMessage(
-                    new TranslationTextComponent("message.territory" + ".insufficient_protect_power").setStyle(MessageUtil.RED));
+                    new TranslationTextComponent("message.territory" + ".insufficient_protect_power").func_230530_a_(MessageUtil.RED),getOwnerId());
         }
     }
 
@@ -271,7 +271,7 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
         updateTerritoryToWorld();
         world.notifyBlockUpdate(pos, world.getBlockState(pos), world.getBlockState(pos), 2);
         world.getServer().getPlayerList().getPlayerByUUID(getOwnerId()).sendMessage(
-                new TranslationTextComponent("message.territory.territory_restore", Integer.toString(count)).setStyle(MessageUtil.GREEN));
+                new TranslationTextComponent("message.territory.territory_restore", Integer.toString(count)).func_230530_a_(MessageUtil.GREEN),getOwnerId());
     }
 
     public double getBlockPower(IWorld world, BlockPos pos) {
@@ -327,7 +327,7 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
         this.mapTexture.updateDynamicTexture();
     }
 
-    @SuppressWarnings({"deprecation", "UnstableApiUsage"})
+    @SuppressWarnings({"UnstableApiUsage"})
     public void drawMapData() {
         mapColor = new byte[mapSize * mapSize];
         ChunkPos chunkPos  = new ChunkPos(pos.getX() >> 4, pos.getZ() >> 4);
@@ -338,7 +338,7 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
         int      l         = MathHelper.floor(pos.getX() - (double) xCenter) / i + mapSize / 2;
         int      i1        = MathHelper.floor(pos.getZ() - (double) yCenter) / i + mapSize / 2;
         int      j1        = mapSize / i;
-        if (world.dimension.isNether()) {
+        if (world.func_230315_m_().func_236037_d_()) { // world.dimension.isNether()
             j1 /= 2;
         }
 
@@ -362,7 +362,7 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
                             int      j3       = l2 & 15;
                             int      k3       = 0;
                             double   d1       = 0.0D;
-                            if (world.dimension.isNether()) {
+                            if (world.func_230315_m_().func_236037_d_()) { //world.dimension.isNether()
                                 int l3 = k2 + l2 * 231871;
                                 l3 = l3 * l3 * 0x1dfd851 + l3 * 11;
                                 if ((l3 >> 20 & 1) == 0) {
@@ -452,7 +452,7 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
     }
 
     private BlockState getFluidState(World worldIn, BlockState state, BlockPos pos) {
-        IFluidState ifluidstate = state.getFluidState();
+        FluidState ifluidstate = state.getFluidState();
         return !ifluidstate.isEmpty() && !state.isSolidSide(worldIn, pos, Direction.UP) ? ifluidstate.getBlockState() : state;
     }
 }
