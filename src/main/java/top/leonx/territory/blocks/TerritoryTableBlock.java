@@ -14,6 +14,7 @@ import net.minecraft.pathfinding.PathType;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Hand;
+import net.minecraft.util.Util;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.shapes.ISelectionContext;
@@ -80,7 +81,7 @@ public class TerritoryTableBlock extends Block {
                 ModCapabilities.TERRITORY_INFO_CAPABILITY.getDefaultInstance());
         if (info.IsProtected()) {
             if (!context.getWorld().isRemote) {
-                context.getPlayer().sendMessage(new TranslationTextComponent("message.territory.already_occupied").setStyle(MessageUtil.YELLOW));
+                context.getPlayer().sendMessage(new TranslationTextComponent("message.territory.already_occupied").setStyle(MessageUtil.YELLOW), Util.DUMMY_UUID);
             }
             return Blocks.AIR.getDefaultState();
         }

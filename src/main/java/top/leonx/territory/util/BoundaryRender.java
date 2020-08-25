@@ -5,7 +5,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.lwjgl.opengl.GL11;
@@ -32,11 +32,11 @@ public class BoundaryRender {
         {duration=time;usedTime=0;}
 
         edges.clear();
-
-        Vec3d[] relativeEdged={new Vec3d(0,0,0),new Vec3d(0,0,16),new Vec3d(16,0,16),new Vec3d(16,0,0),new Vec3d(0,0,0)};
+        
+        Vector3d[] relativeEdged={new Vector3d(0,0,0),new Vector3d(0,0,16),new Vector3d(16,0,16),new Vector3d(16,0,0),new Vector3d(0,0,0)};
 
         territories.forEach(t->{
-            Vec3d originPos=new Vec3d(t.x<<4,0,t.z<<4);
+            Vector3d originPos=new Vector3d(t.x<<4,0,t.z<<4);
 
             for(int i=0;i<4;i++)
             {
@@ -47,7 +47,7 @@ public class BoundaryRender {
         });
     }
 
-    public static void Render(Vec3d viewPos,float pitch,float yaw ,double partialTick)
+    public static void Render(Vector3d viewPos,float pitch,float yaw ,double partialTick)
     {
         float alpha = (float) MathHelper.clampedLerp(0, 1, 3 - 2*(usedTime / duration));
         if(alpha<=0) return;
@@ -70,7 +70,7 @@ public class BoundaryRender {
         Minecraft.getInstance().textureManager.bindTexture(checkerboardOverlayLocation);
 
         RenderUtil.startDraw();
-        edges.forEach((t,v)-> RenderUtil.drawWall(t.from,t.to,255,0,0,255,16,new Vec3d(1,1,1),alpha,0xF0,0xF0));
+        edges.forEach((t,v)-> RenderUtil.drawWall(t.from,t.to,255,0,0,255,16,new Vector3d(1,1,1),alpha,0xF0,0xF0));
 
         RenderUtil.endDraw();
 
@@ -83,9 +83,9 @@ public class BoundaryRender {
 
     private static class EdgeEntry
     {
-        Vec3d from;
-        Vec3d to;
-        public EdgeEntry(Vec3d from,Vec3d to)
+        Vector3d from;
+        Vector3d to;
+        public EdgeEntry(Vector3d from,Vector3d to)
         {
             if(from.x<to.x || from.x==to.x && from.z<to.z)
             {

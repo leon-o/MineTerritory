@@ -10,6 +10,7 @@ import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
+import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.event.world.ExplosionEvent;
 import net.minecraftforge.event.world.WorldEvent;
@@ -31,8 +32,8 @@ import java.util.List;
 @Mod.EventBusSubscriber(modid = TerritoryMod.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class ForgeEvent {
     @SubscribeEvent
-    public static void onServerStarting(FMLServerStartingEvent event) {
-        TerritoryCommand.Register(event.getCommandDispatcher());
+    public static void onServerStarting(RegisterCommandsEvent event) {
+        TerritoryCommand.Register(event.getDispatcher());
     }
 
     @SubscribeEvent
@@ -63,7 +64,7 @@ public class ForgeEvent {
             return;
 
         BlockPos      pos = event.getLiquidPos();
-        if(event.getNewState().getFluidState() instanceof LavaFluid || event.getNewState().getBlock() instanceof FireBlock)
+        if(event.getNewState().getFluidState().getFluid() instanceof LavaFluid || event.getNewState().getBlock() instanceof FireBlock)
         {
             TerritoryInfo info = TerritoryInfoHolder.get((World)event.getWorld()).getChunkTerritoryInfo(new ChunkPos(pos.getX() >> 4, pos.getZ() >> 4));
             if(info.IsProtected())

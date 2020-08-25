@@ -1,5 +1,6 @@
 package top.leonx.territory.client.screen;
 
+import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.platform.GlStateManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
@@ -7,6 +8,8 @@ import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.fml.client.gui.widget.ExtendedButton;
 import top.leonx.territory.container.TerritoryTableContainer;
 
@@ -39,34 +42,35 @@ public class TerritoryMapScreen extends AbstractScreenPage<TerritoryTableContain
 
         final int halfW = width / 2;
         final int halfH = height / 2;
-        territoryNameTextField = new TextFieldWidget(font, parent.getGuiLeft() + 160, parent.getGuiTop() + 24, 80, 16, "Name");
+        territoryNameTextField = new TextFieldWidget(font, parent.getGuiLeft() + 160, parent.getGuiTop() + 24, 80, 16, new StringTextComponent("Name"));
         doneButton = new ExtendedButton(halfW + 40, parent.getGuiTop() + parent.getYSize() - 30, 70, 20,
-                                        I18n.format("gui.territory.done_btn"), $ -> container.Done());
+                                        new TranslationTextComponent("gui.territory.done_btn"), $ -> container.Done());
         this.addButton(doneButton);
-        this.addButton(new ExtendedButton(halfW + 40, parent.getGuiTop()+parent.getYSize()-52, 70, 20, I18n.format("gui.territory.permission_btn"),
+        this.addButton(new ExtendedButton(halfW + 40, parent.getGuiTop()+parent.getYSize()-52, 70, 20,  new TranslationTextComponent("gui.territory.permission_btn"),
                                           $ -> NavigateTo(1)));
 
         territoryNameTextField.setText(container.territoryInfo.territoryName);
         this.children.add(territoryNameTextField);
     }
+    
 
     @Override
-    public void renderInternal(final int mouseX, final int mouseY, final float partialTicks) {
-        territoryNameTextField.render(mouseX, mouseY, partialTicks);
-        territoryNameTextField.renderButton(mouseX, mouseY, partialTicks);
+    public void renderInternal(MatrixStack matrix,final int mouseX, final int mouseY, final float partialTicks) {
+        territoryNameTextField.render(matrix,mouseX, mouseY, partialTicks);
+        territoryNameTextField.renderButton(matrix,mouseX, mouseY, partialTicks);
     }
 
     @Override
-    public void drawGuiContainerForegroundLayer(int mouseX, int mouseY) {
-        drawMap();
-        drawChunkOverlay(mouseX, mouseY);
-        font.drawString(I18n.format("gui.territory.territory_name"),  160, 8, 0xFFFFFF);
+    public void drawGuiContainerForegroundLayer(MatrixStack matrix,int mouseX, int mouseY) {
+        drawMap(matrix);
+        drawChunkOverlay(matrix,mouseX, mouseY);
+        font.drawString(matrix,I18n.format("gui.territory.territory_name"),  160, 8, 0xFFFFFF);
 
-        font.drawString(I18n.format("gui.territory.protect_power"),  160,  50, 0xFFFFFFFF);
+        font.drawString(matrix,I18n.format("gui.territory.protect_power"),  160,  50, 0xFFFFFFFF);
 
-        font.drawString(Integer.toString(container.getUsedProtectPower()),  160,  65,
+        font.drawString(matrix,Integer.toString(container.getUsedProtectPower()),  160,  65,
                              container.getUsedProtectPower() < container.getTotalProtectPower() ? 0xFF00BF4D : 0xFFFFFFFF);
-        font.drawString("/" + container.getTotalProtectPower(),
+        font.drawString(matrix,"/" + container.getTotalProtectPower(),
                              160 + this.font.getStringWidth(Integer.toString(container.getUsedProtectPower())),  65,
                              0xFFFFFFFF);
 
@@ -75,12 +79,12 @@ public class TerritoryMapScreen extends AbstractScreenPage<TerritoryTableContain
             if(xpRequired>container.getPlayerLevel())
             {
                 Minecraft.getInstance().textureManager.bindTexture(xpIconLocation);
-                blit(157,84,(Math.min(xpRequired,3)-1)*16,16,16,16,48,32);
-                font.drawString(Integer.toString(xpRequired),  174,  88,0x8c605d);
+                blit(matrix,157,84,(Math.min(xpRequired,3)-1)*16,16,16,16,48,32);
+                font.drawString(matrix,Integer.toString(xpRequired),  174,  88,0x8c605d);
             }else {
                 Minecraft.getInstance().textureManager.bindTexture(xpIconLocation);
-                blit(157,84,(Math.min(xpRequired,3)-1)*16,0,16,16,48,32);
-                font.drawString(Integer.toString(xpRequired),  174,  88,0xc8ff8f);
+                blit(matrix,157,84,(Math.min(xpRequired,3)-1)*16,0,16,16,48,32);
+                font.drawString(matrix,Integer.toString(xpRequired),  174,  88,0xc8ff8f);
             }
         }
     }
@@ -105,12 +109,12 @@ public class TerritoryMapScreen extends AbstractScreenPage<TerritoryTableContain
         return super.mouseClicked(mouseX, mouseY, p_mouseClicked_5_);
     }
 
-    private void drawMap() {
+    private void drawMap(MatrixStack matrix) {
         getMinecraft().getTextureManager().bindTexture(container.mapLocation);
-        blit(mapPosLeft, mapPosTop, 0, 0, mapSizeX, mapSizeY,mapSizeX,mapSizeY);
+        blit(matrix,mapPosLeft, mapPosTop, 0, 0, mapSizeX, mapSizeY,mapSizeX,mapSizeY);
     }
 
-    private void drawChunkOverlay(int mouseX, int mouseY) {
+    private void drawChunkOverlay(MatrixStack matrix, int mouseX, int mouseY) {
 
         GlStateManager.enableBlend();
         GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA.param, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA.param);
@@ -120,7 +124,8 @@ public class TerritoryMapScreen extends AbstractScreenPage<TerritoryTableContain
         container.territories.forEach(pos -> {
             int chunkX = pos.x;
             int chunkZ = pos.z;
-            blit(mapPosLeft + ((chunkX - container.mapLeftTopChunkPos.x) << 4), mapPosTop + ((chunkZ - container.mapLeftTopChunkPos.z) << 4), 0, 0, 16, 16, 16,
+            blit(matrix,mapPosLeft + ((chunkX - container.mapLeftTopChunkPos.x) << 4), mapPosTop + ((chunkZ - container.mapLeftTopChunkPos.z) << 4), 0, 0, 16
+                    , 16, 16,
                  16);
         });
 
@@ -128,11 +133,11 @@ public class TerritoryMapScreen extends AbstractScreenPage<TerritoryTableContain
         if (container.getUsedProtectPower() < container.getTotalProtectPower()) {
             getMinecraft().getTextureManager().bindTexture(expandSquareLocation);
             // 绘制可以选择的新区块
-            drawOverlayByCollection(container.selectableChunkPos);
+            drawOverlayByCollection(matrix,container.selectableChunkPos);
         }
 
         getMinecraft().getTextureManager().bindTexture(edgeSquareLocation);
-        drawOverlayByCollection(container.removableChunkPos);
+        drawOverlayByCollection(matrix,container.removableChunkPos);
 
         // 绘制鼠标悬浮的区
         int mouseOnChunkX = (mouseX - this.parent.getGuiLeft() - mapPosLeft) / 16;
@@ -144,22 +149,22 @@ public class TerritoryMapScreen extends AbstractScreenPage<TerritoryTableContain
                 mouseOverPos) || (container.getUsedProtectPower() < getContainer().getTotalProtectPower() && getContainer().selectableChunkPos.contains(
                 mouseOverPos)) && mouseOnChunkX >= 0 && mouseOnChunkX < chunkNumX && mouseOnChunkY >= 0 && mouseOnChunkY < chunkNumY) {
 
-            blit(mapPosLeft + (mouseOnChunkX << 4), mapPosTop + (mouseOnChunkY << 4), 0, 0, 16, 16, 16, 16);
+            blit(matrix,mapPosLeft + (mouseOnChunkX << 4), mapPosTop + (mouseOnChunkY << 4), 0, 0, 16, 16, 16, 16);
         }
         getMinecraft().getTextureManager().bindTexture(forbiddenSquareLocation);
-        drawOverlayByCollection(container.forbiddenChunkPos.stream().filter(
+        drawOverlayByCollection(matrix,container.forbiddenChunkPos.stream().filter(
                 t -> t.x >= container.mapLeftTopChunkPos.x && t.x <= container.mapLeftTopChunkPos.x + mapSizeX / 16 && t.z >= container.mapLeftTopChunkPos.z && t.z <= container.mapLeftTopChunkPos.z + mapSizeY / 16).collect(
                 Collectors.toList()));
 
     }
 
-    private void drawOverlayByCollection(Collection<ChunkPos> collection) {
+    private void drawOverlayByCollection(MatrixStack matrix,Collection<ChunkPos> collection) {
         for (ChunkPos pos : collection) {
             int posX = pos.x - container.mapLeftTopChunkPos.x;
             int posZ = pos.z - container.mapLeftTopChunkPos.z;
             if (posX < 0 || posZ < 0 || posX >= chunkNumX || posZ >= chunkNumY) continue;
 
-            blit(mapPosLeft + (posX << 4), mapPosTop + (posZ << 4), 0, 0, 16, 16, 16, 16);
+            blit(matrix,mapPosLeft + (posX << 4), mapPosTop + (posZ << 4), 0, 0, 16, 16, 16, 16);
         }
     }
 

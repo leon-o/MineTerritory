@@ -1,6 +1,7 @@
 package top.leonx.territory.client.screen;
 
 import com.google.common.collect.Lists;
+import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.platform.GlStateManager;
 import net.minecraft.client.gui.IGuiEventListener;
 import net.minecraft.client.gui.screen.Screen;
@@ -35,22 +36,22 @@ public abstract class AbstractScreenPage<T extends Container> extends Screen {
         return this.children;
     }
     @SuppressWarnings("deprecation")
-    public void render(final int mouseX, final int mouseY, final float partialTicks){
+    public void render(MatrixStack matrix, final int mouseX, final int mouseY, final float partialTicks){
         RenderHelper.disableStandardItemLighting();
         GlStateManager.disableLighting();
         GlStateManager.disableDepthTest();
 
-        renderInternal(mouseX, mouseY, partialTicks);
+        renderInternal(matrix,mouseX, mouseY, partialTicks);
         for (Widget button : this.buttons) {
-            button.render(mouseX, mouseY, partialTicks);
+            button.render(matrix,mouseX, mouseY, partialTicks);
         }
 
         GlStateManager.enableLighting();
         GlStateManager.enableDepthTest();
         RenderHelper.enableStandardItemLighting();
     }
-    public abstract void renderInternal(final int mouseX, final int mouseY, final float partialTicks);
-    public abstract void drawGuiContainerForegroundLayer(int mouseX, int mouseY);
+    public abstract void renderInternal(MatrixStack matrix,final int mouseX, final int mouseY, final float partialTicks);
+    public abstract void drawGuiContainerForegroundLayer(MatrixStack matrix,int mouseX, int mouseY);
     public abstract void init();
     @Nonnull
     protected <B extends Widget> B addButton(@Nonnull B p_addButton_1_) {

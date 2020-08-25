@@ -4,6 +4,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.item.Item;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.JsonToNBT;
+import net.minecraft.tags.ITag;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.Tag;
 import net.minecraft.util.ResourceLocation;
@@ -95,7 +96,7 @@ public final class TerritoryConfig {
         }
 
         public static void processPowerProvider() {
-            if (ItemTags.getCollection().getTagMap().size() == 0) return;
+            if (ItemTags.getCollection().func_241833_a().size() == 0) return;
             TerritoryConfig.powerProvider = new HashMap<>();
 
             Pattern typePattern = Pattern.compile("(item)|(tag)(?=:)");
@@ -114,7 +115,7 @@ public final class TerritoryConfig {
                 String           id    = idMatcher.group();
                 Collection<Item> items = null;
                 if (type.equals("tag")) {
-                    Tag<Item> itemTag = ItemTags.getCollection().get(new ResourceLocation(id));
+                    ITag<Item> itemTag = ItemTags.getCollection().get(new ResourceLocation(id));
                     if (itemTag != null) items = itemTag.getAllElements();
                 } else if (type.equals("item")) {
                     Item item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(id));

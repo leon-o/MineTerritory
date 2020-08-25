@@ -4,10 +4,8 @@ import com.mojang.blaze3d.platform.GlStateManager;
 
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.Vector3f;
-
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.lwjgl.opengl.GL11;
@@ -26,27 +24,27 @@ public class RenderUtil {
     {
         tessellator.draw();
     }
-    public static void drawWall(Vec3d from,Vec3d to,double height,Vec3d rgb,float alpha,int skyL, int blockL)
+    public static void drawWall(Vector3d from, Vector3d to, double height, Vector3d rgb, float alpha, int skyL, int blockL)
     {
-        drawDoubleSidePlane(from,to.subtract(from),new Vec3d(0,height,0),rgb,alpha,skyL,blockL);
+        drawDoubleSidePlane(from,to.subtract(from),new Vector3d(0,height,0),rgb,alpha,skyL,blockL);
     }
-    public static void drawWall(Vec3d from,Vec3d to,double height,int minU,int minV,int maxU,int maxV,Vec3d rgb,float alpha,int skyL, int blockL)
+    public static void drawWall(Vector3d from,Vector3d to,double height,int minU,int minV,int maxU,int maxV,Vector3d rgb,float alpha,int skyL, int blockL)
     {
-        drawDoubleSidePlane(from,to.subtract(from),new Vec3d(0,height,0),minU,minV,maxU,maxV,rgb,alpha,skyL,blockL);
+        drawDoubleSidePlane(from,to.subtract(from),new Vector3d(0,height,0),minU,minV,maxU,maxV,rgb,alpha,skyL,blockL);
     }
-    public static void drawDoubleSidePlane(Vec3d o,Vec3d l1,Vec3d l2,Vec3d rgb,float alpha,int skyL, int blockL)
+    public static void drawDoubleSidePlane(Vector3d o,Vector3d l1,Vector3d l2,Vector3d rgb,float alpha,int skyL, int blockL)
     {
         drawDoubleSidePlane(o,l1,l2,0,0,1,1,rgb,alpha,skyL,blockL);
     }
 
-    public static void drawDoubleSidePlane(Vec3d o,Vec3d l1,Vec3d l2,int minU,int minV,int maxU,int maxV,Vec3d rgb,float alpha,int skyL, int blockL)
+    public static void drawDoubleSidePlane(Vector3d o,Vector3d l1,Vector3d l2,int minU,int minV,int maxU,int maxV,Vector3d rgb,float alpha,int skyL, int blockL)
     {
-        Vec3d n = l1.crossProduct(l2).normalize();
+        Vector3d n = l1.crossProduct(l2).normalize();
         drawPlane(o.add(n.scale(0.02)),l1,l2,minU,minV,maxU,maxV,rgb,alpha,skyL,blockL);
         drawPlane(o.subtract(n.scale(0.02)),l2,l1,minV,minU,maxV,maxU,rgb,alpha,skyL,blockL);
     }
 
-    public static void drawPlane(Vec3d o,Vec3d l1,Vec3d l2,Vec3d rgb,float alpha,int skyL, int blockL)
+    public static void drawPlane(Vector3d o,Vector3d l1,Vector3d l2,Vector3d rgb,float alpha,int skyL, int blockL)
     {
         drawPlane(o,l1,l2,0,0,1,1,rgb,alpha,skyL,blockL);
     }
@@ -61,13 +59,13 @@ public class RenderUtil {
      * @param blockL block light color RGB
      */
     // Normal direction = l1 x l2
-    public static void drawPlane(Vec3d o,Vec3d l1,Vec3d l2,int minU,int minV,int maxU,int maxV,Vec3d col,float alpha,int skyL, int blockL)
+    public static void drawPlane(Vector3d o,Vector3d l1,Vector3d l2,int minU,int minV,int maxU,int maxV,Vector3d col,float alpha,int skyL, int blockL)
     {
         float r=(float)col.x;//(col>>>16)& 0x000000FF;
         float g=(float)col.y;//(col>>>8)& 0x000000FF;
         float b=(float)col.z;//col & 0x000000FF;
-        Vec3d normal = l1.crossProduct(l2).normalize();
-        Vector3f nf=new Vector3f((float) normal.x,(float)normal.y,(float)normal.z);
+        Vector3d normal = l1.crossProduct(l2).normalize();
+        Vector3d nf=new Vector3d(normal.x,normal.y,normal.z);
         buffer.pos(o.x,o.y,o.z).color(r,g,b,alpha).tex(minU,minV).lightmap(skyL, blockL).endVertex();
         buffer.pos(o.x+l1.x,o.y+l1.y,o.z+l1.z).color(r,g,b,alpha).tex(minU,maxV).lightmap(skyL, blockL).endVertex();
         buffer.pos(o.x+l1.x+l2.x,o.y+l1.y+l2.y,o.z+l1.z+l2.z).color(r,g,b,alpha).tex(maxU,maxV).lightmap(skyL, blockL).endVertex();

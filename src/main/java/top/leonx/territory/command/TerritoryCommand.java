@@ -13,6 +13,7 @@ import net.minecraft.command.arguments.BlockPosArgument;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.Util;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.text.StringTextComponent;
@@ -21,7 +22,6 @@ import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkStatus;
 import net.minecraft.world.chunk.listener.IChunkStatusListener;
 import net.minecraft.world.server.ServerWorld;
-import net.minecraft.world.storage.SaveHandler;
 import net.minecraftforge.common.util.LazyOptional;
 import top.leonx.territory.capability.ModCapabilities;
 import top.leonx.territory.data.PermissionFlag;
@@ -86,7 +86,7 @@ public class TerritoryCommand {
                 }
             }
         }else{
-            player.sendMessage(new StringTextComponent("No such territory"));
+            player.sendMessage(new StringTextComponent("No such territory"),player.getUniqueID());
             return 0;
         }
         BlockPos pos  = chunkPos.asBlockPos();
@@ -101,7 +101,7 @@ public class TerritoryCommand {
         LazyOptional<TerritoryInfo> capability = chunk.getCapability(ModCapabilities.TERRITORY_INFO_CAPABILITY);
         TerritoryInfo               info       = capability.orElse(ModCapabilities.TERRITORY_INFO_CAPABILITY.getDefaultInstance());
 
-        player.sendMessage(new StringTextComponent(Integer.toString(info.defaultPermission.getCode())));
+        player.sendMessage(new StringTextComponent(Integer.toString(info.defaultPermission.getCode())), Util.DUMMY_UUID);
         info.defaultPermission = new PermissionFlag(IntegerArgumentType.getInteger(context, "num"));
         chunk.markDirty();
 
@@ -111,34 +111,34 @@ public class TerritoryCommand {
     @SuppressWarnings({"ResultOfMethodCallIgnored", "UnstableApiUsage"})
     private static int regen(CommandContext<CommandSource> context) throws CommandSyntaxException {
 
-        ServerPlayerEntity player = context.getSource().asPlayer();
-        //ServerChunkProvider chunkProvider = (ServerChunkProvider)world.getChunkProvider();
+//        ServerPlayerEntity player = context.getSource().asPlayer();
+//        //ServerChunkProvider chunkProvider = (ServerChunkProvider)world.getChunkProvider();
+//
+//        ServerWorld originalWorld = (ServerWorld) player.getEntityWorld();
+//        ChunkPos    chunkPos      = new ChunkPos(player.func_241140_K_().getX() >> 4, player.func_241140_K_().getZ() >> 4); //func_241140_K_() -> getPosition
+//        File        saveFolder    = Files.createTempDir();
+//
+//        saveFolder.deleteOnExit();
+//
+//        MinecraftServer server      = originalWorld.getServer();
+//        SaveHandler     saveHandler = new SaveHandler(saveFolder, originalWorld.getSaveHandler().getWorldDirectory().getName(), server, server.getDataFixer());
+//        World freshWorld = new ServerWorld(server, server.getBackgroundExecutor(), saveHandler, originalWorld.getWorldInfo(),
+//                originalWorld.dimension.getType(), originalWorld.getProfiler(), new NoopChunkStatusListener());
 
-        ServerWorld originalWorld = (ServerWorld) player.getEntityWorld();
-        ChunkPos    chunkPos      = new ChunkPos(player.getPosition().getX() >> 4, player.getPosition().getZ() >> 4);
-        File        saveFolder    = Files.createTempDir();
+        //freshWorld.getChunk(chunkPos.x, chunkPos.z);
 
-        saveFolder.deleteOnExit();
-
-        MinecraftServer server      = originalWorld.getServer();
-        SaveHandler     saveHandler = new SaveHandler(saveFolder, originalWorld.getSaveHandler().getWorldDirectory().getName(), server, server.getDataFixer());
-        World freshWorld = new ServerWorld(server, server.getBackgroundExecutor(), saveHandler, originalWorld.getWorldInfo(),
-                originalWorld.dimension.getType(), originalWorld.getProfiler(), new NoopChunkStatusListener());
-
-        freshWorld.getChunk(chunkPos.x, chunkPos.z);
-
-        //ForgeWorld from = new ForgeWorld(freshWorld);
-        for (int x = chunkPos.x << 4; x < (chunkPos.x + 1) << 4; x++) {
-            for (int z = chunkPos.z << 4; z < (chunkPos.z + 1) << 4; z++) {
-                for (int y = 0; y < 255; y++) {
-                    BlockPos   pos        = new BlockPos(x, y, z);
-                    TileEntity tileEntity = freshWorld.getTileEntity(pos);
-                    originalWorld.setBlockState(pos, freshWorld.getBlockState(pos));
-                    originalWorld.setTileEntity(pos, tileEntity);
-                }
-            }
-        }
-        saveFolder.delete();
+//        //ForgeWorld from = new ForgeWorld(freshWorld);
+//        for (int x = chunkPos.x << 4; x < (chunkPos.x + 1) << 4; x++) {
+//            for (int z = chunkPos.z << 4; z < (chunkPos.z + 1) << 4; z++) {
+//                for (int y = 0; y < 255; y++) {
+//                    BlockPos   pos        = new BlockPos(x, y, z);
+//                    TileEntity tileEntity = freshWorld.getTileEntity(pos);
+//                    originalWorld.setBlockState(pos, freshWorld.getBlockState(pos));
+//                    originalWorld.setTileEntity(pos, tileEntity);
+//                }
+//            }
+//        }
+//        saveFolder.delete();
         return 0;
     }
 
@@ -151,9 +151,9 @@ public class TerritoryCommand {
                 playerEntity.world.getChunk(chunkPos.x, chunkPos.z).getCapability(ModCapabilities.TERRITORY_INFO_CAPABILITY).orElse(ModCapabilities.TERRITORY_INFO_CAPABILITY.getDefaultInstance());
 
         if (!info.IsProtected()) {
-            playerEntity.sendMessage(new StringTextComponent("no territory at " + pos.toString()));
+            playerEntity.sendMessage(new StringTextComponent("no territory at " + pos.toString()),Util.DUMMY_UUID);
         } else {
-            playerEntity.sendMessage(new StringTextComponent(info.toString()));
+            playerEntity.sendMessage(new StringTextComponent(info.toString()),Util.DUMMY_UUID);
         }
 
         return 0;
@@ -178,9 +178,9 @@ public class TerritoryCommand {
             newInfo.defaultPermission = new PermissionFlag(IntegerArgumentType.getInteger(context, "permission"));
 
             TerritoryInfoHolder.get(serverWorld).updateReserveTerritory(oldInfo, newInfo);
-            playerEntity.sendMessage(new StringTextComponent("Success"));
+            playerEntity.sendMessage(new StringTextComponent("Success"),Util.DUMMY_UUID);
         } else {
-            playerEntity.sendMessage(new StringTextComponent("No Such Territory"));
+            playerEntity.sendMessage(new StringTextComponent("No Such Territory"),Util.DUMMY_UUID);
         }
         return 0;
     }
@@ -197,7 +197,7 @@ public class TerritoryCommand {
 
         StringBuilder stringBuilder = new StringBuilder();
         infos.forEach(t -> stringBuilder.append(t.toString()).append("\n"));
-        playerEntity.sendMessage(new StringTextComponent(stringBuilder.toString()));
+        playerEntity.sendMessage(new StringTextComponent(stringBuilder.toString()),Util.DUMMY_UUID);
         return 0;
     }
 
@@ -219,9 +219,9 @@ public class TerritoryCommand {
         if (first.isPresent()) {
             TerritoryInfo oldInfo = first.get();
             TerritoryInfoHolder.get(serverWorld).addReservedTerritory(oldInfo, chunkPos);
-            playerEntity.sendMessage(new StringTextComponent("Success"));
+            playerEntity.sendMessage(new StringTextComponent("Success"),Util.DUMMY_UUID);
         } else {
-            playerEntity.sendMessage(new StringTextComponent("No Such Territory"));
+            playerEntity.sendMessage(new StringTextComponent("No Such Territory"),Util.DUMMY_UUID);
         }
 
         return 0;
@@ -241,9 +241,9 @@ public class TerritoryCommand {
         if (first.isPresent()) {
             TerritoryInfo oldInfo = first.get();
             TerritoryInfoHolder.get(serverWorld).removeReservedTerritory(oldInfo, Collections.singleton(chunkPos));
-            playerEntity.sendMessage(new StringTextComponent("Success"));
+            playerEntity.sendMessage(new StringTextComponent("Success"),Util.DUMMY_UUID);
         } else {
-            playerEntity.sendMessage(new StringTextComponent("No Such Territory"));
+            playerEntity.sendMessage(new StringTextComponent("No Such Territory"),Util.DUMMY_UUID);
         }
         return 0;
     }
@@ -259,7 +259,7 @@ public class TerritoryCommand {
             if (Objects.equals(t.ownerId, UserUtil.DEFAULT_UUID))
                 stringBuilder.append(t.toString()).append("\n");
         });
-        playerEntity.sendMessage(new StringTextComponent(stringBuilder.toString()));
+        playerEntity.sendMessage(new StringTextComponent(stringBuilder.toString()),Util.DUMMY_UUID);
         return 0;
     }
 
@@ -273,9 +273,9 @@ public class TerritoryCommand {
                 TerritoryInfoHolder.get(serverWorld).TERRITORY_CHUNKS.keySet().stream().filter(t->Objects.equals(t.territoryName,targetTerritoryName)).findFirst();
         if (first.isPresent()) {
             TerritoryInfoHolder.get(serverWorld).removeReservedTerritory(first.get());
-            playerEntity.sendMessage(new StringTextComponent("Success"));
+            playerEntity.sendMessage(new StringTextComponent("Success"),Util.DUMMY_UUID);
         } else {
-            playerEntity.sendMessage(new StringTextComponent("No Such Territory"));
+            playerEntity.sendMessage(new StringTextComponent("No Such Territory"),Util.DUMMY_UUID);
         }
         return 0;
     }
@@ -299,7 +299,7 @@ public class TerritoryCommand {
         Stream<TerritoryInfo> nameMatched = TerritoryInfoHolder.get(world).TERRITORY_CHUNKS.keySet().stream().filter(t -> targetTerritoryName.equals(t.territoryName));
         if(nameMatched.count()>0)
         {
-            playerEntity.sendMessage(new StringTextComponent("There has been territory called "+targetTerritoryName));
+            playerEntity.sendMessage(new StringTextComponent("There has been territory called "+targetTerritoryName),Util.DUMMY_UUID);
             return 0;
         }
         for (int x = Math.min(fromChunkX, toChunkX); x <= Math.max(fromChunkX, toChunkX); x++) {
@@ -312,7 +312,7 @@ public class TerritoryCommand {
         ServerWorld   serverWorld   = (ServerWorld) world;
         TerritoryInfoHolder.get(serverWorld).addReservedTerritory(targetTerritoryName, permission, territories);
 
-        playerEntity.sendMessage(new StringTextComponent("Success"));
+        playerEntity.sendMessage(new StringTextComponent("Success"),Util.DUMMY_UUID);
 
         return 0;
     }

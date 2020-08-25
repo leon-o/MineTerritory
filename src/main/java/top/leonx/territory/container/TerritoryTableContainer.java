@@ -11,6 +11,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvents;
+import net.minecraft.util.Util;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.text.TranslationTextComponent;
@@ -134,7 +135,8 @@ public class TerritoryTableContainer extends Container {
             if (player.experienceLevel >= experienceNeed) {
                 player.addExperienceLevel(-experienceNeed);
             } else {
-                player.sendMessage(new TranslationTextComponent("message.territory.need_experience", Integer.toString(experienceNeed)).setStyle(MessageUtil.YELLOW));
+                player.sendMessage(new TranslationTextComponent("message.territory.need_experience", Integer.toString(experienceNeed)).setStyle(MessageUtil.YELLOW),
+                                   Util.DUMMY_UUID);
                 return false;
             }
         }

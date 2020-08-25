@@ -1,5 +1,6 @@
 package top.leonx.territory.client.gui;
 
+import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.widget.list.ExtendedList;
@@ -28,7 +29,8 @@ public class PlayerList extends ExtendedList<PlayerList.PlayerEntry> {
     }
 
     @Override
-    protected void renderHoleBackground(int p_renderHoleBackground_1_, int p_renderHoleBackground_2_, int p_renderHoleBackground_3_, int p_renderHoleBackground_4_) {
+    protected void renderBackground(MatrixStack matrix) {
+        super.renderBackground(matrix);
     }
 
     @Override
@@ -67,12 +69,13 @@ public class PlayerList extends ExtendedList<PlayerList.PlayerEntry> {
         }
 
         @Override
-        public void render(int entryIdx, int top, int left, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean p_194999_5_, float partialTicks) {
+        public void render(MatrixStack matrix,int entryIdx, int top, int left, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean p_194999_5_,
+                           float partialTicks) {
             FontRenderer font = this.parent.getFontRenderer();
             if(UserUtil.isDefaultUser(uuid))
-                font.drawString(font.trimStringToWidth(I18n.format("gui.territory.all_player"), entryWidth),left + 3, top + 2, 0xFFF0F0);
+                font.drawString(matrix,I18n.format("gui.territory.all_player"),left + 3, top + 2, 0xFFF0F0);
             else
-                font.drawString(font.trimStringToWidth(name, entryWidth),left + 3, top + 2, 0xFFFFFF);
+                font.drawString(matrix,name,left + 3, top + 2, 0xFFFFFF);
         }
         @Override
         public boolean mouseClicked(double x, double y, int btn)

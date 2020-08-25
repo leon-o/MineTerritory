@@ -24,6 +24,7 @@ import net.minecraft.tileentity.ITickableTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Direction;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Util;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.MathHelper;
@@ -109,8 +110,8 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
     }
 
     @Override
-    public void func_230337_a_(@Nonnull BlockState state, @Nonnull CompoundNBT compound) {
-        super.func_230337_a_(state,compound);
+    public void read(@Nonnull BlockState state, @Nonnull CompoundNBT compound) {
+        super.read(state,compound);
         readInternal(compound);
     }
 
@@ -155,7 +156,7 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
 
     @Override
     public void handleUpdateTag(BlockState state, CompoundNBT tag) {
-        func_230337_a_(state,tag);
+        read(state,tag);
     }
 
     //Call when invoke world::notifyBlockChange
@@ -250,7 +251,7 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
             updateTerritoryToWorld();
             world.notifyBlockUpdate(pos, world.getBlockState(pos), world.getBlockState(pos), 2);
             world.getServer().getPlayerList().getPlayerByUUID(getOwnerId()).sendMessage(
-                    new TranslationTextComponent("message.territory" + ".insufficient_protect_power").func_230530_a_(MessageUtil.RED),getOwnerId());
+                    new TranslationTextComponent("message.territory" + ".insufficient_protect_power").setStyle(MessageUtil.RED),Util.DUMMY_UUID);
         }
     }
 
@@ -271,7 +272,7 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
         updateTerritoryToWorld();
         world.notifyBlockUpdate(pos, world.getBlockState(pos), world.getBlockState(pos), 2);
         world.getServer().getPlayerList().getPlayerByUUID(getOwnerId()).sendMessage(
-                new TranslationTextComponent("message.territory.territory_restore", Integer.toString(count)).func_230530_a_(MessageUtil.GREEN),getOwnerId());
+                new TranslationTextComponent("message.territory.territory_restore", Integer.toString(count)).setStyle(MessageUtil.GREEN), Util.DUMMY_UUID);
     }
 
     public double getBlockPower(IWorld world, BlockPos pos) {

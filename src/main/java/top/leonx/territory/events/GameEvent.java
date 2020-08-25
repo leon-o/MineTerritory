@@ -10,8 +10,10 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Hand;
+import net.minecraft.util.Util;
 import net.minecraft.util.concurrent.TickDelayedTask;
 import net.minecraft.util.math.*;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.IWorld;
@@ -207,7 +209,7 @@ public class GameEvent {
 
     private static void SendMessage(PlayerEntity player, ITextComponent component) {
         if (coolDown > 0) return;
-        player.sendMessage(component);
+        player.sendMessage(component, Util.DUMMY_UUID);
         coolDown = coolDownTime;
     }
 
@@ -241,8 +243,8 @@ public class GameEvent {
                 SendMessage(clientPlayer, new TranslationTextComponent("message.territory.no_permission",
                                                                        new TranslationTextComponent(PermissionFlag.ENTER.getTranslationKey())));
 
-                Vec3d vec               = clientPlayer.getMotion();
-                Vec3d vecAfterCollision = lastTickPos.x != thisTickPos.x ? new Vec3d(-vec.x, vec.y, vec.z) : new Vec3d(vec.x, vec.y, -vec.z);
+                Vector3d vec               = clientPlayer.getMotion();
+                Vector3d vecAfterCollision = lastTickPos.x != thisTickPos.x ? new Vector3d(-vec.x, vec.y, vec.z) : new Vector3d(vec.x, vec.y, -vec.z);
                 vecAfterCollision = vecAfterCollision.normalize().scale(MathHelper.clamp(vec.length(), 1, 10));
 
                 clientPlayer.setMotion(vecAfterCollision);
@@ -285,7 +287,7 @@ public class GameEvent {
     @SubscribeEvent
     public static void onRenderWorld(RenderWorldLastEvent event) {
         if(!TerritoryConfig.displayBoundary)return;
-        Vec3d projectedView = Minecraft.getInstance().gameRenderer.getActiveRenderInfo().getProjectedView();
+        Vector3d projectedView = Minecraft.getInstance().gameRenderer.getActiveRenderInfo().getProjectedView();
         float pitch         = Minecraft.getInstance().gameRenderer.getActiveRenderInfo().getPitch();
         float yaw           = Minecraft.getInstance().gameRenderer.getActiveRenderInfo().getYaw();
         BoundaryRender.Render(projectedView, pitch, yaw, event.getPartialTicks());

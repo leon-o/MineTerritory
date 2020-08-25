@@ -9,6 +9,9 @@ import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.vector.Matrix4f;
+import net.minecraft.util.math.vector.Quaternion;
+import net.minecraft.util.math.vector.Vector3f;
 import top.leonx.territory.config.TerritoryConfig;
 import top.leonx.territory.tileentities.TerritoryTableTileEntity;
 
@@ -47,11 +50,11 @@ public class TerritoryTableTileEntityRenderer extends TileEntityRenderer<Territo
         matrixStackIn.translate(0.5, 0, 0.5);
 
         IVertexBuilder compassBuffer = bufferIn.getBuffer(COMPASS_ADDITION);
-        Matrix4f matrix4f = matrixStackIn.getLast().getMatrix();
-        compassBuffer.pos(matrix4f, -0.5F, 0.752F,0.5F).color(255, 255, 255, 255).tex(0.0F, 1.0F).lightmap(combinedLightIn).endVertex();
-        compassBuffer.pos(matrix4f, 0.5F,0.752F, 0.5F).color(255, 255, 255, 255).tex(1.0F, 1.0F).lightmap(combinedLightIn).endVertex();
-        compassBuffer.pos(matrix4f, 0.5F, 0.752F,-0.5F).color(255, 255, 255, 255).tex(1.0F, 0.0F).lightmap(combinedLightIn).endVertex();
-        compassBuffer.pos(matrix4f, -0.5F, 0.752F,-0.5F).color(255, 255, 255, 255).tex(0.0F, 0.0F).lightmap(combinedLightIn).endVertex();
+        Matrix4f       matrix        = matrixStackIn.getLast().getMatrix();
+        compassBuffer.pos(matrix, -0.5F, 0.752F,0.5F).color(255, 255, 255, 255).tex(0.0F, 1.0F).lightmap(combinedLightIn).endVertex();
+        compassBuffer.pos(matrix, 0.5F,0.752F, 0.5F).color(255, 255, 255, 255).tex(1.0F, 1.0F).lightmap(combinedLightIn).endVertex();
+        compassBuffer.pos(matrix, 0.5F, 0.752F,-0.5F).color(255, 255, 255, 255).tex(1.0F, 0.0F).lightmap(combinedLightIn).endVertex();
+        compassBuffer.pos(matrix, -0.5F, 0.752F,-0.5F).color(255, 255, 255, 255).tex(0.0F, 0.0F).lightmap(combinedLightIn).endVertex();
 
         matrixStackIn.translate(0, height, 0);
         float angleLerp=MathHelper.interpolateAngle(partialTicks,tileEntityIn.angleLastTick,tileEntityIn.angle);
@@ -63,17 +66,17 @@ public class TerritoryTableTileEntityRenderer extends TileEntityRenderer<Territo
         matrixStackIn.rotate(new Quaternion(new Quaternion(new Vector3f(1, 0, 0),30*(3*scale-0.5f),true)));
 
         IVertexBuilder mapBackBuffer = bufferIn.getBuffer(MAP_BACKGROUND);
-        matrix4f = matrixStackIn.getLast().getMatrix();
-        mapBackBuffer.pos(matrix4f, -0.6F, 0.0F,0.6F).color(255, 255, 255, 255).tex(0.0F, 1.0F).lightmap(combinedLightIn).endVertex();
-        mapBackBuffer.pos(matrix4f, 0.6F,0.0F, 0.6F).color(255, 255, 255, 255).tex(1.0F, 1.0F).lightmap(combinedLightIn).endVertex();
-        mapBackBuffer.pos(matrix4f, 0.6F, 0.0F,-0.6F).color(255, 255, 255, 255).tex(1.0F, 0.0F).lightmap(combinedLightIn).endVertex();
-        mapBackBuffer.pos(matrix4f, -0.6F, 0.0F,-0.6F).color(255, 255, 255, 255).tex(0.0F, 0.0F).lightmap(combinedLightIn).endVertex();
+        matrix = matrixStackIn.getLast().getMatrix();
+        mapBackBuffer.pos(matrix, -0.6F, 0.0F,0.6F).color(255, 255, 255, 255).tex(0.0F, 1.0F).lightmap(combinedLightIn).endVertex();
+        mapBackBuffer.pos(matrix, 0.6F,0.0F, 0.6F).color(255, 255, 255, 255).tex(1.0F, 1.0F).lightmap(combinedLightIn).endVertex();
+        mapBackBuffer.pos(matrix, 0.6F, 0.0F,-0.6F).color(255, 255, 255, 255).tex(1.0F, 0.0F).lightmap(combinedLightIn).endVertex();
+        mapBackBuffer.pos(matrix, -0.6F, 0.0F,-0.6F).color(255, 255, 255, 255).tex(0.0F, 0.0F).lightmap(combinedLightIn).endVertex();
 
         IVertexBuilder mapBuffer=bufferIn.getBuffer(tileEntityIn.mapRenderType);
-        mapBuffer.pos(matrix4f, -0.55F, 0.002F,0.55F).color(255, 255, 255, 255).tex(0.0F, 1.0F).lightmap(combinedLightIn).endVertex();
-        mapBuffer.pos(matrix4f, 0.55F,0.002F, 0.55F).color(255, 255, 255, 255).tex(1.0F, 1.0F).lightmap(combinedLightIn).endVertex();
-        mapBuffer.pos(matrix4f, 0.55F, 0.002F,-0.55F).color(255, 255, 255, 255).tex(1.0F, 0.0F).lightmap(combinedLightIn).endVertex();
-        mapBuffer.pos(matrix4f, -0.55F, 0.002F,-0.55F).color(255, 255, 255, 255).tex(0.0F, 0.0F).lightmap(combinedLightIn).endVertex();
+        mapBuffer.pos(matrix, -0.55F, 0.002F,0.55F).color(255, 255, 255, 255).tex(0.0F, 1.0F).lightmap(combinedLightIn).endVertex();
+        mapBuffer.pos(matrix, 0.55F,0.002F, 0.55F).color(255, 255, 255, 255).tex(1.0F, 1.0F).lightmap(combinedLightIn).endVertex();
+        mapBuffer.pos(matrix, 0.55F, 0.002F,-0.55F).color(255, 255, 255, 255).tex(1.0F, 0.0F).lightmap(combinedLightIn).endVertex();
+        mapBuffer.pos(matrix, -0.55F, 0.002F,-0.55F).color(255, 255, 255, 255).tex(0.0F, 0.0F).lightmap(combinedLightIn).endVertex();
 
         matrixStackIn.pop();
 

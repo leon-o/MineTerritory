@@ -1,14 +1,16 @@
 package top.leonx.territory.client.gui;
 
+import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.gui.widget.Widget;
 import net.minecraft.client.gui.widget.button.ChangePageButton;
+import net.minecraft.util.text.ITextComponent;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class WrapList extends Widget {
 
-    public WrapList(int xIn, int yIn, int widthIn, int heightIn, String msg) {
+    public WrapList(int xIn, int yIn, int widthIn, int heightIn, ITextComponent msg) {
         super(xIn, yIn, widthIn, heightIn, msg);
         prevPageButton = new ChangePageButton(xIn, yIn + heightIn - 13, false, $ -> {
             pageNumber=Math.max(0,--pageNumber);
@@ -33,7 +35,7 @@ public class WrapList extends Widget {
     public int marginTop=4;
 
     @Override
-    public void render(int mouseX, int mouseY, float partialTick) {
+    public void render(MatrixStack matrix, int mouseX, int mouseY, float partialTick) {
         //super.render(mouseX, mouseY, partialTick);
         int left=0,top=0,maxHeightThisLine=0;
         for (int i=pageNumber*entryCountEachPage;i<Math.min(children.size(),(pageNumber+1)*entryCountEachPage);i++) {
@@ -44,16 +46,16 @@ public class WrapList extends Widget {
                 top+=maxHeightThisLine+marginTop;
                 maxHeightThisLine=0;
             }
-            maxHeightThisLine=Math.max(widget.getHeight(),maxHeightThisLine);
+            maxHeightThisLine=Math.max(widget.getWidth_CLASH(),maxHeightThisLine);
             widget.x=super.x+left+marginLeft;
             widget.y=super.y+top;
-            widget.render(mouseX, mouseY, partialTick);
+            widget.render(matrix,mouseX, mouseY, partialTick);
             left+=widget.getWidth()+marginRight;
         }
-        prevPageButton.render(mouseX, mouseY, partialTick);
-        nextPageButton.render(mouseX, mouseY, partialTick);
-        prevPageButton.renderButton(mouseX, mouseY, partialTick);
-        nextPageButton.renderButton(mouseX, mouseY, partialTick);
+        prevPageButton.render(matrix,mouseX, mouseY, partialTick);
+        nextPageButton.render(matrix,mouseX, mouseY, partialTick);
+        prevPageButton.renderButton(matrix,mouseX, mouseY, partialTick);
+        nextPageButton.renderButton(matrix,mouseX, mouseY, partialTick);
     }
 
     @Override

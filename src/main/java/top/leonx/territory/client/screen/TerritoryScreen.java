@@ -1,5 +1,6 @@
 package top.leonx.territory.client.screen;
 
+import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.entity.player.PlayerInventory;
@@ -36,25 +37,25 @@ public class TerritoryScreen extends ContainerScreen<TerritoryTableContainer> {
     }
 
     @Override
-    public void render(int mouseX, int mouseY, float ticks) {
-        this.renderBackground();
-        super.render(mouseX, mouseY, ticks);
+    public void render(MatrixStack stack,int mouseX, int mouseY, float ticks) {
+        this.renderBackground(stack);
+        super.render(stack,mouseX, mouseY, ticks);
 
-        pages.get(pageNumber).render(mouseX,mouseY,ticks);
+        pages.get(pageNumber).render(stack,mouseX,mouseY,ticks);
     }
 
     @Override
-    protected void drawGuiContainerBackgroundLayer(float partialTicks, int mouseX, int mouseY) {
+    protected void drawGuiContainerBackgroundLayer(MatrixStack stack,float partialTicks, int mouseX, int mouseY) {
         Minecraft.getInstance().textureManager.bindTexture(backgroundLocation);
         int startX = this.guiLeft;
         int startY = this.guiTop;
-        this.blit(startX, startY, 0, 0, this.xSize, this.ySize);
+        this.blit(stack,startX, startY, 0, 0, this.xSize, this.ySize);
     }
 
     @Override
-    protected void drawGuiContainerForegroundLayer(int mouseX, int mouseY) {
-        super.drawGuiContainerForegroundLayer(mouseX, mouseY);
-        pages.get(pageNumber).drawGuiContainerForegroundLayer(mouseX,mouseY);
+    protected void drawGuiContainerForegroundLayer(MatrixStack stack,int mouseX, int mouseY) {
+        super.drawGuiContainerForegroundLayer(stack,mouseX, mouseY);
+        pages.get(pageNumber).drawGuiContainerForegroundLayer(stack,mouseX,mouseY);
     }
 
     @Override

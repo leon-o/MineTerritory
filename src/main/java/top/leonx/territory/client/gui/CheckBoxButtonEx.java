@@ -1,11 +1,12 @@
 package top.leonx.territory.client.gui;
 
 import net.minecraft.client.gui.widget.button.CheckboxButton;
+import net.minecraft.util.text.ITextComponent;
 
 import java.util.function.Consumer;
 
 public class CheckBoxButtonEx extends CheckboxButton {
-    public CheckBoxButtonEx(int left, int top, int width, int height, String text, boolean checked) {
+    public CheckBoxButtonEx(int left, int top, int width, int height, ITextComponent text, boolean checked) {
         super(left, top, width, height, text, checked);
     }
     public Consumer<CheckBoxButtonEx> onCheckedChange;
