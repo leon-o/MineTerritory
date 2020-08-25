@@ -31,6 +31,7 @@ public class TerritoryMapScreen extends AbstractScreenPage<TerritoryTableContain
     private static final ResourceLocation expandSquareLocation    = new ResourceLocation("minecraft", "textures/block/cyan_stained_glass.png");
     private static final ResourceLocation forbiddenSquareLocation = new ResourceLocation("minecraft", "textures/block/red_stained_glass.png");
     private static final ResourceLocation xpIconLocation          = new ResourceLocation("territory", "textures/gui/xp_icon.png");
+    private static final int              foregroundColor         = 0x293134;
     private              TextFieldWidget territoryNameTextField;
     private ExtendedButton               doneButton;
     private int xpRequired;
@@ -51,7 +52,7 @@ public class TerritoryMapScreen extends AbstractScreenPage<TerritoryTableContain
         territoryNameTextField.setText(container.territoryInfo.territoryName);
         this.children.add(territoryNameTextField);
     }
-    
+
 
     @Override
     public void renderInternal(MatrixStack matrix,final int mouseX, final int mouseY, final float partialTicks) {
@@ -60,30 +61,33 @@ public class TerritoryMapScreen extends AbstractScreenPage<TerritoryTableContain
     }
 
     @Override
-    public void drawGuiContainerForegroundLayer(MatrixStack matrix,int mouseX, int mouseY) {
-        drawMap(matrix);
-        drawChunkOverlay(matrix,mouseX, mouseY);
-        font.drawString(matrix,I18n.format("gui.territory.territory_name"),  160, 8, 0xFFFFFF);
+    public void drawGuiContainerForegroundLayer(MatrixStack stack,int mouseX, int mouseY) {
+        drawMap(stack);
+        drawChunkOverlay(stack,mouseX, mouseY);
+        font.drawString(stack,I18n.format("gui.territory.territory_name"),  160, 8, foregroundColor);
 
-        font.drawString(matrix,I18n.format("gui.territory.protect_power"),  160,  50, 0xFFFFFFFF);
+        String protectPowerTranslation=I18n.format("gui.territory.protect_power");
+        font.drawString(stack,protectPowerTranslation,  160,  50, foregroundColor);
 
-        font.drawString(matrix,Integer.toString(container.getUsedProtectPower()),  160,  65,
-                             container.getUsedProtectPower() < container.getTotalProtectPower() ? 0xFF00BF4D : 0xFFFFFFFF);
-        font.drawString(matrix,"/" + container.getTotalProtectPower(),
-                             160 + this.font.getStringWidth(Integer.toString(container.getUsedProtectPower())),  65,
-                             0xFFFFFFFF);
+        font.drawString(stack,Integer.toString(container.getUsedProtectPower()),  160,  64,
+                             container.getUsedProtectPower() < container.getTotalProtectPower() ? 0x00A838 : foregroundColor);
+        font.drawString(stack,"/" + container.getTotalProtectPower(),
+                        160 + this.font.getStringWidth(Integer.toString(container.getUsedProtectPower())), 64,
+                        foregroundColor);
 
         if(xpRequired>0)
         {
+            String xpRequiredTranslation=I18n.format("gui.territory.xp_required");
+            font.drawString(stack,xpRequiredTranslation,160,79, foregroundColor);
             if(xpRequired>container.getPlayerLevel())
             {
                 Minecraft.getInstance().textureManager.bindTexture(xpIconLocation);
-                blit(matrix,157,84,(Math.min(xpRequired,3)-1)*16,16,16,16,48,32);
-                font.drawString(matrix,Integer.toString(xpRequired),  174,  88,0x8c605d);
+                blit(stack,157,89,(Math.min(xpRequired,3)-1)*16,16,16,16,48,32);
+                font.drawString(stack,Integer.toString(xpRequired),  173,  93,0x8c605d);
             }else {
                 Minecraft.getInstance().textureManager.bindTexture(xpIconLocation);
-                blit(matrix,157,84,(Math.min(xpRequired,3)-1)*16,0,16,16,48,32);
-                font.drawString(matrix,Integer.toString(xpRequired),  174,  88,0xc8ff8f);
+                blit(stack,157,89,(Math.min(xpRequired,3)-1)*16,0,16,16,48,32);
+                font.drawString(stack,Integer.toString(xpRequired),  173,  93,0xc8ff8f);
             }
         }
     }
