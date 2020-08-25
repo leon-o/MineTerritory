@@ -29,5 +29,6 @@
   "gui.territory.owner": "Owner",
   "gui.territory.all_player": "All Player",
   "gui.territory.territory_name": "Territory Name",
-  "gui.territory.protect_power": "Protect Power"
+  "gui.territory.protect_power": "Protect Power",
+  "gui.territory.xp_required": "Xp Required"
 }
