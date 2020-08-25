@@ -33,7 +33,7 @@ public class UserUtil {
         if(FMLEnvironment.dist== Dist.CLIENT)
         {
             List<AbstractClientPlayerEntity> players = Minecraft.getInstance().world.getPlayers();
-            Optional<AbstractClientPlayerEntity> first = players.stream().filter(t -> t.getName().toString().equals(name)).findFirst();
+            Optional<AbstractClientPlayerEntity> first = players.stream().filter(t -> t.getName().getString().equals(name)).findFirst();
             if(first.isPresent())
                 return first.get().getUniqueID();
         }
