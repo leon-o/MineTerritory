@@ -156,26 +156,17 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryTable
     private String addTextFieldSuggestion; //why is there no direct way to get;
     private void addNewPlayer() {
         String name=addTextField.getText()+addTextFieldSuggestion;
-        UUID uuid=null;
-        for (Map.Entry<UUID,String> entry:UsernameCache.getMap().entrySet())
-        {
-            if(entry.getValue().equals(name))
-            {
-                uuid=entry.getKey();
-                break;
-            }
-        }
-
-        if(uuid==null)
+        UUID uuid= UserUtil.getUUIDByName(name);
+        if(uuid.equals(UserUtil.DEFAULT_UUID) || uuid==null)
         {
             return;
         }
+
         addTextField.setText("");
         updateSuggestion();
         if(container.territoryInfo.permissions.containsKey(uuid)){
-            UUID finalUuid = uuid;
             //noinspection OptionalGetWithoutIsPresent
-            playerList.setSelected(playerList.getEventListeners().stream().filter(t->t.getUUID().equals(finalUuid)).findFirst().get());
+            playerList.setSelected(playerList.getEventListeners().stream().filter(t->t.getUUID().equals(uuid)).findFirst().get());
         }
         else{
             container.territoryInfo.permissions.put(uuid, TerritoryConfig.defaultPermission);
