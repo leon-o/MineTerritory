@@ -54,7 +54,7 @@ public class TerritoryScreen extends ContainerScreen<TerritoryTableContainer> {
 
     @Override
     protected void drawGuiContainerForegroundLayer(MatrixStack stack,int mouseX, int mouseY) {
-        super.drawGuiContainerForegroundLayer(stack,mouseX, mouseY);
+        //super.drawGuiContainerForegroundLayer(stack,mouseX, mouseY);
         pages.get(pageNumber).drawGuiContainerForegroundLayer(stack,mouseX,mouseY);
     }
 
