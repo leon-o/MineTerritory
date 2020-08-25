@@ -114,10 +114,10 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryTable
 
         String title=I18n.format("gui.territory.all_player");
         if(playerList.getSelected()!=null) title=playerList.getSelected().getName();
-        RenderSystem.pushMatrix();
-        RenderSystem.scaled(1.2,1.2,1.2);
+        matrix.push();
+        matrix.scale(1.2f,1.2f,1.2f);
         font.drawString(matrix,title, (int)((this.parent.getGuiLeft()+150)/1.2),parent.getGuiTop()+4,0xFFFFF0);
-        RenderSystem.popMatrix();
+        matrix.pop();
     }
 
     @Override
