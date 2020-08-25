@@ -6,9 +6,9 @@
 # The name of the mod loader type to load - for regular FML @Mod mods it should be javafml
 modLoader="javafml" #mandatory
 # A version range to match for said mod loader - for regular FML @Mod it will be the forge version
-loaderVersion="[33,)" #mandatory (28 is current forge version)
+loaderVersion="[33,)"
 
-license="All rights reserved"
+license="GNU General Public License v3.0"
 # A URL to refer people to when problems occur with this mod
 issueTrackerURL="https://github.com/leon-o/MineTerritory/issues" #optional
 # A list of mods - how many allowed here is determined by the individual mod loader
@@ -26,7 +26,7 @@ displayURL="https://github.com/leon-o/MineTerritory" #optional
 # A file name (in the root of the mod JAR) containing a logo for display
 # logoFile="examplemod.png" #optional
 # A text field displayed in the mod UI
-credits="Thanks for this example mod goes to Java" #optional
+credits="" #optional
 # A text field displayed in the mod UI
 authors="Leon" #optional
 # The description text for the mod (multi line!) (#mandatory)
@@ -34,21 +34,21 @@ description='''
 A mod of minecraft which allows player to declare territory whit GUI.
 '''
 # A dependency - use the . to indicate dependency for a specific modid. Dependencies are optional.
-[[dependencies.examplemod]] #optional
+[[dependencies.territory]] #optional
     # the modid of the dependency
     modId="forge" #mandatory
     # Does this dependency have to exist - if not, ordering below must be specified
     mandatory=true #mandatory
     # The version range of the dependency
-    versionRange="[33,)" #mandatory
+    versionRange="[32,)" #mandatory
     # An ordering relationship for the dependency - BEFORE or AFTER required if the relationship is not mandatory
     ordering="NONE"
     # Side this dependency is applied on - BOTH, CLIENT or SERVER
     side="BOTH"
 # Here's another dependency
-[[dependencies.examplemod]]
+[[dependencies.territory]]
     modId="minecraft"
     mandatory=true
-    versionRange="[1.16.2]"
+    versionRange="[1.16,)"
     ordering="NONE"
     side="BOTH"

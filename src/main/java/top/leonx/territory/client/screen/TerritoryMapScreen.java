@@ -41,7 +41,6 @@ public class TerritoryMapScreen extends AbstractScreenPage<TerritoryTableContain
     public void init() {
 
         final int halfW = width / 2;
-        final int halfH = height / 2;
         territoryNameTextField = new TextFieldWidget(font, parent.getGuiLeft() + 160, parent.getGuiTop() + 24, 80, 16, new StringTextComponent("Name"));
         doneButton = new ExtendedButton(halfW + 40, parent.getGuiTop() + parent.getYSize() - 30, 70, 20,
                                         new TranslationTextComponent("gui.territory.done_btn"), $ -> container.Done());
