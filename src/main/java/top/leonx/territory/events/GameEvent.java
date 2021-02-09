@@ -263,7 +263,7 @@ public class GameEvent {
         }
 
         ItemStack heldItem = clientPlayer.getHeldItem(Hand.MAIN_HAND);
-        if (heldItem.getItem() == ModItems.TerritoryBlockItem) {
+        if (heldItem.getItem() == ModItems.TerritoryBlockItem.get()) {
             ClientPlayerEntity player = Minecraft.getInstance().player;
             BlockRayTraceResult blockRayTraceResult = Minecraft.getInstance().world.rayTraceBlocks(
                     new RayTraceContext(player.getEyePosition(0), player.getEyePosition(0).add(player.getLookVec().scale(4)),

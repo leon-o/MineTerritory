@@ -60,7 +60,7 @@ public class TerritoryTableContainer extends Container {
     }
 
     public TerritoryTableContainer(int id, PlayerInventory inventory, TerritoryTableTileEntity tileEntity) {
-        super(ModContainerTypes.TERRITORY_CONTAINER, id);
+        super(ModContainerTypes.TERRITORY_CONTAINER.get(), id);
         this.player = inventory.player;
         this.territoryInfo = tileEntity.getTerritoryInfo().copy();
 

@@ -96,7 +96,7 @@ public final class TerritoryConfig {
         }
 
         public static void processPowerProvider() {
-            if (ItemTags.getCollection().func_241833_a().size() == 0) return;
+            if (ItemTags.getCollection().getRegisteredTags().size() == 0) return;
             TerritoryConfig.powerProvider = new HashMap<>();
 
             Pattern typePattern = Pattern.compile("(item)|(tag)(?=:)");

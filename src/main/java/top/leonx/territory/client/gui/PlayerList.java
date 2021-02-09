@@ -40,7 +40,7 @@ public class PlayerList extends ExtendedList<PlayerList.PlayerEntry> {
         super.setSelected(selected);
         selected.onSelected.accept(selected);
     }
-    private int getMaxScroll() {
+    public int getMaxScroll() {
         return Math.max(0, this.getMaxPosition() - (this.y1 - this.y0 - 4));
     }
     @Override

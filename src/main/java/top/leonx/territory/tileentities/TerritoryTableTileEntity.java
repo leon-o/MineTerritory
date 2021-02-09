@@ -78,7 +78,7 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
     private              byte[]                      mapColor                  = new byte[0];
 
     public TerritoryTableTileEntity() {
-        super(ModTileEntityType.TERRITORY_TILE_ENTITY);
+        super(ModTileEntityTypes.TERRITORY_TILE_ENTITY.get());
         //territoryInfo.assignedTo(null, UUID.randomUUID(), null, "", TerritoryConfig.defaultPermission, new HashMap<>());
     }
 
@@ -339,112 +339,110 @@ public class TerritoryTableTileEntity extends TileEntity implements ITickableTil
         int      l         = MathHelper.floor(pos.getX() - (double) xCenter) / i + mapSize / 2;
         int      i1        = MathHelper.floor(pos.getZ() - (double) yCenter) / i + mapSize / 2;
         int      j1        = mapSize / i;
-        if (world.func_230315_m_().func_236037_d_()) { // world.dimension.isNether()
+        if (world!=null && world.getDimensionKey() == World.THE_NETHER) { // world.dimension.isNether()
             j1 /= 2;
         }
 
         for (int k1 = l - j1 + 1; k1 < l + j1; ++k1) {
-            if (true/*(k1 & 0b1111) == (mapdata$mapinfo.step & 0b1111) || flag*/) {
-                //flag = false;
-                double d0 = 0.0D;
+            //flag = false;
+            double d0 = 0.0D;
 
-                for (int l1 = i1 - j1 - 1; l1 < i1 + j1; ++l1) {
-                    if (k1 >= 0 && l1 >= -1 && k1 < mapSize && l1 < mapSize) {
-                        int                     i2       = k1 - l;
-                        int                     j2       = l1 - i1;
-                        boolean                 flag1    = i2 * i2 + j2 * j2 > (j1 - 2) * (j1 - 2);
-                        int                     k2       = (xCenter / i + k1 - mapSize / 2) * i;
-                        int                     l2       = (yCenter / i + l1 - mapSize / 2) * i;
-                        Multiset<MaterialColor> multiset = LinkedHashMultiset.create();
-                        Chunk                   chunk    = world.getChunkAt(new BlockPos(k2, 0, l2));
-                        if (!chunk.isEmpty()) {
-                            ChunkPos chunkpos = chunk.getPos();
-                            int      i3       = k2 & 15;
-                            int      j3       = l2 & 15;
-                            int      k3       = 0;
-                            double   d1       = 0.0D;
-                            if (world.func_230315_m_().func_236037_d_()) { //world.dimension.isNether()
-                                int l3 = k2 + l2 * 231871;
-                                l3 = l3 * l3 * 0x1dfd851 + l3 * 11;
-                                if ((l3 >> 20 & 1) == 0) {
-                                    multiset.add(Blocks.DIRT.getDefaultState().getMaterialColor(world, BlockPos.ZERO), 10);
-                                } else {
-                                    multiset.add(Blocks.STONE.getDefaultState().getMaterialColor(world, BlockPos.ZERO), 100);
-                                }
-
-                                d1 = 100.0D;
+            for (int l1 = i1 - j1 - 1; l1 < i1 + j1; ++l1) {
+                if (k1 >= 0 && l1 >= -1 && k1 < mapSize && l1 < mapSize) {
+                    int                     i2       = k1 - l;
+                    int                     j2       = l1 - i1;
+                    boolean                 flag1    = i2 * i2 + j2 * j2 > (j1 - 2) * (j1 - 2);
+                    int                     k2       = (xCenter / i + k1 - mapSize / 2) * i;
+                    int                     l2       = (yCenter / i + l1 - mapSize / 2) * i;
+                    Multiset<MaterialColor> multiset = LinkedHashMultiset.create();
+                    Chunk                   chunk    = world.getChunkAt(new BlockPos(k2, 0, l2));
+                    if (!chunk.isEmpty()) {
+                        ChunkPos chunkpos = chunk.getPos();
+                        int      i3       = k2 & 15;
+                        int      j3       = l2 & 15;
+                        int      k3       = 0;
+                        double   d1       = 0.0D;
+                        if (world!=null && world.getDimensionKey() == World.THE_NETHER) { //world.dimension.isNether()
+                            int l3 = k2 + l2 * 231871;
+                            l3 = l3 * l3 * 0x1dfd851 + l3 * 11;
+                            if ((l3 >> 20 & 1) == 0) {
+                                multiset.add(Blocks.DIRT.getDefaultState().getMaterialColor(world, BlockPos.ZERO), 10);
                             } else {
-                                BlockPos.Mutable blockpos$mutable1 = new BlockPos.Mutable();
-                                BlockPos.Mutable blockpos$mutable  = new BlockPos.Mutable();
-
-                                for (int i4 = 0; i4 < i; ++i4) {
-                                    for (int j4 = 0; j4 < i; ++j4) {
-                                        int        k4 = chunk.getTopBlockY(Heightmap.Type.WORLD_SURFACE, i4 + i3, j4 + j3) + 1;
-                                        BlockState blockstate;
-                                        if (k4 <= 1) {
-                                            blockstate = Blocks.BEDROCK.getDefaultState();
-                                        } else {
-                                            do {
-                                                --k4;
-                                                blockpos$mutable1.setPos(chunkpos.getXStart() + i4 + i3, k4, chunkpos.getZStart() + j4 + j3);
-                                                blockstate = chunk.getBlockState(blockpos$mutable1);
-                                            } while (blockstate.getMaterialColor(world, blockpos$mutable1) == MaterialColor.AIR && k4 > 0);
-
-                                            if (k4 > 0 && !blockstate.getFluidState().isEmpty()) {
-                                                int l4 = k4 - 1;
-                                                blockpos$mutable.setPos(blockpos$mutable1);
-
-                                                while (true) {
-                                                    blockpos$mutable.setY(l4--);
-                                                    BlockState blockstate1 = chunk.getBlockState(blockpos$mutable);
-                                                    ++k3;
-                                                    if (l4 <= 0 || blockstate1.getFluidState().isEmpty()) {
-                                                        break;
-                                                    }
-                                                }
-
-                                                blockstate = this.getFluidState(world, blockstate, blockpos$mutable1);
-                                            }
-                                        }
-
-                                        //data.removeStaleBanners(world, chunkpos.getXStart() + i4 + i3, chunkpos.getZStart() + j4 + j3);
-                                        d1 += (double) k4 / (double) (i * i);
-                                        multiset.add(blockstate.getMaterialColor(world, blockpos$mutable1));
-                                    }
-                                }
+                                multiset.add(Blocks.STONE.getDefaultState().getMaterialColor(world, BlockPos.ZERO), 100);
                             }
 
-                            k3 = k3 / (i * i);
-                            double d2 = (d1 - d0) * 4.0D / (double) (i + 4) + ((double) (k1 + l1 & 1) - 0.5D) * 0.4D;
-                            int    i5 = 1;
-                            if (d2 > 0.6D) {
+                            d1 = 100.0D;
+                        } else {
+                            BlockPos.Mutable blockpos$mutable1 = new BlockPos.Mutable();
+                            BlockPos.Mutable blockpos$mutable  = new BlockPos.Mutable();
+
+                            for (int i4 = 0; i4 < i; ++i4) {
+                                for (int j4 = 0; j4 < i; ++j4) {
+                                    int        k4 = chunk.getTopBlockY(Heightmap.Type.WORLD_SURFACE, i4 + i3, j4 + j3) + 1;
+                                    BlockState blockstate;
+                                    if (k4 <= 1) {
+                                        blockstate = Blocks.BEDROCK.getDefaultState();
+                                    } else {
+                                        do {
+                                            --k4;
+                                            blockpos$mutable1.setPos(chunkpos.getXStart() + i4 + i3, k4, chunkpos.getZStart() + j4 + j3);
+                                            blockstate = chunk.getBlockState(blockpos$mutable1);
+                                        } while (blockstate.getMaterialColor(world, blockpos$mutable1) == MaterialColor.AIR && k4 > 0);
+
+                                        if (k4 > 0 && !blockstate.getFluidState().isEmpty()) {
+                                            int l4 = k4 - 1;
+                                            blockpos$mutable.setPos(blockpos$mutable1);
+
+                                            while (true) {
+                                                blockpos$mutable.setY(l4--);
+                                                BlockState blockstate1 = chunk.getBlockState(blockpos$mutable);
+                                                ++k3;
+                                                if (l4 <= 0 || blockstate1.getFluidState().isEmpty()) {
+                                                    break;
+                                                }
+                                            }
+
+                                            blockstate = this.getFluidState(world, blockstate, blockpos$mutable1);
+                                        }
+                                    }
+
+                                    //data.removeStaleBanners(world, chunkpos.getXStart() + i4 + i3, chunkpos.getZStart() + j4 + j3);
+                                    d1 += (double) k4 / (double) (i * i);
+                                    multiset.add(blockstate.getMaterialColor(world, blockpos$mutable1));
+                                }
+                            }
+                        }
+
+                        k3 = k3 / (i * i);
+                        double d2 = (d1 - d0) * 4.0D / (double) (i + 4) + ((double) (k1 + l1 & 1) - 0.5D) * 0.4D;
+                        int    i5 = 1;
+                        if (d2 > 0.6D) {
+                            i5 = 2;
+                        }
+
+                        if (d2 < -0.6D) {
+                            i5 = 0;
+                        }
+
+                        MaterialColor materialcolor = Iterables.getFirst(Multisets.copyHighestCountFirst(multiset), MaterialColor.AIR);
+                        if (materialcolor == MaterialColor.WATER) {
+                            d2 = (double) k3 * 0.1D + (double) (k1 + l1 & 1) * 0.2D;
+                            i5 = 1;
+                            if (d2 < 0.5D) {
                                 i5 = 2;
                             }
 
-                            if (d2 < -0.6D) {
+                            if (d2 > 0.9D) {
                                 i5 = 0;
                             }
+                        }
 
-                            MaterialColor materialcolor = Iterables.getFirst(Multisets.copyHighestCountFirst(multiset), MaterialColor.AIR);
-                            if (materialcolor == MaterialColor.WATER) {
-                                d2 = (double) k3 * 0.1D + (double) (k1 + l1 & 1) * 0.2D;
-                                i5 = 1;
-                                if (d2 < 0.5D) {
-                                    i5 = 2;
-                                }
+                        d0 = d1;
+                        if (l1 >= 0 && i2 * i2 + j2 * j2 < j1 * j1 && (!flag1 || (k1 + l1 & 1) != 0)) {
 
-                                if (d2 > 0.9D) {
-                                    i5 = 0;
-                                }
-                            }
+                            byte b1 = (byte) (materialcolor.colorIndex * 4 + i5);
 
-                            d0 = d1;
-                            if (l1 >= 0 && i2 * i2 + j2 * j2 < j1 * j1 && (!flag1 || (k1 + l1 & 1) != 0)) {
-
-                                byte b1 = (byte) (materialcolor.colorIndex * 4 + i5);
-
-                                mapColor[k1 + l1 * mapSize] = b1;
-                            }
+                            mapColor[k1 + l1 * mapSize] = b1;
                         }
                     }
                 }

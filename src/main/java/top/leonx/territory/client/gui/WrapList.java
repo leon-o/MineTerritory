@@ -46,7 +46,7 @@ public class WrapList extends Widget {
                 top+=maxHeightThisLine+marginTop;
                 maxHeightThisLine=0;
             }
-            maxHeightThisLine=Math.max(widget.getWidth_CLASH(),maxHeightThisLine);
+            maxHeightThisLine=Math.max(widget.getHeightRealms(),maxHeightThisLine);
             widget.x=super.x+left+marginLeft;
             widget.y=super.y+top;
             widget.render(matrix,mouseX, mouseY, partialTick);

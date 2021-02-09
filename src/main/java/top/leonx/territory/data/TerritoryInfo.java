@@ -3,6 +3,7 @@ package top.leonx.territory.data;
 import net.minecraft.util.math.BlockPos;
 import top.leonx.territory.util.UserUtil;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.*;
 
@@ -20,6 +21,8 @@ public class TerritoryInfo {
     @Nullable
     public UUID territoryId;
 
+    // Version identification
+    public int version=1;
     private boolean isProtected=false;
     @SuppressWarnings("unused")
     public void assignedTo(UUID ownerId)
@@ -46,6 +49,7 @@ public class TerritoryInfo {
         this.defaultPermission=info.defaultPermission;
         this.permissions=info.permissions;
         this.territoryId=info.territoryId;
+        this.version=info.version;
     }
     public void deassign()
     {

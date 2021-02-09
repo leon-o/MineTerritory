@@ -4,6 +4,8 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.material.Material;
+import net.minecraft.block.material.MaterialColor;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
@@ -19,7 +21,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.Explosion;
 import net.minecraft.world.IBlockReader;
@@ -31,7 +32,7 @@ import net.minecraftforge.fml.network.NetworkHooks;
 import top.leonx.territory.capability.ModCapabilities;
 import top.leonx.territory.data.PermissionFlag;
 import top.leonx.territory.data.TerritoryInfo;
-import top.leonx.territory.tileentities.ModTileEntityType;
+import top.leonx.territory.tileentities.ModTileEntityTypes;
 import top.leonx.territory.tileentities.TerritoryTableTileEntity;
 import top.leonx.territory.util.MessageUtil;
 
@@ -40,8 +41,9 @@ import java.util.Random;
 
 @SuppressWarnings({"NullableProblems", "deprecation"})
 public class TerritoryTableBlock extends Block {
-    public TerritoryTableBlock(Properties properties) {
-        super(properties);
+    public TerritoryTableBlock() {
+        super(Block.Properties.create(Material.ROCK, MaterialColor.RED).hardnessAndResistance
+              (5.0F, 1200.0F));
     }
 
 
@@ -68,7 +70,7 @@ public class TerritoryTableBlock extends Block {
     @Nullable
     @Override
     public TileEntity createTileEntity(BlockState state, IBlockReader world) {
-        return ModTileEntityType.TERRITORY_TILE_ENTITY.create();
+        return ModTileEntityTypes.TERRITORY_TILE_ENTITY.get().create();
     }
 
     @Nullable

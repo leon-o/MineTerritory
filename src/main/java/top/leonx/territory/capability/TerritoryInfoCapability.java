@@ -20,6 +20,7 @@ import static top.leonx.territory.util.DataUtil.ConvertUUIDPermissionToNbt;
 
 public class TerritoryInfoCapability {
     public static class Storage implements Capability.IStorage<TerritoryInfo> {
+        private static final String VERSION_KEY = "version";
         private static final String OWNER_ID_KEY="owner_id";
         private static final String TERRITORY_ID_KEY="te_id";
         //private static final String TERRITORY_POS_KEY ="territories";
@@ -33,7 +34,7 @@ public class TerritoryInfoCapability {
         @Override
         public INBT writeNBT(Capability<TerritoryInfo> capability, TerritoryInfo instance, Direction side) {
             CompoundNBT compound=new CompoundNBT();
-
+            compound.putInt(VERSION_KEY,instance.version);
             if(instance.permissions!=null)
             {
                 ListNBT permissionListNBT=new ListNBT();
@@ -59,6 +60,7 @@ public class TerritoryInfoCapability {
             if(nbt.getId()!=10) return;
             CompoundNBT compound=(CompoundNBT) nbt;
             boolean isProtected = compound.getBoolean(IS_PROTECTED_KEY);
+            instance.version= compound.getInt(VERSION_KEY);
             if(isProtected)
             {
                 UUID ownerId=compound.getUniqueId(OWNER_ID_KEY);

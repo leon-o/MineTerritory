@@ -5,7 +5,7 @@ import net.minecraft.util.math.ChunkPos;
 import java.util.*;
 
 public class TerritoryUtil {
-    // Calculate cut vertex https://www.cnblogs.com/en-heng/p/4002658.html
+
     public static HashSet<ChunkPos> computeCutChunk(ChunkPos center, Collection<ChunkPos> chunks) {
         if(chunks.size()<=1)
             return new HashSet<>();
