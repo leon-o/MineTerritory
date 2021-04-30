@@ -22,7 +22,7 @@ public class ChunkCapabilityProvider implements ICapabilitySerializable<INBT> {
     public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable Direction side) {
         if(cap== TERRITORY_INFO_CAPABILITY)
             return instance.cast();
-        return null;
+        return LazyOptional.empty();
     }
 
     @Override
