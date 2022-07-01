@@ -6,7 +6,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
-import net.minecraftforge.event.world.ChunkDataEvent;
 import top.leonx.territory.config.TerritoryConfig;
 import top.leonx.territory.data.TerritoryInfo;
 import top.leonx.territory.data.TerritoryInfoHolder;

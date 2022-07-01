@@ -3,7 +3,6 @@ package top.leonx.territory.data;
 import net.minecraft.util.math.BlockPos;
 import top.leonx.territory.util.UserUtil;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.*;
 

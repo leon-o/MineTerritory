@@ -8,7 +8,10 @@ import net.minecraft.world.server.ServerWorld;
 import net.minecraft.world.storage.WorldSavedData;
 
 import javax.annotation.Nonnull;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import static top.leonx.territory.capability.ModCapabilities.TERRITORY_INFO_CAPABILITY;
 import static top.leonx.territory.util.DataUtil.ConvertNbtToPos;

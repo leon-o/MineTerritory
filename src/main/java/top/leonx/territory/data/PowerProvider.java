@@ -1,16 +1,16 @@
 package top.leonx.territory.data;
 
 import net.minecraft.item.Item;
-import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.NbtCompound;
 
 import java.util.Objects;
 
 public class PowerProvider {
     private final Item        item;
-    private final CompoundNBT tag;
+    private final NbtCompound tag;
     private final double      power;
 
-    public PowerProvider(Item item, CompoundNBT tag, double power) {
+    public PowerProvider(Item item, NbtCompound tag, double power) {
         this.item = item;
         this.tag = tag;
         this.power = power;
@@ -20,7 +20,7 @@ public class PowerProvider {
         return item;
     }
 
-    public CompoundNBT getTag() {
+    public NbtCompound getTag() {
         return tag;
     }
 

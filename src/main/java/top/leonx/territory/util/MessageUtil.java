@@ -1,10 +1,10 @@
 package top.leonx.territory.util;
 
-import net.minecraft.util.text.Style;
-import net.minecraft.util.text.TextFormatting;
+import net.minecraft.text.Style;
+import net.minecraft.util.Formatting;
 
 public class MessageUtil {
-    public static final Style GREEN  =Style.EMPTY.setFormatting(TextFormatting.GREEN);
-    public static final Style RED    =Style.EMPTY.setFormatting(TextFormatting.RED);
-    public static final Style YELLOW =Style.EMPTY.setFormatting(TextFormatting.YELLOW);
+    public static final Style GREEN  =Style.EMPTY.withColor(Formatting.GREEN);
+    public static final Style RED    =Style.EMPTY.withColor(Formatting.RED);
+    public static final Style YELLOW =Style.EMPTY.withColor(Formatting.YELLOW);
 }

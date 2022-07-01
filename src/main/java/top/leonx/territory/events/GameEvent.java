@@ -1,6 +1,9 @@
 package top.leonx.territory.events;
 
-import net.minecraft.block.*;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.DoorBlock;
+import net.minecraft.block.FenceGateBlock;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.entity.Entity;
@@ -12,7 +15,9 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Util;
 import net.minecraft.util.concurrent.TickDelayedTask;
-import net.minecraft.util.math.*;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
@@ -41,7 +46,9 @@ import top.leonx.territory.util.DataUtil;
 import top.leonx.territory.util.UserUtil;
 
 import javax.annotation.Nullable;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Random;
+import java.util.Set;
 
 @SuppressWarnings("unused")
 @Mod.EventBusSubscriber(modid = TerritoryMod.MODID)
@@ -263,7 +270,7 @@ public class GameEvent {
         }
 
         ItemStack heldItem = clientPlayer.getHeldItem(Hand.MAIN_HAND);
-        if (heldItem.getItem() == ModItems.TerritoryBlockItem.get()) {
+        if (heldItem.getItem() == ModItems.TerritoryBlockItem) {
             ClientPlayerEntity player = Minecraft.getInstance().player;
             BlockRayTraceResult blockRayTraceResult = Minecraft.getInstance().world.rayTraceBlocks(
                     new RayTraceContext(player.getEyePosition(0), player.getEyePosition(0).add(player.getLookVec().scale(4)),

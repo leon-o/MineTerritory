@@ -1,7 +1,6 @@
 package top.leonx.territory.client.screen;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
@@ -10,9 +9,9 @@ import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.common.UsernameCache;
 import net.minecraftforge.fml.client.gui.widget.*;
-import top.leonx.territory.client.gui.WrapList;
-import top.leonx.territory.client.gui.PlayerList;
 import top.leonx.territory.client.gui.PermissionToggleButton;
+import top.leonx.territory.client.gui.PlayerList;
+import top.leonx.territory.client.gui.WrapList;
 import top.leonx.territory.config.TerritoryConfig;
 import top.leonx.territory.container.TerritoryTableContainer;
 import top.leonx.territory.data.PermissionFlag;
