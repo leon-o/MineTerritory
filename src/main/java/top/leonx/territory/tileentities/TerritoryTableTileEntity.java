@@ -11,9 +11,6 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.MapColor;
 import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityTicker;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.block.entity.EnchantingTableBlockEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.texture.NativeImageBackedTexture;
@@ -44,7 +41,6 @@ import net.minecraft.world.Heightmap;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldAccess;
 import net.minecraft.world.chunk.WorldChunk;
-import top.leonx.territory.TerritoryMod;
 import top.leonx.territory.config.TerritoryConfig;
 import top.leonx.territory.container.TerritoryTableContainer;
 import top.leonx.territory.data.TerritoryInfo;
@@ -68,7 +64,7 @@ public class TerritoryTableTileEntity extends BlockEntity implements ExtendedScr
     //private final        LazyOptional<TerritoryInfo> territoryInfoLazyOptional = LazyOptional.of(() -> territoryInfo);
     private final HashSet<ChunkPos> lastTerritories = new HashSet<>();
     private final List<ChunkPos> territoriesLostDueToPower = new ArrayList<>();
-    public final int mapSize = 144;
+    public final int mapSize = 256;
     public Identifier mapLocation = null;
     public RenderLayer mapRenderType = null;
     public ItemStack mapStack;
@@ -80,7 +76,7 @@ public class TerritoryTableTileEntity extends BlockEntity implements ExtendedScr
     public float height = 0.8f;
     public HashSet<ChunkPos> territories = new HashSet<>();
     private NativeImageBackedTexture mapTexture = null;
-    private byte[] mapColor = new byte[0];
+    private byte[] mapColors = new byte[0];
 
     public TerritoryTableTileEntity(BlockPos pos, BlockState state) {
         super(ModTileEntityTypes.TERRITORY_TILE_ENTITY, pos, state);
@@ -132,9 +128,8 @@ public class TerritoryTableTileEntity extends BlockEntity implements ExtendedScr
             ChunkPos pos = ConvertNbtToPos(nbt);
             territories.add(pos);
         }
-        mapColor = compound.getByteArray(MAP_COLOR);
 
-        if (world != null && world.isClient && mapColor != null && mapColor.length == mapSize * mapSize)
+        if (world != null && world.isClient && mapColors != null && mapColors.length == mapSize * mapSize)
             updateMapTexture();
     }
 
@@ -153,7 +148,7 @@ public class TerritoryTableTileEntity extends BlockEntity implements ExtendedScr
     @org.jetbrains.annotations.Nullable
     @Override
     public ScreenHandler createMenu(int syncId, PlayerInventory inv, PlayerEntity player) {
-        return new TerritoryTableContainer(syncId, inv, ScreenHandlerContext.create(world,this.pos));
+        return new TerritoryTableContainer(syncId, inv, ScreenHandlerContext.create(world, this.pos));
     }
 
     @Override
@@ -166,8 +161,8 @@ public class TerritoryTableTileEntity extends BlockEntity implements ExtendedScr
         NbtList listNBT = new NbtList();
         territories.forEach(t -> listNBT.add(ConvertPosToNbt(t)));
         compound.put(TERRITORY_POS_KEY, listNBT);
-        if (mapColor.length == 0) drawMapData();
-        compound.putByteArray(MAP_COLOR, mapColor);
+        if (mapColors.length == 0) drawMapData();
+        compound.putByteArray(MAP_COLOR, mapColors);
     }
 
     //Call when world loads.
@@ -196,8 +191,8 @@ public class TerritoryTableTileEntity extends BlockEntity implements ExtendedScr
         if (world.isClient) {
             mapTexture = new NativeImageBackedTexture(mapSize, mapSize, true);
             mapLocation = MinecraftClient.getInstance().getTextureManager().registerDynamicTexture(
-                    String.format("territory_dynamic_map_texture_%d_%d_%d",this.pos.getX()<<4,
-                                  this.pos.getZ()<<4,this.mapSize), mapTexture);
+                    String.format("territory_dynamic_map_texture_%d_%d_%d", this.pos.getX() << 4, this.pos.getZ() << 4,
+                                  this.mapSize), mapTexture);
             mapRenderType = RenderLayer.getText(mapLocation);
         }
         //drawMapData();
@@ -237,7 +232,8 @@ public class TerritoryTableTileEntity extends BlockEntity implements ExtendedScr
                 angleRadian += ((float) Math.PI * 2F);
             }
             angleLastTick = angle;
-            angle = MathHelper.lerpAngleDegrees(0.5f,angle,(float) Math.toDegrees(angleRadian));//(float) Math.toDegrees(angleRadian);
+            angle = MathHelper.lerpAngleDegrees(0.5f, angle, (float) Math.toDegrees(
+                    angleRadian));//(float) Math.toDegrees(angleRadian);
             // todo rotated inertia
         } else {
             rise = false;
@@ -326,131 +322,148 @@ public class TerritoryTableTileEntity extends BlockEntity implements ExtendedScr
     private void updateMapTexture() {
         for (int i = 0; i < mapSize; i++) {
             for (int j = 0; j < mapSize; j++) {
-                int index = mapColor[i + j * mapSize] & 255;
+                int index = mapColors[i + j * mapSize] & 255;
                 this.mapTexture.getImage().setColor(i, j, MapColor.getRenderColor(index)); // todo there must be a problem
             }
         }
         this.mapTexture.upload();
     }
 
+    /*private void initMapState(){
+        ChunkPos centerChunkPos = new ChunkPos(pos.getX() >> 4, pos.getZ() >> 4);
+        BlockPos centerPos = centerChunkPos.getStartPos().add(8, 0, 8);
+        state = MapState.of(centerPos.getX(), centerPos.getZ(), (byte) 1, false, false,
+                            world.getRegistryKey());
+    }*/
+
     @SuppressWarnings({"UnstableApiUsage"})
     public void drawMapData() {
-        mapColor = new byte[mapSize * mapSize];
-        ChunkPos chunkPos = new ChunkPos(pos.getX() >> 4, pos.getZ() >> 4);
-        BlockPos centerPos = chunkPos.getStartPos().add(8, 0, 8);
-        int i = 1;
+        mapColors = new byte[mapSize * mapSize];
+        /*if(state==null)
+            initMapState();*/
+        //int i = 1;
+        ChunkPos centerChunkPos = new ChunkPos(pos.getX() >> 4, pos.getZ() >> 4);
+        BlockPos centerPos = centerChunkPos.getStartPos().add(8, 0, 8);
         int xCenter = centerPos.getX();
         int yCenter = centerPos.getZ();
-        int l = MathHelper.floor(pos.getX() - (double) xCenter) / i + mapSize / 2;
+        /*int l = MathHelper.floor(pos.getX() - (double) xCenter) / i + mapSize / 2;
         int i1 = MathHelper.floor(pos.getZ() - (double) yCenter) / i + mapSize / 2;
-        int j1 = mapSize / i;
-        if (world != null && world.getDimension().hasCeiling()) { // world.dimension.isNether()
-            j1 /= 2;
+        int j1 = mapSize / i;*/
+
+        int i = 1 << 1;//state.scale;
+        int j = xCenter;
+        int k = yCenter;
+        int l = MathHelper.floor(pos.getX() - (double) j) / i+mapSize/2;
+        int m = MathHelper.floor(pos.getZ() - (double) k) / i+mapSize/2;
+        int n = mapSize / i;
+        if (world.getDimension().hasCeiling()) {
+            n /= 2;
         }
 
-        for (int k1 = l - j1 + 1; k1 < l + j1; ++k1) {
-            //flag = false;
-            double d0 = 0.0D;
+        //MapState.PlayerUpdateTracker playerUpdateTracker = state.getPlayerSyncData((PlayerEntity)entity);
+        //++playerUpdateTracker.field_131;
+        boolean bl = false;
 
-            for (int l1 = i1 - j1 - 1; l1 < i1 + j1; ++l1) {
-                if (k1 >= 0 && l1 >= -1 && k1 < mapSize && l1 < mapSize) {
-                    int i2 = k1 - l;
-                    int j2 = l1 - i1;
-                    boolean flag1 = i2 * i2 + j2 * j2 > (j1 - 2) * (j1 - 2);
-                    int k2 = (xCenter / i + k1 - mapSize / 2) * i;
-                    int l2 = (yCenter / i + l1 - mapSize / 2) * i;
+        for (int o = l - n + 1; o < l + n; ++o) {
+
+            double d = 0.0;
+
+            for (int p = m - n - 1; p < m + n; ++p) {
+                if (o >= 0 && p >= -1 && o < mapSize && p < mapSize) {
+                    int q = o - l;
+                    int r = p - m;
+                    boolean bl2 = false;// q * q + r * r > (n - 2) * (n - 2);
+                    int s = (j / i + o - mapSize/2) * i;
+                    int t = (k / i + p - mapSize/2) * i;
                     Multiset<MapColor> multiset = LinkedHashMultiset.create();
-                    WorldChunk chunk = world.getWorldChunk(new BlockPos(k2, 0, l2));
-                    if (!chunk.isEmpty()) {
-                        ChunkPos chunkpos = chunk.getPos();
-                        int i3 = k2 & 15;
-                        int j3 = l2 & 15;
-                        int k3 = 0;
-                        double d1 = 0.0D;
-                        if (world != null && world.getDimension().hasCeiling()) { //world.dimension.isNether()
-                            int l3 = k2 + l2 * 231871;
-                            l3 = l3 * l3 * 0x1dfd851 + l3 * 11;
-                            if ((l3 >> 20 & 1) == 0) {
+                    WorldChunk worldChunk = world.getWorldChunk(new BlockPos(s, 0, t));
+                    if (!worldChunk.isEmpty()) {
+                        ChunkPos chunkPos = worldChunk.getPos();
+                        int u = s & 15;
+                        int v = t & 15;
+                        int w = 0;
+                        double e = 0.0;
+                        if (world.getDimension().hasCeiling()) {
+                            int x = s + t * 231871;
+                            x = x * x * 31287121 + x * 11;
+                            if ((x >> 20 & 1) == 0) {
                                 multiset.add(Blocks.DIRT.getDefaultState().getMapColor(world, BlockPos.ORIGIN), 10);
                             } else {
                                 multiset.add(Blocks.STONE.getDefaultState().getMapColor(world, BlockPos.ORIGIN), 100);
                             }
 
-                            d1 = 100.0D;
+                            e = 100.0;
                         } else {
                             BlockPos.Mutable mutable = new BlockPos.Mutable();
                             BlockPos.Mutable mutable2 = new BlockPos.Mutable();
 
-                            for (int i4 = 0; i4 < i; ++i4) {
-                                for (int j4 = 0; j4 < i; ++j4) {
-                                    int k4 = chunk.sampleHeightmap(Heightmap.Type.WORLD_SURFACE, i4 + i3, j4 + j3) + 1;
-                                    BlockState blockstate;
-                                    if (k4 <= 1) {
-                                        blockstate = Blocks.BEDROCK.getDefaultState();
+                            for (int y = 0; y < i; ++y) {
+                                for (int z = 0; z < i; ++z) {
+                                    int aa = worldChunk.sampleHeightmap(Heightmap.Type.WORLD_SURFACE, y + u, z + v) + 1;
+                                    BlockState blockState;
+                                    if (aa <= world.getBottomY() + 1) {
+                                        blockState = Blocks.BEDROCK.getDefaultState();
                                     } else {
                                         do {
-                                            --k4;
-                                            mutable.set(chunkpos.getStartX() + i4 + i3, k4,
-                                                        chunkpos.getStartZ() + j4 + j3);
-                                            blockstate = chunk.getBlockState(mutable);
-                                        } while ((blockstate = chunk.getBlockState(mutable)).getMapColor(world,
-                                                                                                         mutable) == MapColor.CLEAR && k4 > world.getBottomY());
+                                            --aa;
+                                            mutable.set(chunkPos.getStartX() + y + u, aa, chunkPos.getStartZ() + z + v);
+                                            blockState = worldChunk.getBlockState(mutable);
+                                        } while (blockState.getMapColor(world,
+                                                                        mutable) == MapColor.CLEAR && aa > world.getBottomY());
 
-                                        if (k4 > 0 && !blockstate.getFluidState().isEmpty()) {
-                                            int l4 = k4 - 1;
+                                        if (aa > world.getBottomY() && !blockState.getFluidState().isEmpty()) {
+                                            int ab = aa - 1;
                                             mutable2.set(mutable);
 
-                                            while (true) {
-                                                mutable2.setY(l4--);
-                                                BlockState blockstate1 = chunk.getBlockState(mutable2);
-                                                ++k3;
-                                                if (l4 <= 0 || blockstate1.getFluidState().isEmpty()) {
-                                                    break;
-                                                }
-                                            }
+                                            BlockState blockState2;
+                                            do {
+                                                mutable2.setY(ab--);
+                                                blockState2 = worldChunk.getBlockState(mutable2);
+                                                ++w;
+                                            } while (ab > world.getBottomY() && !blockState2.getFluidState().isEmpty());
 
-                                            blockstate = this.getFluidState(world, blockstate, mutable);
+                                            blockState = this.getFluidStateIfVisible(world, blockState, mutable);
                                         }
                                     }
 
-                                    //data.removeStaleBanners(world, chunkpos.getXStart() + i4 + i3, chunkpos.getZStart() + j4 + j3);
-                                    d1 += (double) k4 / (double) (i * i);
-                                    multiset.add(blockstate.getMapColor(world, mutable));
+                                    /*state.removeBanner(world, chunkPos.getStartX() + y + u,
+                                                       chunkPos.getStartZ() + z + v);*/
+                                    e += (double) aa / (double) (i * i);
+                                    multiset.add(blockState.getMapColor(world, mutable));
                                 }
                             }
                         }
 
-                        k3 = k3 / (i * i);
-                        double d2 = (d1 - d0) * 4.0D / (double) (i + 4) + ((double) (k1 + l1 & 1) - 0.5D) * 0.4D;
-                        int i5 = 1;
-                        if (d2 > 0.6D) {
-                            i5 = 2;
-                        }
-
-                        if (d2 < -0.6D) {
-                            i5 = 0;
-                        }
-
-                        MapColor materialcolor = Iterables.getFirst(Multisets.copyHighestCountFirst(multiset),
-                                                                    MapColor.CLEAR);
-                        if (materialcolor == MapColor.WATER_BLUE) {
-                            d2 = (double) k3 * 0.1D + (double) (k1 + l1 & 1) * 0.2D;
-                            i5 = 1;
-                            if (d2 < 0.5D) {
-                                i5 = 2;
+                        w /= i * i;
+                        MapColor mapColor = (MapColor) Iterables.getFirst(Multisets.copyHighestCountFirst(multiset),
+                                                                          MapColor.CLEAR);
+                        MapColor.Brightness brightness;
+                        double f;
+                        if (mapColor == MapColor.WATER_BLUE) {
+                            f = (double) w * 0.1 + (double) (o + p & 1) * 0.2;
+                            if (f < 0.5) {
+                                brightness = MapColor.Brightness.HIGH;
+                            } else if (f > 0.9) {
+                                brightness = MapColor.Brightness.LOW;
+                            } else {
+                                brightness = MapColor.Brightness.NORMAL;
                             }
-
-                            if (d2 > 0.9D) {
-                                i5 = 0;
+                        } else {
+                            f = (e - d) * 4.0 / (double) (i + 4) + ((double) (o + p & 1) - 0.5) * 0.4;
+                            if (f > 0.6) {
+                                brightness = MapColor.Brightness.HIGH;
+                            } else if (f < -0.6) {
+                                brightness = MapColor.Brightness.LOW;
+                            } else {
+                                brightness = MapColor.Brightness.NORMAL;
                             }
                         }
 
-                        d0 = d1;
-                        if (l1 >= 0 && i2 * i2 + j2 * j2 < j1 * j1 && (!flag1 || (k1 + l1 & 1) != 0)) {
-
-                            byte b1 = (byte) (materialcolor.id * 4 + i5);
-
-                            mapColor[k1 + l1 * mapSize] = b1;
+                        d = e;
+                        if (p >= 0 /*&& q * q + r * r < n * n && (!bl2 || (o + p & 1) != 0)*/) {
+                            //byte b1 = (byte) (mapColor.id * 4 + brightness.id);
+                            mapColors[o+p*mapSize] = mapColor.getRenderColorByte(brightness);
+                            //state.putColor(o, p, mapColor.getRenderColorByte(brightness));
                         }
                     }
                 }
@@ -458,7 +471,7 @@ public class TerritoryTableTileEntity extends BlockEntity implements ExtendedScr
         }
     }
 
-    private BlockState getFluidState(World worldIn, BlockState state, BlockPos pos) {
+    private BlockState getFluidStateIfVisible(World worldIn, BlockState state, BlockPos pos) {
         FluidState ifluidstate = state.getFluidState();
         return !ifluidstate.isEmpty() && !state.isSideSolidFullSquare(worldIn, pos,
                                                                       Direction.UP) ? ifluidstate.getBlockState() : state;
