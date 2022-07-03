@@ -1,22 +1,13 @@
 package top.leonx.territory.config;
 
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.item.Item;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.JsonToNBT;
-import net.minecraft.tags.ITag;
-import net.minecraft.tags.ItemTags;
-import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.registries.ForgeRegistries;
-import org.apache.commons.lang3.tuple.Pair;
 import top.leonx.territory.data.PermissionFlag;
 import top.leonx.territory.data.PowerProvider;
 
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 public final class TerritoryConfig {
@@ -27,20 +18,20 @@ public final class TerritoryConfig {
     // Server
     public static  double                         expNeededPerChunk;
     public static  Map<Item, List<PowerProvider>> powerProvider = new HashMap<>();
-    public static  List<PermissionFlag>           usablePermission;
-    public static  PermissionFlag                 defaultPermission;
+    public static  List<PermissionFlag>           usablePermission = new ArrayList<>();
+    public static  PermissionFlag                 defaultPermission = PermissionFlag.NONE;
     public static  boolean                        preventFire;
     public static  boolean                        preventExplosion;
-    private static List<String>                   powerProviderRaw;
+    private static List<String>                   powerProviderRaw = new ArrayList<>();
 
     public final static class ConfigHolder {
 
-        public static final ForgeConfigSpec CLIENT_SPEC;
-        public static final ForgeConfigSpec SERVER_SPEC;
-        static final        ClientConfig    CLIENT;
-        static final        ServerConfig    SERVER;
+        /*public static final ForgeConfigSpec CLIENT_SPEC;
+        public static final ForgeConfigSpec SERVER_SPEC;*/
+        static final        ClientConfig    CLIENT = new ClientConfig();
+        static final        ServerConfig    SERVER = new ServerConfig();
 
-        static {
+        /*static {
             {
                 final Pair<ClientConfig, ForgeConfigSpec> specPair = new ForgeConfigSpec.Builder().configure(ClientConfig::new);
                 CLIENT = specPair.getLeft();
@@ -51,11 +42,10 @@ public final class TerritoryConfig {
                 SERVER = specPair.getLeft();
                 SERVER_SPEC = specPair.getRight();
             }
-        }
+        }*/
     }
 
-    @SuppressWarnings("FieldCanBeLocal")
-    public final static class ConfigHelper {
+    /*public final static class ConfigHelper {
 
 
         private static ModConfig clientConfig;
@@ -149,6 +139,6 @@ public final class TerritoryConfig {
                 }
             });
         }
-    }
+    }*/
 
 }

@@ -1,14 +1,9 @@
 package top.leonx.territory.transform;
 
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.World;
-import top.leonx.territory.data.TerritoryInfo;
-import top.leonx.territory.data.TerritoryInfoHolder;
-import top.leonx.territory.data.TerritoryInfoSynchronizer;
+
 
 // ChunkDataEvent.Load never fired.
-public class SendChunkDataTransform {
+/*public class SendChunkDataTransform {
     public static void onServerChunkLoad(ChunkPos pos, ServerPlayerEntity player)
     {
         TerritoryInfo info  = TerritoryInfoHolder.get(player.getEntityWorld()).getChunkTerritoryInfo(pos);
@@ -21,4 +16,4 @@ public class SendChunkDataTransform {
         else
             TerritoryInfoHolder.get(world).removeIndex(info,pos);
     }
-}
+}*/

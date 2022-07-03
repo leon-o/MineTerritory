@@ -1,11 +1,9 @@
 package top.leonx.territory.config;
 
-import net.minecraftforge.common.ForgeConfigSpec;
-import top.leonx.territory.TerritoryMod;
 
 final class ClientConfig {
 
-	final ForgeConfigSpec.BooleanValue              displayOwnerName;
+	/*final ForgeConfigSpec.BooleanValue              displayOwnerName;
 	final ForgeConfigSpec.BooleanValue displayBoundary;
 	ClientConfig(final ForgeConfigSpec.Builder builder) {
 		builder.push("render");
@@ -19,6 +17,6 @@ final class ClientConfig {
 				.translation(TerritoryMod.MODID + ".config.displayOwnerName")
 				.define("displayBoundary", true);
 		builder.pop();
-	}
+	}*/
 
 }

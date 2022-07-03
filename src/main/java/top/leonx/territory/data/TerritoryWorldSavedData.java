@@ -1,23 +1,7 @@
 package top.leonx.territory.data;
 
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.ListNBT;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
-import net.minecraft.world.storage.WorldSavedData;
 
-import javax.annotation.Nonnull;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
-import static top.leonx.territory.capability.ModCapabilities.TERRITORY_INFO_CAPABILITY;
-import static top.leonx.territory.util.DataUtil.ConvertNbtToPos;
-import static top.leonx.territory.util.DataUtil.ConvertPosToNbt;
-
-public class TerritoryWorldSavedData extends WorldSavedData {
+/*public class TerritoryWorldSavedData extends WorldSavedData {
 
     static final  String                                    DATA_NAME          = "TERRITORY_WORLD_DATA";
     static final  String                                    RESERVED_TERRITORY = "RESERVED_TERRITORY";
@@ -94,4 +78,4 @@ public class TerritoryWorldSavedData extends WorldSavedData {
         compound.put(RESERVED_TERRITORY, reservedTerritory);
         return compound;
     }
-}
+}*/

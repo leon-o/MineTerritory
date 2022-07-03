@@ -1,10 +1,8 @@
 package top.leonx.territory.blocks;
 
 import net.minecraft.block.Block;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
-import net.minecraftforge.fml.RegistryObject;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.ForgeRegistries;
 import top.leonx.territory.TerritoryMod;
 
 public class ModBlocks {
@@ -12,8 +10,8 @@ public class ModBlocks {
                                                                                           TerritoryMod.MODID);*/
     public static final Block   TERRITORY_BLOCK = new TerritoryTableBlock();
 
-    public void Register(){
-        Registry.register(Registry.BLOCK,"territory_table", TERRITORY_BLOCK);
+    public static void Register(){
+        Registry.register(Registry.BLOCK, new Identifier(TerritoryMod.MOD_ID, "territory_table"), TERRITORY_BLOCK);
     }
 
     //public static final Block                   TERRITORY_BLOCK =

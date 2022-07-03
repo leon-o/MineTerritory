@@ -6,22 +6,33 @@ import com.google.common.collect.Multiset;
 import com.google.common.collect.Multisets;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.MapColor;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.block.entity.BlockEntityTicker;
+import net.minecraft.block.entity.BlockEntityType;
+import net.minecraft.block.entity.EnchantingTableBlockEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.texture.NativeImageBackedTexture;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.fluid.FluidState;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.network.MessageType;
 import net.minecraft.network.Packet;
+import net.minecraft.network.PacketByteBuf;
 import net.minecraft.network.listener.ClientPlayPacketListener;
 import net.minecraft.network.packet.s2c.play.BlockEntityUpdateS2CPacket;
+import net.minecraft.screen.NamedScreenHandlerFactory;
+import net.minecraft.screen.ScreenHandler;
+import net.minecraft.screen.ScreenHandlerContext;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Util;
@@ -33,7 +44,9 @@ import net.minecraft.world.Heightmap;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldAccess;
 import net.minecraft.world.chunk.WorldChunk;
+import top.leonx.territory.TerritoryMod;
 import top.leonx.territory.config.TerritoryConfig;
+import top.leonx.territory.container.TerritoryTableContainer;
 import top.leonx.territory.data.TerritoryInfo;
 import top.leonx.territory.data.TerritoryInfoHolder;
 import top.leonx.territory.util.DataUtil;
@@ -48,29 +61,29 @@ import java.util.stream.Collectors;
 import static top.leonx.territory.util.DataUtil.ConvertNbtToPos;
 import static top.leonx.territory.util.DataUtil.ConvertPosToNbt;
 
-public class TerritoryTableTileEntity extends BlockEntity {
-    private static final String                      TERRITORY_POS_KEY         = "ter";
-    private static final String                      MAP_COLOR                 = "map";
-    private final        TerritoryInfo               territoryInfo             = new TerritoryInfo();
+public class TerritoryTableTileEntity extends BlockEntity implements ExtendedScreenHandlerFactory, NamedScreenHandlerFactory {
+    private static final String TERRITORY_POS_KEY = "ter";
+    private static final String MAP_COLOR = "map";
+    private final TerritoryInfo territoryInfo = new TerritoryInfo();
     //private final        LazyOptional<TerritoryInfo> territoryInfoLazyOptional = LazyOptional.of(() -> territoryInfo);
-    private final        HashSet<ChunkPos>           lastTerritories           = new HashSet<>();
-    private final        List<ChunkPos>              territoriesLostDueToPower = new ArrayList<>();
-    private final        int                         mapSize                   = 144;
-    public Identifier mapLocation               = null;
-    public               RenderLayer                 mapRenderType             = null;
-    public               ItemStack                   mapStack;
+    private final HashSet<ChunkPos> lastTerritories = new HashSet<>();
+    private final List<ChunkPos> territoriesLostDueToPower = new ArrayList<>();
+    public final int mapSize = 144;
+    public Identifier mapLocation = null;
+    public RenderLayer mapRenderType = null;
+    public ItemStack mapStack;
     //For renderer
-    public               float                       angle;
-    public               float                       angleLastTick;
-    public               boolean                     rise;
-    public               float                       scale                     = 1 / 6f;
-    public               float                       height                    = 0.8f;
-    public               HashSet<ChunkPos>           territories               = new HashSet<>();
-    private NativeImageBackedTexture mapTexture                = null;
-    private              byte[]                      mapColor                  = new byte[0];
+    public float angle;
+    public float angleLastTick;
+    public boolean rise;
+    public float scale = 1 / 6f;
+    public float height = 0.8f;
+    public HashSet<ChunkPos> territories = new HashSet<>();
+    private NativeImageBackedTexture mapTexture = null;
+    private byte[] mapColor = new byte[0];
 
     public TerritoryTableTileEntity(BlockPos pos, BlockState state) {
-        super(ModTileEntityTypes.TERRITORY_TILE_ENTITY,pos,state);
+        super(ModTileEntityTypes.TERRITORY_TILE_ENTITY, pos, state);
         //territoryInfo.assignedTo(null, UUID.randomUUID(), null, "", TerritoryConfig.defaultPermission, new HashMap<>());
     }
 
@@ -79,7 +92,8 @@ public class TerritoryTableTileEntity extends BlockEntity {
     }
 
     public void initTerritoryInfo(UUID owner_id) {
-        territoryInfo.assignedTo(owner_id, UUID.randomUUID(), pos, UserUtil.getNameByUUID(owner_id) + "'s", TerritoryConfig.defaultPermission, new HashMap<>());
+        territoryInfo.assignedTo(owner_id, UUID.randomUUID(), pos, UserUtil.getNameByUUID(owner_id) + "'s",
+                                 TerritoryConfig.defaultPermission, new HashMap<>());
         updateTerritoryToWorld();
         markDirty();
     }
@@ -94,7 +108,8 @@ public class TerritoryTableTileEntity extends BlockEntity {
 
     public void updateTerritoryToWorld() {
         if (world == null || !world.isClient) return;
-        lastTerritories.stream().filter(t -> !territories.contains(t)).forEach(t -> TerritoryInfoHolder.get(world).deassignToChunk(t));
+        lastTerritories.stream().filter(t -> !territories.contains(t)).forEach(
+                t -> TerritoryInfoHolder.get(world).deassignToChunk(t));
         territories.forEach(t -> TerritoryInfoHolder.get(world).assignToChunk(t, territoryInfo));
         lastTerritories.clear();
         lastTerritories.addAll(territories);
@@ -103,8 +118,8 @@ public class TerritoryTableTileEntity extends BlockEntity {
 
     @Override
     public void readNbt(@Nonnull NbtCompound compound) {
-        super.readNbt(compound);
         readInternal(compound);
+        super.readNbt(compound);
     }
 
     public void readInternal(@Nonnull NbtCompound compound) {
@@ -114,12 +129,13 @@ public class TerritoryTableTileEntity extends BlockEntity {
         NbtList list = compound.getList(TERRITORY_POS_KEY, 10);
         for (int i = 0; i < list.size(); i++) {
             NbtCompound nbt = list.getCompound(i);
-            ChunkPos    pos = ConvertNbtToPos(nbt);
+            ChunkPos pos = ConvertNbtToPos(nbt);
             territories.add(pos);
         }
         mapColor = compound.getByteArray(MAP_COLOR);
 
-        if (world != null && !world.isClient && mapColor != null && mapColor.length == mapSize * mapSize) updateMapTexture();
+        if (world != null && world.isClient && mapColor != null && mapColor.length == mapSize * mapSize)
+            updateMapTexture();
     }
 
     @Nonnull
@@ -127,6 +143,22 @@ public class TerritoryTableTileEntity extends BlockEntity {
     public void writeNbt(@Nonnull NbtCompound compound) {
         writeInternal(compound);
         super.writeNbt(compound);
+    }
+
+    @Override
+    public Text getDisplayName() {
+        return new TranslatableText("gui.territory_table");
+    }
+
+    @org.jetbrains.annotations.Nullable
+    @Override
+    public ScreenHandler createMenu(int syncId, PlayerInventory inv, PlayerEntity player) {
+        return new TerritoryTableContainer(syncId, inv, ScreenHandlerContext.create(world,this.pos));
+    }
+
+    @Override
+    public void writeScreenOpeningData(ServerPlayerEntity player, PacketByteBuf buf) {
+        buf.writeBlockPos(getPos());
     }
 
     private void writeInternal(NbtCompound compound) {
@@ -163,8 +195,9 @@ public class TerritoryTableTileEntity extends BlockEntity {
         super.cancelRemoval();
         if (world.isClient) {
             mapTexture = new NativeImageBackedTexture(mapSize, mapSize, true);
-            mapLocation = MinecraftClient.getInstance().getTextureManager().registerDynamicTexture("map_dynamic" + MathHelper.nextInt(new Random(), 0, mapSize),
-                    mapTexture);
+            mapLocation = MinecraftClient.getInstance().getTextureManager().registerDynamicTexture(
+                    String.format("territory_dynamic_map_texture_%d_%d_%d",this.pos.getX()<<4,
+                                  this.pos.getZ()<<4,this.mapSize), mapTexture);
             mapRenderType = RenderLayer.getText(mapLocation);
         }
         //drawMapData();
@@ -180,9 +213,9 @@ public class TerritoryTableTileEntity extends BlockEntity {
         updateTerritoryToWorld();
     }
 
-    public static void tick(World world, BlockPos pos, BlockState state, TerritoryTableTileEntity be) {
+    public static void tick(World world, BlockPos pos, BlockState state, TerritoryTableTileEntity blockEntity) {
         if (world.isClient) {
-            be.computeAngle();
+            blockEntity.computeAngle();
         }
     }
 
@@ -190,11 +223,11 @@ public class TerritoryTableTileEntity extends BlockEntity {
     private void computeAngle() {
         PlayerEntity player = MinecraftClient.getInstance().player;//this.world.getClosestPlayer((float)this.pos.getX() + 0.5F, (float)this.pos.getY() + 0.5F,
 
-        if (player != null && this.pos.isWithinDistance(player.getTrackedPosition(), 4)) {
+        if (player != null && this.pos.isWithinDistance(player.getPos(), 4)) {
             rise = true;
-            double dx          = player.getX() - (this.pos.getX() + 0.5);
-            double dz          = player.getZ() - (this.pos.getZ() + 0.5);
-            float  angleRadian = (float) MathHelper.atan2(dz, dx);
+            double dx = player.getX() - (this.pos.getX() + 0.5);
+            double dz = player.getZ() - (this.pos.getZ() + 0.5);
+            float angleRadian = (float) MathHelper.atan2(dz, dx);
 
             while (angleRadian >= (float) Math.PI) {
                 angleRadian -= ((float) Math.PI * 2F);
@@ -204,8 +237,7 @@ public class TerritoryTableTileEntity extends BlockEntity {
                 angleRadian += ((float) Math.PI * 2F);
             }
             angleLastTick = angle;
-            angle = (float) Math.toDegrees(angleRadian);
-
+            angle = MathHelper.lerpAngleDegrees(0.5f,angle,(float) Math.toDegrees(angleRadian));//(float) Math.toDegrees(angleRadian);
             // todo rotated inertia
         } else {
             rise = false;
@@ -213,18 +245,19 @@ public class TerritoryTableTileEntity extends BlockEntity {
     }
 
     public void notifyPowerProviderDestroy() {
-        int usedPower    = territories.size();
+        int usedPower = territories.size();
         int protectPower = computeProtectPower();
-        int fade         = usedPower - protectPower;
+        int fade = usedPower - protectPower;
         if (fade > 0) {
             ChunkPos centerPos = new ChunkPos(pos.getX() >> 4, pos.getZ() >> 4);
-            List<ChunkPos> removable = territories.stream().sorted(
-                    Comparator.comparingInt(a -> (a.x - centerPos.x) * (a.x - centerPos.x) + (a.z - centerPos.z) * (a.z - centerPos.z))).collect(Collectors.toList());//.filter
+            List<ChunkPos> removable = territories.stream().sorted(Comparator.comparingInt(
+                    a -> (a.x - centerPos.x) * (a.x - centerPos.x) + (a.z - centerPos.z) * (a.z - centerPos.z))).collect(
+                    Collectors.toList());//.filter
 
             removable.remove(centerPos);
             for (int i = 0; i < fade; i++) {
-                ChunkPos pos         = removable.get(removable.size()-1);
-                removable.remove(removable.size()-1);
+                ChunkPos pos = removable.get(removable.size() - 1);
+                removable.remove(removable.size() - 1);
                 territories.remove(pos);
                 territoriesLostDueToPower.add(pos);
             }
@@ -232,15 +265,15 @@ public class TerritoryTableTileEntity extends BlockEntity {
             world.updateListeners(pos, world.getBlockState(pos), world.getBlockState(pos), 2);
             world.getServer().getPlayerManager().getPlayer(getOwnerId()).sendMessage(
                     new TranslatableText("message.territory" + ".insufficient_protect_power").setStyle(MessageUtil.RED),
-                    MessageType.GAME_INFO,Util.NIL_UUID);
+                    MessageType.GAME_INFO, Util.NIL_UUID);
         }
     }
 
     public void notifyPowerProviderPlace() {
-        int usedPower    = territories.size();
+        int usedPower = territories.size();
         int protectPower = computeProtectPower();
-        int count=0;
-        while (territoriesLostDueToPower.size()>0 && usedPower < protectPower) {
+        int count = 0;
+        while (territoriesLostDueToPower.size() > 0 && usedPower < protectPower) {
             ChunkPos chunkPos = territoriesLostDueToPower.get(territoriesLostDueToPower.size() - 1);
             if (territories.add(chunkPos)) {
                 count++;
@@ -249,12 +282,12 @@ public class TerritoryTableTileEntity extends BlockEntity {
             territoriesLostDueToPower.remove(territoriesLostDueToPower.size() - 1);
 
         }
-        if(count==0) return;
+        if (count == 0) return;
         updateTerritoryToWorld();
         world.updateListeners(pos, world.getBlockState(pos), world.getBlockState(pos), 2);
         world.getServer().getPlayerManager().getPlayer(getOwnerId()).sendMessage(
-                new TranslatableText("message.territory.territory_restore", Integer.toString(count)).setStyle(MessageUtil.GREEN),
-                MessageType.GAME_INFO, Util.NIL_UUID);
+                new TranslatableText("message.territory.territory_restore", Integer.toString(count)).setStyle(
+                        MessageUtil.GREEN), MessageType.GAME_INFO, Util.NIL_UUID);
     }
 
     public double getBlockPower(WorldAccess world, BlockPos pos) {
@@ -294,11 +327,7 @@ public class TerritoryTableTileEntity extends BlockEntity {
         for (int i = 0; i < mapSize; i++) {
             for (int j = 0; j < mapSize; j++) {
                 int index = mapColor[i + j * mapSize] & 255;
-                if (index / 4 == 0) {
-                    this.mapTexture.getImage().setColor(i, j, 0);
-                } else {
-                    this.mapTexture.getImage().setColor(i, j, MapColor.getRenderColor(index & 3)); // todo there must be a problem
-                }
+                this.mapTexture.getImage().setColor(i, j, MapColor.getRenderColor(index)); // todo there must be a problem
             }
         }
         this.mapTexture.upload();
@@ -307,15 +336,15 @@ public class TerritoryTableTileEntity extends BlockEntity {
     @SuppressWarnings({"UnstableApiUsage"})
     public void drawMapData() {
         mapColor = new byte[mapSize * mapSize];
-        ChunkPos chunkPos  = new ChunkPos(pos.getX() >> 4, pos.getZ() >> 4);
+        ChunkPos chunkPos = new ChunkPos(pos.getX() >> 4, pos.getZ() >> 4);
         BlockPos centerPos = chunkPos.getStartPos().add(8, 0, 8);
-        int      i         = 1;
-        int      xCenter   = centerPos.getX();
-        int      yCenter   = centerPos.getZ();
-        int      l         = MathHelper.floor(pos.getX() - (double) xCenter) / i + mapSize / 2;
-        int      i1        = MathHelper.floor(pos.getZ() - (double) yCenter) / i + mapSize / 2;
-        int      j1        = mapSize / i;
-        if (world!=null && world.getDimension().hasCeiling()) { // world.dimension.isNether()
+        int i = 1;
+        int xCenter = centerPos.getX();
+        int yCenter = centerPos.getZ();
+        int l = MathHelper.floor(pos.getX() - (double) xCenter) / i + mapSize / 2;
+        int i1 = MathHelper.floor(pos.getZ() - (double) yCenter) / i + mapSize / 2;
+        int j1 = mapSize / i;
+        if (world != null && world.getDimension().hasCeiling()) { // world.dimension.isNether()
             j1 /= 2;
         }
 
@@ -325,20 +354,20 @@ public class TerritoryTableTileEntity extends BlockEntity {
 
             for (int l1 = i1 - j1 - 1; l1 < i1 + j1; ++l1) {
                 if (k1 >= 0 && l1 >= -1 && k1 < mapSize && l1 < mapSize) {
-                    int                     i2       = k1 - l;
-                    int                     j2       = l1 - i1;
-                    boolean                 flag1    = i2 * i2 + j2 * j2 > (j1 - 2) * (j1 - 2);
-                    int                     k2       = (xCenter / i + k1 - mapSize / 2) * i;
-                    int                     l2       = (yCenter / i + l1 - mapSize / 2) * i;
+                    int i2 = k1 - l;
+                    int j2 = l1 - i1;
+                    boolean flag1 = i2 * i2 + j2 * j2 > (j1 - 2) * (j1 - 2);
+                    int k2 = (xCenter / i + k1 - mapSize / 2) * i;
+                    int l2 = (yCenter / i + l1 - mapSize / 2) * i;
                     Multiset<MapColor> multiset = LinkedHashMultiset.create();
-                    WorldChunk chunk    = world.getWorldChunk(new BlockPos(k2, 0, l2));
+                    WorldChunk chunk = world.getWorldChunk(new BlockPos(k2, 0, l2));
                     if (!chunk.isEmpty()) {
                         ChunkPos chunkpos = chunk.getPos();
-                        int      i3       = k2 & 15;
-                        int      j3       = l2 & 15;
-                        int      k3       = 0;
-                        double   d1       = 0.0D;
-                        if (world!=null && world.getDimension().hasCeiling()) { //world.dimension.isNether()
+                        int i3 = k2 & 15;
+                        int j3 = l2 & 15;
+                        int k3 = 0;
+                        double d1 = 0.0D;
+                        if (world != null && world.getDimension().hasCeiling()) { //world.dimension.isNether()
                             int l3 = k2 + l2 * 231871;
                             l3 = l3 * l3 * 0x1dfd851 + l3 * 11;
                             if ((l3 >> 20 & 1) == 0) {
@@ -350,20 +379,22 @@ public class TerritoryTableTileEntity extends BlockEntity {
                             d1 = 100.0D;
                         } else {
                             BlockPos.Mutable mutable = new BlockPos.Mutable();
-                            BlockPos.Mutable mutable2  = new BlockPos.Mutable();
+                            BlockPos.Mutable mutable2 = new BlockPos.Mutable();
 
                             for (int i4 = 0; i4 < i; ++i4) {
                                 for (int j4 = 0; j4 < i; ++j4) {
-                                    int        k4 = chunk.sampleHeightmap(Heightmap.Type.WORLD_SURFACE, i4 + i3, j4 + j3) + 1;
+                                    int k4 = chunk.sampleHeightmap(Heightmap.Type.WORLD_SURFACE, i4 + i3, j4 + j3) + 1;
                                     BlockState blockstate;
                                     if (k4 <= 1) {
                                         blockstate = Blocks.BEDROCK.getDefaultState();
                                     } else {
                                         do {
                                             --k4;
-                                            mutable.set(chunkpos.getStartX() + i4 + i3, k4, chunkpos.getStartZ() + j4 + j3);
+                                            mutable.set(chunkpos.getStartX() + i4 + i3, k4,
+                                                        chunkpos.getStartZ() + j4 + j3);
                                             blockstate = chunk.getBlockState(mutable);
-                                        } while ((blockstate = chunk.getBlockState(mutable)).getMapColor(world, mutable) == MapColor.CLEAR && k4 > world.getBottomY());
+                                        } while ((blockstate = chunk.getBlockState(mutable)).getMapColor(world,
+                                                                                                         mutable) == MapColor.CLEAR && k4 > world.getBottomY());
 
                                         if (k4 > 0 && !blockstate.getFluidState().isEmpty()) {
                                             int l4 = k4 - 1;
@@ -391,7 +422,7 @@ public class TerritoryTableTileEntity extends BlockEntity {
 
                         k3 = k3 / (i * i);
                         double d2 = (d1 - d0) * 4.0D / (double) (i + 4) + ((double) (k1 + l1 & 1) - 0.5D) * 0.4D;
-                        int    i5 = 1;
+                        int i5 = 1;
                         if (d2 > 0.6D) {
                             i5 = 2;
                         }
@@ -400,7 +431,8 @@ public class TerritoryTableTileEntity extends BlockEntity {
                             i5 = 0;
                         }
 
-                        MapColor materialcolor = Iterables.getFirst(Multisets.copyHighestCountFirst(multiset), MapColor.CLEAR);
+                        MapColor materialcolor = Iterables.getFirst(Multisets.copyHighestCountFirst(multiset),
+                                                                    MapColor.CLEAR);
                         if (materialcolor == MapColor.WATER_BLUE) {
                             d2 = (double) k3 * 0.1D + (double) (k1 + l1 & 1) * 0.2D;
                             i5 = 1;
@@ -428,6 +460,7 @@ public class TerritoryTableTileEntity extends BlockEntity {
 
     private BlockState getFluidState(World worldIn, BlockState state, BlockPos pos) {
         FluidState ifluidstate = state.getFluidState();
-        return !ifluidstate.isEmpty() && !state.isSideSolidFullSquare(worldIn, pos, Direction.UP) ? ifluidstate.getBlockState() : state;
+        return !ifluidstate.isEmpty() && !state.isSideSolidFullSquare(worldIn, pos,
+                                                                      Direction.UP) ? ifluidstate.getBlockState() : state;
     }
 }

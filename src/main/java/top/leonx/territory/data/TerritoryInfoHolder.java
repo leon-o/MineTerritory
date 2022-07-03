@@ -1,16 +1,15 @@
 package top.leonx.territory.data;
 
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.server.ServerWorld;
+import top.leonx.territory.component.ComponentContainer;
 import top.leonx.territory.util.UserUtil;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-
-import static top.leonx.territory.capability.ModCapabilities.TERRITORY_INFO_CAPABILITY;
 
 public class TerritoryInfoHolder {
     public final ConcurrentHashMap<TerritoryInfo,HashSet<ChunkPos>>  TERRITORY_CHUNKS=new ConcurrentHashMap<>();
@@ -58,20 +57,20 @@ public class TerritoryInfoHolder {
     {
         getChunkTerritoryInfo(chunk).getFrom(info);
         addIndex(info, chunk.getPos());
-        chunk.markDirty();
+        chunk.setNeedsSaving(true);
 
-        if(!world.isRemote)
-            TerritoryInfoSynchronizer.UpdateInfoToClientTracked(chunk,info);
+        //if(!world.isClient)
+            //TerritoryInfoSynchronizer.UpdateInfoToClientTracked(chunk,info);
     }
     public void assignToChunk(Chunk chunk, UUID ownerId, UUID territoryId, BlockPos tablePos, String name, PermissionFlag defaultPer, Map<UUID, PermissionFlag> specificPer)
     {
         TerritoryInfo info = getChunkTerritoryInfo(chunk);
         info.assignedTo(ownerId,territoryId,tablePos,name,defaultPer,specificPer);
         addIndex(info, chunk.getPos());
-        chunk.markDirty();
+        chunk.setNeedsSaving(true);
 
-        if(!world.isRemote)
-            TerritoryInfoSynchronizer.UpdateInfoToClientTracked(chunk,info);
+        //if(!world.isClient)
+            //TerritoryInfoSynchronizer.UpdateInfoToClientTracked(chunk,info);
     }
     public void deassignToChunk(ChunkPos pos)
     {
@@ -82,13 +81,14 @@ public class TerritoryInfoHolder {
         TerritoryInfo info = getChunkTerritoryInfo(chunk);
         removeIndex(info,chunk.getPos());
         info.deassign();
-        chunk.markDirty();
+        chunk.setNeedsSaving(true);
 
-        if(!world.isRemote)
-            TerritoryInfoSynchronizer.UpdateInfoToClientTracked(chunk,info);
+        //if(!world.isClient)
+            //TerritoryInfoSynchronizer.UpdateInfoToClientTracked(chunk,info);
     }
     public TerritoryInfo getChunkTerritoryInfo(Chunk chunk) {
-        return chunk.getCapability(TERRITORY_INFO_CAPABILITY).orElse(TERRITORY_INFO_CAPABILITY.getDefaultInstance());
+        return ComponentContainer.TERRITORY_INFO.get(chunk);
+        //return chunk.getCapability(TERRITORY_INFO_CAPABILITY).orElse(TERRITORY_INFO_CAPABILITY.getDefaultInstance());
     }
 
     public TerritoryInfo getChunkTerritoryInfo(ChunkPos pos) {
@@ -99,9 +99,9 @@ public class TerritoryInfoHolder {
         return TERRITORY_CHUNKS.get(info);
     }
 
-    public void addReservedTerritory(TerritoryInfo info,ChunkPos pos)
+    /*public void addReservedTerritory(TerritoryInfo info,ChunkPos pos)
     {
-        if(world.isRemote) return;
+        if(world.isClient) return;
         ServerWorld serverWorld=(ServerWorld)world;
         TerritoryWorldSavedData.get(serverWorld).addReservedTerritory(info,Collections.singleton(pos));
         getChunkTerritoryInfo(pos).getFrom(info);
@@ -109,7 +109,7 @@ public class TerritoryInfoHolder {
         TerritoryInfoSynchronizer.UpdateInfoToClientTracked(world.getChunk(pos.x,pos.z),info);
     }
     public void addReservedTerritory(String name, PermissionFlag defaultFlag, HashSet<ChunkPos> area) {
-        if(world.isRemote) return;
+        if(world.isClient) return;
         ServerWorld serverWorld=(ServerWorld)world;
         TerritoryInfo info = new TerritoryInfo();
         info.assignedTo(UserUtil.DEFAULT_UUID, UUID.randomUUID(), null, name, defaultFlag, null);
@@ -127,7 +127,7 @@ public class TerritoryInfoHolder {
     }
     public void removeReservedTerritory(TerritoryInfo info,Set<ChunkPos> area)
     {
-        if(world.isRemote) return;
+        if(world.isClient) return;
         ServerWorld serverWorld=(ServerWorld)world;
         TerritoryWorldSavedData.get(serverWorld).removeReservedTerritory(info);
         Set<ChunkPos> tmp=new HashSet<>(area); // avoid ConcurrentModificationException
@@ -139,7 +139,7 @@ public class TerritoryInfoHolder {
     }
     public void updateReserveTerritory(TerritoryInfo oldInfo,TerritoryInfo newInfo)
     {
-        if(world.isRemote) return;
+        if(world.isClient) return;
         ServerWorld serverWorld=(ServerWorld)world;
         TerritoryWorldSavedData.get(serverWorld).updateReservedTerritory(oldInfo,newInfo);
 
@@ -151,5 +151,5 @@ public class TerritoryInfoHolder {
         HashSet<ChunkPos> tmp = TERRITORY_CHUNKS.get(oldInfo);
         TERRITORY_CHUNKS.remove(oldInfo);
         TERRITORY_CHUNKS.put(newInfo,tmp);
-    }
+    }*/
 }

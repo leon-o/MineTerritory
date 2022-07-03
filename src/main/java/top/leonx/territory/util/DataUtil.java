@@ -1,5 +1,7 @@
 package top.leonx.territory.util;
 
+import net.fabricmc.api.EnvType;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.block.BlockState;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
@@ -43,7 +45,7 @@ public class DataUtil {
     public static double getBlockStateProtectPower(BlockState state, WorldAccess world, BlockPos pos)
     {
         ItemStack  stack;
-        if(FMLEnvironment.dist.isClient())
+        if(FabricLoader.getInstance().getEnvironmentType()== EnvType.CLIENT)
             stack = state.getBlock().getPickStack(world,pos,null);
         else {
             List<ItemStack> drops = state.getBlock().getDroppedStacks(state, (ServerWorld) world, pos, world.getBlockEntity(pos));

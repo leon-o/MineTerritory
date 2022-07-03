@@ -21,7 +21,10 @@ import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.explosion.Explosion;
+import top.leonx.territory.component.ComponentContainer;
 import top.leonx.territory.data.PermissionFlag;
+import top.leonx.territory.data.TerritoryInfo;
+import top.leonx.territory.tileentities.ModTileEntityTypes;
 import top.leonx.territory.tileentities.TerritoryTableTileEntity;
 import top.leonx.territory.util.MessageUtil;
 
@@ -40,14 +43,15 @@ public class TerritoryTableBlock extends BlockWithEntity {
         if (hand == Hand.MAIN_HAND) getTerritoryTileEntity(world, pos).mapStack = player.getStackInHand(hand);
         if (world.isClient) return ActionResult.PASS;
         TerritoryTableTileEntity tileEntity = getTerritoryTileEntity(world, pos);
-        if (tileEntity.getOwnerId().equals(player.getUuid()) || tileEntity.getTerritoryInfo().permissions.containsKey(
+        player.openHandledScreen(state.createScreenHandlerFactory(world, pos));
+        /*if (tileEntity.getOwnerId().equals(player.getUuid()) || tileEntity.getTerritoryInfo().permissions.containsKey(
                 player.getUuid()) && tileEntity.getTerritoryInfo().permissions.get(player.getUuid()).contain(
                 PermissionFlag.MANAGE) || !tileEntity.getTerritoryInfo().permissions.containsKey(
                 player.getUuid()) && tileEntity.getTerritoryInfo().defaultPermission.contain(PermissionFlag.MANAGE)) {
             tileEntity.drawMapData();
 
             player.openHandledScreen(state.createScreenHandlerFactory(world, pos));
-        }
+        }*/
         return ActionResult.PASS;
     }
 
@@ -60,15 +64,14 @@ public class TerritoryTableBlock extends BlockWithEntity {
     @org.jetbrains.annotations.Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type) {
-        return world.isClient ? TerritoryTableBlock.checkType(type, BlockEntityType.ENCHANTING_TABLE, EnchantingTableBlockEntity::tick) : null;
+        return world.isClient ? TerritoryTableBlock.checkType(type, ModTileEntityTypes.TERRITORY_TILE_ENTITY, TerritoryTableTileEntity::tick) : null;
     }
 
     @org.jetbrains.annotations.Nullable
     @Override
     public BlockState getPlacementState(ItemPlacementContext context) {
         Chunk chunk = context.getWorld().getChunk(context.getBlockPos().getX() >> 4, context.getBlockPos().getZ() >> 4);
-        /*TerritoryInfo info = chunk.getCapability(ModCapabilities.TERRITORY_INFO_CAPABILITY).orElse(
-                ModCapabilities.TERRITORY_INFO_CAPABILITY.getDefaultInstance());*/
+        TerritoryInfo info = ComponentContainer.TERRITORY_INFO.get(chunk);
         // todo Capability
         if (info.IsProtected()) {
             if (!context.getWorld().isClient) {

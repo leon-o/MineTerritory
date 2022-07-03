@@ -1,15 +1,8 @@
 package top.leonx.territory.config;
 
-import net.minecraftforge.common.ForgeConfigSpec;
-import top.leonx.territory.TerritoryMod;
-import top.leonx.territory.data.PermissionFlag;
-
-import java.util.ArrayList;
-import java.util.List;
-
 final class ServerConfig {
 
-	final ForgeConfigSpec.DoubleValue               expNeededPerChunk;
+	/*final ForgeConfigSpec.DoubleValue               expNeededPerChunk;
 	final ForgeConfigSpec.ConfigValue<List<String>> powerProvider;
 	final ForgeConfigSpec.ConfigValue<List<String>> permissionWhiteList;
 	final ForgeConfigSpec.BooleanValue				addToDefault;
@@ -64,6 +57,6 @@ final class ServerConfig {
 				.translation(TerritoryMod.MODID + ".config.preventExplosion")
 				.define("preventExplosion",true);
 		builder.pop();
-	}
+	}*/
 
 }

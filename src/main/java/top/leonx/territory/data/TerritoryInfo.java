@@ -1,5 +1,6 @@
 package top.leonx.territory.data;
 
+import net.minecraft.util.Util;
 import net.minecraft.util.math.BlockPos;
 import top.leonx.territory.util.UserUtil;
 
@@ -8,17 +9,17 @@ import java.util.*;
 
 public class TerritoryInfo {
     @Nullable
-    public BlockPos centerPos;
+    public BlockPos centerPos = BlockPos.ORIGIN;
     @Nullable
-    public String territoryName;
+    public String territoryName = "";
     @Nullable
-    public Map<UUID, PermissionFlag> permissions;
+    public Map<UUID, PermissionFlag> permissions = Collections.emptyMap();
     @Nullable
-    public PermissionFlag defaultPermission;
+    public PermissionFlag defaultPermission = PermissionFlag.NONE;
     @Nullable
-    public UUID ownerId;
+    public UUID ownerId = Util.NIL_UUID;
     @Nullable
-    public UUID territoryId;
+    public UUID territoryId = Util.NIL_UUID;
 
     // Version identification
     public int version=1;
@@ -53,11 +54,11 @@ public class TerritoryInfo {
     public void deassign()
     {
         isProtected=false;
-        ownerId=null;
-        territoryName=null;
-        permissions=null;
-        defaultPermission=null;
-        territoryId=null;
+        ownerId=Util.NIL_UUID;
+        territoryName="";
+        permissions=Collections.emptyMap();
+        defaultPermission=PermissionFlag.NONE;
+        territoryId=Util.NIL_UUID;
     }
 
     public boolean IsProtected(){return isProtected;}
