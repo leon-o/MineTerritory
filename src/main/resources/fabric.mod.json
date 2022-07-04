@@ -25,7 +25,7 @@
       "top.leonx.territory.TerritoryModClient"
     ],
     "cardinal-components": [
-      "top.leonx.territory.component.ComponentContainer"
+      "top.leonx.territory.data.ComponentTypes"
     ]
   },
   "mixins": [

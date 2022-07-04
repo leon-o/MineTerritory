@@ -4,7 +4,6 @@ import net.minecraft.block.*;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityTicker;
 import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.block.entity.EnchantingTableBlockEntity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.pathing.NavigationType;
 import net.minecraft.entity.player.PlayerEntity;
@@ -21,8 +20,7 @@ import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.explosion.Explosion;
-import top.leonx.territory.component.ComponentContainer;
-import top.leonx.territory.data.PermissionFlag;
+import top.leonx.territory.data.ComponentTypes;
 import top.leonx.territory.data.TerritoryInfo;
 import top.leonx.territory.tileentities.ModTileEntityTypes;
 import top.leonx.territory.tileentities.TerritoryTableTileEntity;
@@ -71,7 +69,7 @@ public class TerritoryTableBlock extends BlockWithEntity {
     @Override
     public BlockState getPlacementState(ItemPlacementContext context) {
         Chunk chunk = context.getWorld().getChunk(context.getBlockPos().getX() >> 4, context.getBlockPos().getZ() >> 4);
-        TerritoryInfo info = ComponentContainer.TERRITORY_INFO.get(chunk);
+        TerritoryInfo info = ComponentTypes.WORLD_TERRITORY_INFO.get(chunk);
         // todo Capability
         if (info.IsProtected()) {
             if (!context.getWorld().isClient) {

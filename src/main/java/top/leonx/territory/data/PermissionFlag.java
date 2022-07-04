@@ -1,5 +1,7 @@
 package top.leonx.territory.data;
 
+import net.minecraft.nbt.NbtCompound;
+
 public class PermissionFlag {
     public enum Type{
         PLAYER,
@@ -41,6 +43,14 @@ public class PermissionFlag {
 
     public PermissionFlag() {
         this(0);
+    }
+
+    public static PermissionFlag readFromNbt(NbtCompound tag){
+        return new PermissionFlag(tag.getInt("per_flag"));
+    }
+
+    public void writeToNbt(NbtCompound tag){
+        tag.putInt("per_flag",this.code);
     }
 
     public int getCode(){return code;}

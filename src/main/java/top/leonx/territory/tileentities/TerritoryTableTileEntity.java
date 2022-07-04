@@ -103,7 +103,8 @@ public class TerritoryTableTileEntity extends BlockEntity implements ExtendedScr
     }
 
     public void updateTerritoryToWorld() {
-        if (world == null || !world.isClient) return;
+        if (world == null || world.isClient) return;
+
         lastTerritories.stream().filter(t -> !territories.contains(t)).forEach(
                 t -> TerritoryInfoHolder.get(world).deassignToChunk(t));
         territories.forEach(t -> TerritoryInfoHolder.get(world).assignToChunk(t, territoryInfo));

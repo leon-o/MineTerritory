@@ -1,12 +1,8 @@
 package top.leonx.territory.data;
 
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
-import top.leonx.territory.component.ComponentContainer;
-import top.leonx.territory.util.UserUtil;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -14,11 +10,25 @@ import java.util.concurrent.ConcurrentHashMap;
 public class TerritoryInfoHolder {
     public final ConcurrentHashMap<TerritoryInfo,HashSet<ChunkPos>>  TERRITORY_CHUNKS=new ConcurrentHashMap<>();
 
-    private final World world;
-
+    public final Map<ChunkPos,List<TerritoryArea>> chunkToAreaMap = new HashMap<>();
+    public final World world;
+    private final WorldTerritoryInfoComponent info;
     private TerritoryInfoHolder(World world)
     {
         this.world=world;
+        info = ComponentTypes.WORLD_TERRITORY_INFO.get(world);
+
+        for (TerritoryInfo territory : info.getTerritories()) {
+            for (var area : territory.getAreas().values()) {
+                for (ChunkPos pos : area.chunks) {
+                    if (!chunkToAreaMap.containsKey(pos)) {
+                        chunkToAreaMap.put(pos,List.of(area));
+                    }else{
+                        chunkToAreaMap.get(pos).add(area);
+                    }
+                }
+            }
+        }
     }
     private static final HashMap<World,TerritoryInfoHolder> territoryInfoHolders=new HashMap<>();
     public static TerritoryInfoHolder get(World world)
@@ -45,54 +55,24 @@ public class TerritoryInfoHolder {
         if(TERRITORY_CHUNKS.get(info).size()==0)
             TERRITORY_CHUNKS.remove(info);
     }
-    public void assignToChunk(ChunkPos pos,TerritoryInfo info)
+    public void assignToChunk(ChunkPos pos,TerritoryArea area)
     {
-        assignToChunk(world.getChunk(pos.x,pos.z),info);
-    }
-    public void assignToChunk(ChunkPos pos, UUID ownerId, UUID territoryId, BlockPos tablePos, String name, PermissionFlag defaultPer, Map<UUID, PermissionFlag> specificPer)
-    {
-        assignToChunk(world.getChunk(pos.x,pos.z),ownerId,territoryId,tablePos,name,defaultPer,specificPer);
-    }
-    public void assignToChunk(Chunk chunk,TerritoryInfo info)
-    {
-        getChunkTerritoryInfo(chunk).getFrom(info);
-        addIndex(info, chunk.getPos());
-        chunk.setNeedsSaving(true);
-
-        //if(!world.isClient)
-            //TerritoryInfoSynchronizer.UpdateInfoToClientTracked(chunk,info);
-    }
-    public void assignToChunk(Chunk chunk, UUID ownerId, UUID territoryId, BlockPos tablePos, String name, PermissionFlag defaultPer, Map<UUID, PermissionFlag> specificPer)
-    {
-        TerritoryInfo info = getChunkTerritoryInfo(chunk);
-        info.assignedTo(ownerId,territoryId,tablePos,name,defaultPer,specificPer);
-        addIndex(info, chunk.getPos());
-        chunk.setNeedsSaving(true);
-
-        //if(!world.isClient)
-            //TerritoryInfoSynchronizer.UpdateInfoToClientTracked(chunk,info);
-    }
-    public void deassignToChunk(ChunkPos pos)
-    {
-        deassignToChunk(world.getChunk(pos.x,pos.z));
-    }
-    public void deassignToChunk(Chunk chunk)
-    {
-        TerritoryInfo info = getChunkTerritoryInfo(chunk);
-        removeIndex(info,chunk.getPos());
-        info.deassign();
-        chunk.setNeedsSaving(true);
-
-        //if(!world.isClient)
-            //TerritoryInfoSynchronizer.UpdateInfoToClientTracked(chunk,info);
-    }
-    public TerritoryInfo getChunkTerritoryInfo(Chunk chunk) {
-        return ComponentContainer.TERRITORY_INFO.get(chunk);
-        //return chunk.getCapability(TERRITORY_INFO_CAPABILITY).orElse(TERRITORY_INFO_CAPABILITY.getDefaultInstance());
+        area.chunks.add(pos);
     }
 
-    public TerritoryInfo getChunkTerritoryInfo(ChunkPos pos) {
-        return getChunkTerritoryInfo(world.getChunk(pos.x, pos.z));
+    public Optional<TerritoryInfo> getChunkTerritoryInfo(Chunk chunk) {
+        return getChunkTerritoryInfo(chunk.getPos());
+    }
+
+    public Optional<TerritoryInfo> getChunkTerritoryInfo(ChunkPos pos) {
+        if (chunkToAreaMap.containsKey(pos)) {
+            List<TerritoryArea> areas = chunkToAreaMap.get(pos);
+            if(areas.size()>0){
+                TerritoryArea area = areas.get(0);
+                info.getTerritoryById(area.territoryId);
+            }
+        }
+        return Optional.empty();
     }
 
     public Set<ChunkPos> getAssociatedTerritory(TerritoryInfo info) {

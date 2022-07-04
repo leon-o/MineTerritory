@@ -5,6 +5,10 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.util.UserCache;
 
 import java.util.*;
 
@@ -24,7 +28,8 @@ public class UserUtil {
             if(player!=null)
                 return player.getName().getString();
         }
-        String lastKnownUsername = null;// UsernameCache.getLastKnownUsername(uuid);
+
+        String lastKnownUsername =  "";//(uuid);
         return lastKnownUsername==null?DEFAULT_NAME:lastKnownUsername;
     }
     public static UUID getUUIDByName(String name)

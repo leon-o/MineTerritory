@@ -11,14 +11,12 @@ import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.network.MessageType;
 import net.minecraft.network.PacketByteBuf;
-import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.ScreenHandlerContext;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
@@ -36,7 +34,7 @@ import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkStatus;
 import top.leonx.territory.TerritoryPacketHandler;
 import top.leonx.territory.client.gui.WMapWidget;
-import top.leonx.territory.component.ComponentContainer;
+import top.leonx.territory.data.ComponentTypes;
 import top.leonx.territory.config.TerritoryConfig;
 import top.leonx.territory.data.PermissionFlag;
 import top.leonx.territory.data.TerritoryInfo;
@@ -96,7 +94,7 @@ public class TerritoryTableContainer extends SyncedGuiDescription {
                     if(territories.contains(new ChunkPos(x,z))) continue;
                     Chunk chunk = tileEntity.getWorld().getChunk(x, z, ChunkStatus.EMPTY,false);
                     if(chunk!=null){
-                        TerritoryInfo info = ComponentContainer.TERRITORY_INFO.get(chunk);//chunk.getCapability(ModCapabilities.TERRITORY_INFO_CAPABILITY).orElse(ModCapabilities.TERRITORY_INFO_CAPABILITY.getDefaultInstance());
+                        TerritoryInfo info = ComponentTypes.WORLD_TERRITORY_INFO.get(chunk);//chunk.getCapability(ModCapabilities.TERRITORY_INFO_CAPABILITY).orElse(ModCapabilities.TERRITORY_INFO_CAPABILITY.getDefaultInstance());
                         if (info.IsProtected() && !info.equals(territoryInfo))
                             forbiddenChunkPos.add(new ChunkPos(x, z));
                     }
