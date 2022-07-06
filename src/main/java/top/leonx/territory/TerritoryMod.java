@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import top.leonx.territory.blocks.ModBlocks;
 import top.leonx.territory.container.ModContainerTypes;
 import top.leonx.territory.items.ModItems;
+import top.leonx.territory.network.TerritoryNetworkHandler;
 import top.leonx.territory.tileentities.ModTileEntityTypes;
 
 public class TerritoryMod implements ModInitializer {
@@ -16,7 +17,7 @@ public class TerritoryMod implements ModInitializer {
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 	@Override
 	public void onInitialize() {
-
+		TerritoryNetworkHandler.register();
 		ModBlocks.Register();
 		ModTileEntityTypes.Register();
 		ModItems.register();

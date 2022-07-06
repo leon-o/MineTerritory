@@ -7,8 +7,6 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.fabricmc.fabric.api.networking.v1.PacketSender;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
@@ -32,31 +30,22 @@ import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkStatus;
-import top.leonx.territory.TerritoryPacketHandler;
+import top.leonx.territory.network.PacketContext;
+import top.leonx.territory.network.TerritoryNetworkHandler;
 import top.leonx.territory.client.gui.WMapWidget;
 import top.leonx.territory.data.ComponentTypes;
 import top.leonx.territory.config.TerritoryConfig;
-import top.leonx.territory.data.PermissionFlag;
 import top.leonx.territory.data.TerritoryInfo;
+import top.leonx.territory.network.packet.GUIBaseDataPushRequestPacket;
+import top.leonx.territory.network.packet.GUIChunkDataSyncPacket;
+import top.leonx.territory.network.packet.GUIChunkOperateRequestPacket;
 import top.leonx.territory.tileentities.TerritoryTableTileEntity;
 import top.leonx.territory.util.MessageUtil;
 import top.leonx.territory.util.TerritoryUtil;
 
-import javax.annotation.Nonnull;
 import java.util.*;
 
 public class TerritoryTableContainer extends SyncedGuiDescription {
-
-    /*static {
-        if(FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT){
-            *//*TerritoryPacketHandler.registerMessage(1,TerritoryOperationMsg.class, TerritoryOperationMsg::encode,
-                                                   TerritoryOperationMsg::decode,
-                                                   TerritoryTableContainer::handler);*//*
-
-            ClientPlayNetworking.registerGlobalReceiver(TerritoryPacketHandler.CHANNEL, new TerritoryMsgClientReceiver());
-        }
-        ServerPlayNetworking.registerGlobalReceiver(TerritoryPacketHandler.CHANNEL, new TerritoryMsgServerReceiver());
-    }*/
 
     public final BlockPos tileEntityPos;
     public final ChunkPos tileEntityChunkPos;
@@ -141,38 +130,13 @@ public class TerritoryTableContainer extends SyncedGuiDescription {
         return ScreenHandlerContext.create(inventory.player.world,buffer.readBlockPos());//tileAtPos;
     }
 
-    /*private static void handler(TerritoryOperationMsg msg, Supplier<NetworkEvent.Context> contextSupplier) {
-        contextSupplier.get().enqueueWork(() -> {
-            ServerPlayerEntity sender = contextSupplier.get().getSender();
-            if (sender == null)//client side ,when success
-            {
-                MinecraftClient.getInstance().player.closeScreen();
-            } else {
-                TerritoryTableContainer container = (TerritoryTableContainer) sender.openContainer;
-                if (!container.updateTileEntityServerSide(sender, msg)) return;
-
-                World world = container.player.world;
-                BlockState state = world.getBlockState(container.tileEntityPos);
-                world.notifyBlockUpdate(container.tileEntityPos, state, state, 2); //notify all clients to update.
-
-                TerritoryPacketHandler.CHANNEL.sendTo(msg, sender.connection.netManager,
-                        NetworkDirection.PLAY_TO_CLIENT);
-            }
-        });
-        contextSupplier.get().setPacketHandled(true);
-    }*/
-
-
-    //private final TerritoryTileEntity tileEntity; Should avoid directly operating the Tile Entity directly on the client side
-
-
     public boolean updateTileEntityServerSide(ServerPlayerEntity player, TerritoryOperationMsg msg) {
-        if (originalTerritories.size() + msg.readyAdd.length - msg.readyRemove.length > protectPower)
+        if (originalTerritories.size() + msg.add.length - msg.remove.length > protectPower)
             return false;
 
         TerritoryTableTileEntity tileEntity = (TerritoryTableTileEntity) player.world.getBlockEntity(tileEntityPos);
         if (!player.isCreative()) {
-            int experienceNeed = (int) Math.round((msg.readyAdd.length-msg.readyRemove.length)* TerritoryConfig.expNeededPerChunk);
+            int experienceNeed = (int) Math.round((msg.add.length-msg.remove.length)* TerritoryConfig.expNeededPerChunk);
             if (player.experienceLevel >= experienceNeed) {
                 player.addExperienceLevels(-experienceNeed);
             } else {
@@ -183,11 +147,11 @@ public class TerritoryTableContainer extends SyncedGuiDescription {
         }
         player.world.playSound(null, player.getBlockPos(), SoundEvents.BLOCK_ENCHANTMENT_TABLE_USE,
                                SoundCategory.BLOCKS, 2F, 1F);
-        for (ChunkPos pos : msg.readyRemove) {
+        for (ChunkPos pos : msg.remove) {
             tileEntity.territories.remove(pos);
         }
 
-        Collections.addAll(tileEntity.territories, msg.readyAdd);
+        Collections.addAll(tileEntity.territories, msg.add);
 
         tileEntity.getTerritoryInfo().permissions = msg.permissions;
         tileEntity.getTerritoryInfo().defaultPermission = msg.defaultPermission;
@@ -222,31 +186,19 @@ public class TerritoryTableContainer extends SyncedGuiDescription {
 
         PacketByteBuf buf = PacketByteBufs.create();
         TerritoryOperationMsg.encode(msg,buf);
-        ClientPlayNetworking.send(TerritoryPacketHandler.CHANNEL,buf);
+        ClientPlayNetworking.send(TerritoryNetworkHandler.GUI_BASE_DATA_PUSH_REQUEST,buf);
     }
 
     public void initChunkInfo() {
-        selectableChunkPos.clear();
-
-
-        for (ChunkPos pos : territories) {
-            int chunkX = pos.x;
-            int chunkZ = pos.z;
-
-            selectableChunkPos.add(new ChunkPos(chunkX + 1, chunkZ));
-            selectableChunkPos.add(new ChunkPos(chunkX, chunkZ + 1));
-            selectableChunkPos.add(new ChunkPos(chunkX - 1, chunkZ));
-            selectableChunkPos.add(new ChunkPos(chunkX, chunkZ - 1));
-        }
-        selectableChunkPos.removeIf(territories::contains);
-        selectableChunkPos.removeIf(forbiddenChunkPos::contains);
-
-        removableChunkPos.clear();
-
-        removableChunkPos.addAll(territories);
-        removableChunkPos.removeAll(TerritoryUtil.computeCutChunk(tileEntityChunkPos, territories));
-        removableChunkPos.remove(tileEntityChunkPos); // Player cant remove the chunkPos where the tileEntity is located.
+        TerritoryUtil.computeSelectableBtn(selectableChunkPos,territories,forbiddenChunkPos);
+        TerritoryUtil.computeRemovableBtn(removableChunkPos,tileEntityChunkPos,territories);
     }
+
+    public void onFetchChunkInfoFromServer(){
+
+    }
+
+    public void
 
     public int getTotalProtectPower() {
         return protectPower;
@@ -261,95 +213,34 @@ public class TerritoryTableContainer extends SyncedGuiDescription {
         return true;
     }
 
-    @Environment(EnvType.CLIENT)
-    public static class TerritoryMsgClientReceiver implements ClientPlayNetworking.PlayChannelHandler {
-        @Override
-        public void receive(MinecraftClient client, ClientPlayNetworkHandler handler, PacketByteBuf buf, PacketSender responseSender) {
-            client.execute(()->{
-                MinecraftClient.getInstance().player.closeScreen();
-            });
-        }
-    }
 
-    public static class TerritoryMsgServerReceiver implements ServerPlayNetworking.PlayChannelHandler {
-        @Override
-        public void receive(MinecraftServer server, ServerPlayerEntity player, ServerPlayNetworkHandler handler, PacketByteBuf buf, PacketSender responseSender) {
-            TerritoryTableContainer container = (TerritoryTableContainer) player.currentScreenHandler;
-            var msg = TerritoryOperationMsg.decode(buf);
+    /*public static void onServerReceived(MinecraftServer server, ServerPlayerEntity player, ServerPlayNetworkHandler handler, GUIChunkDataSyncPacket msg, PacketContext<GUIChunkDataSyncPacket> context) {
+        if (player.currentScreenHandler instanceof TerritoryTableContainer container) {
             if (!container.updateTileEntityServerSide(player, msg)) return;
 
             World world = container.player.world;
             BlockState state = world.getBlockState(container.tileEntityPos);
             world.updateListeners(container.tileEntityPos, state, state, 2); //notify all clients to update.
-            PacketByteBuf data = PacketByteBufs.create(); // todo 暂时这样表示成功，以后要改
-            data.writeBoolean(true);
-            responseSender.sendPacket(TerritoryPacketHandler.CHANNEL,data);
+            context.sendPacket(msg); // todo successful message
         }
     }
 
-    public static class TerritoryOperationMsg {
-        @Nonnull
-        public ChunkPos[] readyAdd;
-        @Nonnull
-        public ChunkPos[] readyRemove;
-        @Nonnull
-        public Map<UUID, PermissionFlag> permissions;
-        public PermissionFlag defaultPermission;
-        public String territoryName;
-
-        public TerritoryOperationMsg(String territoryName, @Nonnull ChunkPos[] readyAdd, @Nonnull ChunkPos[] readyRemove,
-                                     @Nonnull Map<UUID, PermissionFlag> permissionFlagMap, PermissionFlag defaultPermission) {
-            this.readyAdd = readyAdd;
-            this.readyRemove = readyRemove;
-            permissions = permissionFlagMap;
-            this.defaultPermission = defaultPermission;
-            this.territoryName = territoryName;
+    public static void onClientReceived(MinecraftClient client, ClientPlayNetworkHandler handler, GUIChunkDataSyncPacket msg, PacketContext<GUIChunkDataSyncPacket> context) {
+        if (client.player.currentScreenHandler instanceof TerritoryTableContainer screenHandler) {
+            // todo
         }
+    }*/
 
-        public static void encode(TerritoryOperationMsg msg, PacketByteBuf buffer) {
-            buffer.writeInt(msg.readyAdd.length);
-            buffer.writeInt(msg.readyRemove.length);
-            buffer.writeInt(msg.permissions.size());
-            for (ChunkPos pos : msg.readyAdd) {
-                buffer.writeInt(pos.x);
-                buffer.writeInt(pos.z);
-            }
-            for (ChunkPos pos : msg.readyRemove) {
-                buffer.writeInt(pos.x);
-                buffer.writeInt(pos.z);
-            }
-            msg.permissions.forEach((k, v) -> {
-                buffer.writeUuid(k);
-                buffer.writeInt(v.getCode());
-            });
-            buffer.writeInt(msg.defaultPermission.getCode());
-            buffer.writeString(msg.territoryName);
-        }
+    @Environment(EnvType.CLIENT)
+    public static <T> void ClientHandleChunkDataSync(MinecraftClient client, ClientPlayNetworkHandler handler, GUIChunkDataSyncPacket msg, PacketContext<T> context) {
 
-        public static TerritoryOperationMsg decode(PacketByteBuf buffer) {
-            int addLength = buffer.readInt();
-            int removeLength = buffer.readInt();
-            int permissionLength = buffer.readInt();
+    }
 
-            HashMap<UUID, PermissionFlag> permissions = new HashMap<>();
-            ChunkPos[] readyAdd = new ChunkPos[addLength];
-            ChunkPos[] readyRemove = new ChunkPos[removeLength];
+    public static <T> void ServerHandleBaseDataPushRequest(MinecraftServer server, ServerPlayerEntity player, ServerPlayNetworkHandler handler, GUIBaseDataPushRequestPacket msg, PacketContext<T> context) {
 
-            for (int i = 0; i < readyAdd.length; i++) {
-                readyAdd[i] = new ChunkPos(buffer.readInt(), buffer.readInt());
-            }
-            for (int i = 0; i < readyRemove.length; i++) {
-                readyRemove[i] = new ChunkPos(buffer.readInt(), buffer.readInt());
-            }
-            for (int i = 0; i < permissionLength; i++) {
-                UUID uuid = buffer.readUuid();
-                int code = buffer.readInt();
-                PermissionFlag flag = new PermissionFlag(code);
-                permissions.put(uuid, flag);
-            }
-            int defaultPermissionCode = buffer.readInt();
-            String territoryName = buffer.readString(16);
-            return new TerritoryOperationMsg(territoryName, readyAdd, readyRemove, permissions, new PermissionFlag(defaultPermissionCode));
-        }
+    }
+
+    public static <T> void ServerHandleChunkOperateRequest(MinecraftServer server, ServerPlayerEntity player, ServerPlayNetworkHandler handler, GUIChunkOperateRequestPacket msg, PacketContext<T> context) {
+
     }
 }

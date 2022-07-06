@@ -54,4 +54,26 @@ public class TerritoryUtil {
             }
         }
     }
+
+    public static void computeSelectableBtn(Set<ChunkPos> result,Set<ChunkPos> occupied,Set<ChunkPos> forbidden){
+        result.clear();
+        for (ChunkPos pos : occupied) {
+            int chunkX = pos.x;
+            int chunkZ = pos.z;
+
+            result.add(new ChunkPos(chunkX + 1, chunkZ));
+            result.add(new ChunkPos(chunkX, chunkZ + 1));
+            result.add(new ChunkPos(chunkX - 1, chunkZ));
+            result.add(new ChunkPos(chunkX, chunkZ - 1));
+        }
+        result.removeIf(occupied::contains);
+        result.removeIf(forbidden::contains);
+    }
+
+    public static void computeRemovableBtn(Set<ChunkPos> result,ChunkPos tileEntityChunkPos,Set<ChunkPos> occupied){
+        result.clear();
+        result.addAll(occupied);
+        result.removeAll(TerritoryUtil.computeCutChunk(tileEntityChunkPos, occupied));
+        result.remove(tileEntityChunkPos);
+    }
 }
