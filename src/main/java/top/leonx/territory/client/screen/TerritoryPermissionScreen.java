@@ -1,21 +1,20 @@
 package top.leonx.territory.client.screen;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
-import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screen.inventory.ContainerScreen;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.resources.I18n;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.resources.language.I18n;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraftforge.client.gui.widget.ExtendedButton;
 import net.minecraftforge.common.UsernameCache;
-import net.minecraftforge.fml.client.gui.widget.*;
-import top.leonx.territory.client.gui.WrapList;
-import top.leonx.territory.client.gui.PlayerList;
 import top.leonx.territory.client.gui.PermissionToggleButton;
-import top.leonx.territory.config.TerritoryConfig;
-import top.leonx.territory.container.TerritoryTableContainer;
-import top.leonx.territory.data.PermissionFlag;
+import top.leonx.territory.client.gui.PlayerList;
+import top.leonx.territory.client.gui.WrapList;
+import top.leonx.territory.common.container.TerritoryTableContainer;
+import top.leonx.territory.core.PermissionFlag;
+import top.leonx.territory.init.config.TerritoryConfig;
 import top.leonx.territory.util.UserUtil;
 
 import java.util.HashMap;
@@ -28,15 +27,15 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryTable
 
     private PlayerList      playerList;
     private WrapList        permissionList;
-    private TextFieldWidget search;
-    private TextFieldWidget addTextField;
+    private EditBox search;
+    private EditBox addTextField;
 
     private final Map<PermissionToggleButton,PermissionFlag> permissionCheckbox=new HashMap<>();
     private ExtendedButton addPlayerBtn;
     private ExtendedButton removePlayerBtn;
     PlayerList.PlayerEntry defaultPlayerEntry;
     public TerritoryPermissionScreen(TerritoryTableContainer container,
-                                     ContainerScreen<TerritoryTableContainer> parent, Consumer<Integer> changePage) {
+                                     AbstractContainerScreen<TerritoryTableContainer> parent, Consumer<Integer> changePage) {
         super(container,parent,changePage);
     }
     @Override
@@ -49,23 +48,23 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryTable
         playerList.setLeftPos(parent.getGuiLeft()+10);
         defaultPlayerEntry = new PlayerList.PlayerEntry(UserUtil.DEFAULT_UUID, UserUtil.DEFAULT_NAME, playerList,this::onPlayerEntrySelected);
         defaultPlayerEntry.canDelete=false;
-        search=new TextFieldWidget(font, parent.getGuiLeft()+10, parent.getGuiTop()+8, 100,16,new TranslationTextComponent("gui.territory.search"));
-        addTextField=new TextFieldWidget(font, parent.getGuiLeft()+10, parent.getGuiTop()+parent.getYSize()-24, 80,16,new TranslationTextComponent("gui.territory.add_player"));
-        addPlayerBtn=new ExtendedButton(parent.getGuiLeft()+90,parent.getGuiTop()+parent.getYSize()-24,20,16,new StringTextComponent("+"),
+        search=new EditBox(font, parent.getGuiLeft()+10, parent.getGuiTop()+8, 100,16,new TranslatableComponent("gui.territory.search"));
+        addTextField=new EditBox(font, parent.getGuiLeft()+10, parent.getGuiTop()+parent.getYSize()-24, 80,16,new TranslatableComponent("gui.territory.add_player"));
+        addPlayerBtn=new ExtendedButton(parent.getGuiLeft()+90,parent.getGuiTop()+parent.getYSize()-24,20,16,new TextComponent("+"),
                 t-> addNewPlayer());
-        removePlayerBtn=new ExtendedButton(parent.getGuiLeft()+120,parent.getGuiTop()+8,24,16,new TranslationTextComponent("gui.territory.remove_player_btn"),
+        removePlayerBtn=new ExtendedButton(parent.getGuiLeft()+120,parent.getGuiTop()+8,24,16,new TranslatableComponent("gui.territory.remove_player_btn"),
                 t-> removePlayer());
-        permissionList=new WrapList(parent.getGuiLeft()+120, parent.getGuiTop()+30, 110, 104, new StringTextComponent("permission_list"));
+        permissionList=new WrapList(parent.getGuiLeft()+120, parent.getGuiTop()+30, 110, 104, new TextComponent("permission_list"));
         permissionList.marginLeft=6;
-        playerList.getEventListeners().add(defaultPlayerEntry);
-        container.territoryInfo.permissions.forEach((k,v)-> playerList.getEventListeners().add(new PlayerList.PlayerEntry(k,playerList,this::onPlayerEntrySelected)));
+        playerList.children().add(defaultPlayerEntry);
+        container.territoryInfo.permissions.forEach((k,v)-> playerList.children().add(new PlayerList.PlayerEntry(k,playerList,this::onPlayerEntrySelected)));
         playerList.setSelected(defaultPlayerEntry);
 
         int checkboxWidth=100;
         int checkboxHeight=20;
         for (PermissionFlag flag : TerritoryConfig.usablePermission) {
             PermissionToggleButton btn=new PermissionToggleButton(0,0,checkboxWidth, checkboxHeight,
-                    new TranslationTextComponent(flag.getTranslationKey()),container.territoryInfo.defaultPermission.contain(flag));
+                    new TranslatableComponent(flag.getTranslationKey()),container.territoryInfo.defaultPermission.contain(flag));
 
             btn.onTriggered=t->{
                 PermissionFlag permissionFlag;
@@ -83,13 +82,13 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryTable
             permissionCheckbox.put(btn,flag);
         }
 
-        addTextField.setSuggestion(I18n.format("gui.territory.add_player"));
-        search.setSuggestion(I18n.format("gui.territory.search"));
+        addTextField.setSuggestion(I18n.get("gui.territory.add_player"));
+        search.setSuggestion(I18n.get("gui.territory.search"));
         addPlayerBtn.active=false;
 
         this.addButton(addPlayerBtn);
         this.addButton(removePlayerBtn);
-        this.addButton(new ExtendedButton(halfW+40, parent.getGuiTop()+parent.getYSize()-30, 70, 20, new TranslationTextComponent("gui.territory.back"),
+        this.addButton(new ExtendedButton(halfW+40, parent.getGuiTop()+parent.getYSize()-30, 70, 20, new TranslatableComponent("gui.territory.back"),
                 $ -> NavigateTo(0)
         ));
         this.children.add(playerList);
@@ -102,7 +101,7 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryTable
 
 
     @Override
-    public void renderInternal(MatrixStack matrix,int mouseX, int mouseY, float partialTicks) {
+    public void renderInternal(PoseStack matrix, int mouseX, int mouseY, float partialTicks) {
         playerList.render(matrix,mouseX,mouseY,partialTicks);
         permissionList.render(matrix,mouseX,mouseY,partialTicks);
 
@@ -112,16 +111,16 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryTable
         addTextField.render(matrix,mouseX,mouseY,partialTicks);
         addTextField.renderButton(matrix,mouseX,mouseY,partialTicks);
 
-        String title=I18n.format("gui.territory.all_player");
+        String title= I18n.get("gui.territory.all_player");
         if(playerList.getSelected()!=null) title=playerList.getSelected().getName();
-        matrix.push();
+        matrix.pushPose();
         matrix.scale(1.2f,1.2f,1.2f);
-        font.drawString(matrix,title, (int)((this.parent.getGuiLeft()+150)/1.2),parent.getGuiTop()+4,0xFFFFF0);
-        matrix.pop();
+        font.draw(matrix,title, (int)((this.parent.getGuiLeft()+150)/1.2),parent.getGuiTop()+4,0xFFFFF0);
+        matrix.popPose();
     }
 
     @Override
-    public void drawGuiContainerForegroundLayer(MatrixStack matrix,int mouseX, int mouseY) {
+    public void drawGuiContainerForegroundLayer(PoseStack matrix,int mouseX, int mouseY) {
 
     }
 
@@ -129,14 +128,14 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryTable
 
     @Override
     public void tick() {
-        if(!search.getText().equals(lastTickSearch))
+        if(!search.getValue().equals(lastTickSearch))
         {
-            playerList.getEventListeners().clear();
-            playerList.getEventListeners().add(defaultPlayerEntry);
-            container.territoryInfo.permissions.entrySet().stream().filter(t-> UsernameCache.getLastKnownUsername(t.getKey()).contains(search.getText())).forEach(
-                    t-> playerList.getEventListeners().add(new PlayerList.PlayerEntry(t.getKey(),playerList,this::onPlayerEntrySelected))
+            playerList.children().clear();
+            playerList.children().add(defaultPlayerEntry);
+            container.territoryInfo.permissions.entrySet().stream().filter(t-> UsernameCache.getLastKnownUsername(t.getKey()).contains(search.getValue())).forEach(
+                    t-> playerList.children().add(new PlayerList.PlayerEntry(t.getKey(),playerList,this::onPlayerEntrySelected))
             );
-            lastTickSearch=search.getText();
+            lastTickSearch=search.getValue();
         }
     }
 
@@ -155,29 +154,29 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryTable
     }
     private String addTextFieldSuggestion; //why is there no direct way to get;
     private void addNewPlayer() {
-        String name=addTextField.getText()+addTextFieldSuggestion;
+        String name=addTextField.getValue()+addTextFieldSuggestion;
         UUID uuid= UserUtil.getUUIDByName(name);
         if(uuid.equals(UserUtil.DEFAULT_UUID) || uuid==null)
         {
             return;
         }
 
-        addTextField.setText("");
+        addTextField.setValue("");
         updateSuggestion();
         if(container.territoryInfo.permissions.containsKey(uuid)){
             //noinspection OptionalGetWithoutIsPresent
-            playerList.setSelected(playerList.getEventListeners().stream().filter(t->t.getUUID().equals(uuid)).findFirst().get());
+            playerList.setSelected(playerList.children().stream().filter(t->t.getUUID().equals(uuid)).findFirst().get());
         }
         else{
             container.territoryInfo.permissions.put(uuid, TerritoryConfig.defaultPermission);
-            playerList.getEventListeners().add(new PlayerList.PlayerEntry(uuid,name,playerList,this::onPlayerEntrySelected));
+            playerList.children().add(new PlayerList.PlayerEntry(uuid,name,playerList,this::onPlayerEntrySelected));
         }
     }
     private void removePlayer() {
         PlayerList.PlayerEntry selected = playerList.getSelected();
         if(!selected.canDelete) return;
         container.territoryInfo.permissions.remove(selected.getUUID());
-        playerList.getEventListeners().remove(selected);
+        playerList.children().remove(selected);
     }
     private void onPlayerEntrySelected(PlayerList.PlayerEntry entry)
     {
@@ -194,14 +193,14 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryTable
     }
     private void updateSuggestion()
     {
-        if(addTextField.getText().length()>0)
+        if(addTextField.getValue().length()>0)
         {
             String selfName = Minecraft.getInstance().player.getName().getString();
             Optional<String> first =
-                    UserUtil.getAllPlayerName().stream().filter(t -> !t.equals(selfName)&&t.indexOf(addTextField.getText())==0).findFirst();
+                    UserUtil.getAllPlayerName().stream().filter(t -> !t.equals(selfName)&&t.indexOf(addTextField.getValue())==0).findFirst();
             if(first.isPresent())
             {
-                addTextFieldSuggestion=first.get().replace(addTextField.getText(),"");
+                addTextFieldSuggestion=first.get().replace(addTextField.getValue(),"");
                 addPlayerBtn.active=true;
             }else{
                 addPlayerBtn.active=false;
@@ -209,13 +208,13 @@ public class TerritoryPermissionScreen extends AbstractScreenPage<TerritoryTable
             }
         }else{
             addPlayerBtn.active=false;
-            addTextFieldSuggestion=I18n.format("gui.territory.add_player");
+            addTextFieldSuggestion=I18n.get("gui.territory.add_player");
         }
         addTextField.setSuggestion(addTextFieldSuggestion);
 
-        if(search.getText().length()>0)
+        if(search.getValue().length()>0)
             search.setSuggestion("");
         else
-            search.setSuggestion(I18n.format("gui.territory.search"));
+            search.setSuggestion(I18n.get("gui.territory.search"));
     }
 }

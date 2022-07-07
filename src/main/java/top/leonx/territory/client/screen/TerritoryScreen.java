@@ -1,43 +1,44 @@
 package top.leonx.territory.client.screen;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screen.inventory.ContainerScreen;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.ITextComponent;
-import top.leonx.territory.container.TerritoryTableContainer;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Inventory;
+import top.leonx.territory.common.container.TerritoryTableContainer;
 
-import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TerritoryScreen extends ContainerScreen<TerritoryTableContainer> {
+public class TerritoryScreen extends AbstractContainerScreen<TerritoryTableContainer> {
 
     private final List<AbstractScreenPage<TerritoryTableContainer>> pages=new ArrayList<>();
     private int pageNumber=0;
     private static final ResourceLocation backgroundLocation = new ResourceLocation("minecraft", "textures/gui" +
             "/demo_background.png");
 
-    public TerritoryScreen(TerritoryTableContainer screenContainer, PlayerInventory inv, ITextComponent titleIn) {
+    public TerritoryScreen(TerritoryTableContainer screenContainer, Inventory inv, Component titleIn) {
         super(screenContainer, inv, titleIn);
         pages.add(new TerritoryMapScreen(screenContainer,this,this::ChangePage));
         pages.add(new TerritoryPermissionScreen(screenContainer,this,this::ChangePage));
-        this.xSize=250;
+        this.imageWidth =250;
         //pages.add(new TerritoryPermissionScreen(screenContainer,inv,titleIn));
     }
     public void ChangePage(int num)
     {
         pageNumber=num;
     }
-    @Override
-    public void init(@Nonnull Minecraft mc, int width, int height) {
-        super.init(mc, width, height);
-        pages.forEach(t->t.init(mc,width,height));
-    }
 
     @Override
-    public void render(MatrixStack stack,int mouseX, int mouseY, float ticks) {
+    protected void init() {
+        super.init();
+        pages.forEach(t->t.init(minecraft,width,height));
+    }
+
+
+    @Override
+    public void render(PoseStack stack, int mouseX, int mouseY, float ticks) {
         this.renderBackground(stack);
         super.render(stack,mouseX, mouseY, ticks);
 
@@ -45,18 +46,20 @@ public class TerritoryScreen extends ContainerScreen<TerritoryTableContainer> {
     }
 
     @Override
-    protected void drawGuiContainerBackgroundLayer(MatrixStack stack,float partialTicks, int mouseX, int mouseY) {
-        Minecraft.getInstance().textureManager.bindTexture(backgroundLocation);
-        int startX = this.guiLeft;
-        int startY = this.guiTop;
-        this.blit(stack,startX, startY, 0, 0, this.xSize, this.ySize);
+    protected void renderBg(PoseStack pPoseStack, float pPartialTick, int pMouseX, int pMouseY) {
+        Minecraft.getInstance().textureManager.bindForSetup(backgroundLocation);
+        int startX = this.getGuiLeft();
+        int startY = this.getGuiTop();
+        this.blit(pPoseStack,startX, startY, 0, 0, this.getXSize(), this.getYSize());
     }
 
     @Override
-    protected void drawGuiContainerForegroundLayer(MatrixStack stack,int mouseX, int mouseY) {
-        //super.drawGuiContainerForegroundLayer(stack,mouseX, mouseY);
-        pages.get(pageNumber).drawGuiContainerForegroundLayer(stack,mouseX,mouseY);
+    protected void renderTooltip(PoseStack pPoseStack, int pX, int pY) {
+//        super.renderTooltip(pPoseStack, pX, pY);
+        pages.get(pageNumber).drawGuiContainerForegroundLayer(pPoseStack,pX,pY);
+
     }
+
 
     @Override
     public boolean mouseClicked(double p_mouseClicked_1_, double p_mouseClicked_3_, int p_mouseClicked_5_) {
@@ -95,7 +98,9 @@ public class TerritoryScreen extends ContainerScreen<TerritoryTableContainer> {
     }
 
     @Override
-    public void tick() {
+    protected void containerTick() {
         pages.get(pageNumber).tick();
     }
+
+
 }

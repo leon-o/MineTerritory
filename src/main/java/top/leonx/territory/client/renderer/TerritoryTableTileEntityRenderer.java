@@ -12,8 +12,8 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Matrix4f;
 import net.minecraft.util.math.vector.Quaternion;
 import net.minecraft.util.math.vector.Vector3f;
-import top.leonx.territory.config.TerritoryConfig;
-import top.leonx.territory.tileentities.TerritoryTableTileEntity;
+import top.leonx.territory.init.config.TerritoryConfig;
+import top.leonx.territory.common.tileentities.TerritoryTableTileEntity;
 
 public class TerritoryTableTileEntityRenderer extends TileEntityRenderer<TerritoryTableTileEntity> {
 

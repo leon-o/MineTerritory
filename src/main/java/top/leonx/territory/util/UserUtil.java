@@ -1,8 +1,10 @@
 package top.leonx.territory.util;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.player.AbstractClientPlayerEntity;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.client.entity.player.AbstractClientPlayer;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.entity.player.Player;
+import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.UsernameCache;
 import net.minecraftforge.fml.loading.FMLEnvironment;
@@ -21,7 +23,7 @@ public class UserUtil {
         if(uuid==null)return DEFAULT_NAME;
         if(FMLEnvironment.dist.isClient())
         {
-            PlayerEntity player = Minecraft.getInstance().world.getPlayerByUuid(uuid);
+            Player player = Minecraft.getInstance().level.getPlayerByUUID(uuid);
             if(player!=null)
                 return player.getName().getString();
         }
@@ -32,10 +34,10 @@ public class UserUtil {
     {
         if(FMLEnvironment.dist== Dist.CLIENT)
         {
-            List<AbstractClientPlayerEntity> players = Minecraft.getInstance().world.getPlayers();
-            Optional<AbstractClientPlayerEntity> first = players.stream().filter(t -> t.getName().getString().equals(name)).findFirst();
+            List<AbstractClientPlayer> players = Minecraft.getInstance().level.players();
+            Optional<AbstractClientPlayer> first = players.stream().filter(t -> t.getName().getString().equals(name)).findFirst();
             if(first.isPresent())
-                return first.get().getUniqueID();
+                return first.get().getUUID();
         }
         if(name.equals(DEFAULT_NAME))
             return DEFAULT_UUID;
@@ -52,7 +54,7 @@ public class UserUtil {
 
         if(FMLEnvironment.dist.isClient())
         {
-            PlayerEntity player = Minecraft.getInstance().world.getPlayerByUuid(uuid);
+            Player player = Minecraft.getInstance().level.getPlayerByUUID(uuid);
             return player!=null;
         }
         return false;
@@ -63,7 +65,7 @@ public class UserUtil {
             return true;
         if(FMLEnvironment.dist.isClient())
         {
-            return Minecraft.getInstance().world.getPlayers().stream().anyMatch(t->t.getName().toString().equals(name));
+            return Minecraft.getInstance().level.players().stream().anyMatch(t->t.getName().toString().equals(name));
         }
 
         return false;
@@ -73,7 +75,7 @@ public class UserUtil {
         List<String> result = new ArrayList<>(UsernameCache.getMap().values());
         if(FMLEnvironment.dist.isClient())
         {
-            for (AbstractClientPlayerEntity player : Minecraft.getInstance().world.getPlayers()) {
+            for (AbstractClientPlayer player : Minecraft.getInstance().level.players()) {
                 result.add(player.getName().getString());
             }
         }

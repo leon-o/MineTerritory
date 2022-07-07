@@ -1,11 +1,16 @@
 package top.leonx.territory.util;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.util.math.vector.Vec3;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.lwjgl.opengl.GL11;
@@ -32,11 +37,11 @@ public class BoundaryRender {
         {duration=time;usedTime=0;}
 
         edges.clear();
-        
-        Vector3d[] relativeEdged={new Vector3d(0,0,0),new Vector3d(0,0,16),new Vector3d(16,0,16),new Vector3d(16,0,0),new Vector3d(0,0,0)};
+
+        Vec3[] relativeEdged={new Vec3(0,0,0),new Vec3(0,0,16),new Vec3(16,0,16),new Vec3(16,0,0),new Vec3(0,0,0)};
 
         territories.forEach(t->{
-            Vector3d originPos=new Vector3d(t.x<<4,0,t.z<<4);
+            Vec3 originPos=new Vec3(t.x<<4,0,t.z<<4);
 
             for(int i=0;i<4;i++)
             {
@@ -47,16 +52,16 @@ public class BoundaryRender {
         });
     }
 
-    public static void Render(Vector3d viewPos,float pitch,float yaw ,double partialTick)
+    public static void Render(PoseStack stack, Vec3 viewPos, float pitch, float yaw , double partialTick)
     {
-        float alpha = (float) MathHelper.clampedLerp(0, 1, 3 - 2*(usedTime / duration));
+        float alpha = (float) Mth.clampedLerp(0, 1, 3 - 2*(usedTime / duration));
         if(alpha<=0) return;
         usedTime+=partialTick;
 
-        Minecraft.getInstance().textureManager.bindTexture(checkerboardOverlayLocation); //must load once before
+        Minecraft.getInstance().textureManager.bindForSetup(checkerboardOverlayLocation); //must load once before
 
 
-        RenderSystem.pushMatrix();
+        stack.pushPose();
         RenderSystem.depthMask(true);
         RenderSystem.enableBlend();
         RenderSystem.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
@@ -67,25 +72,25 @@ public class BoundaryRender {
         RenderSystem.translated(-viewPos.x, -viewPos.y, -viewPos.z);
 
         RenderUtil.enableTextureRepeat();
-        Minecraft.getInstance().textureManager.bindTexture(checkerboardOverlayLocation);
+        Minecraft.getInstance().textureManager.bindForSetup(checkerboardOverlayLocation);
 
         RenderUtil.startDraw();
-        edges.forEach((t,v)-> RenderUtil.drawWall(t.from,t.to,255,0,0,255,16,new Vector3d(1,1,1),alpha,0xF0,0xF0));
+        edges.forEach((t,v)-> RenderUtil.drawWall(t.from,t.to,255,0,0,255,16,new Vec3(1,1,1),alpha,0xF0,0xF0));
 
         RenderUtil.endDraw();
 
         RenderUtil.disableTextureRepeat();
         //GlStateManager.enableCull();
         RenderSystem.depthMask(true);
-        RenderSystem.popMatrix();
+        stack.popPose();
         RenderSystem.disableBlend();
     }
 
     private static class EdgeEntry
     {
-        Vector3d from;
-        Vector3d to;
-        public EdgeEntry(Vector3d from,Vector3d to)
+        Vec3 from;
+        Vec3 to;
+        public EdgeEntry(Vec3 from,Vec3 to)
         {
             if(from.x<to.x || from.x==to.x && from.z<to.z)
             {
