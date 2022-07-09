@@ -29,11 +29,11 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.network.NetworkHooks;
-import top.leonx.territory.init.registry.ModCaps;
-import top.leonx.territory.init.registry.ModTiles;
 import top.leonx.territory.common.tileentities.TerritoryTableTileEntity;
 import top.leonx.territory.core.PermissionFlag;
 import top.leonx.territory.core.TerritoryInfo;
+import top.leonx.territory.init.registry.ModCaps;
+import top.leonx.territory.init.registry.ModTiles;
 import top.leonx.territory.util.MessageUtil;
 
 import javax.annotation.Nullable;

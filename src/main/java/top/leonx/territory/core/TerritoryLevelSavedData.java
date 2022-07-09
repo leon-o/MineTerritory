@@ -3,16 +3,16 @@ package top.leonx.territory.core;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.Level;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.saveddata.SavedData;
-import net.minecraft.world.server.ServerLevel;
-import net.minecraft.world.storage.LevelSavedData;
+import top.leonx.territory.common.capability.ChunkCapabilityProvider;
 
 import javax.annotation.Nonnull;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import static top.leonx.territory.init.registry.ModCaps.TERRITORY_INFO_CAPABILITY;
 import static top.leonx.territory.util.DataUtil.ConvertNbtToPos;
@@ -22,16 +22,21 @@ public class TerritoryLevelSavedData extends SavedData {
 
     static final  String                                    DATA_NAME          = "TERRITORY_WORLD_DATA";
     static final  String                                    RESERVED_TERRITORY = "RESERVED_TERRITORY";
-    private final HashMap<TerritoryInfo, Set<ChunkPos>> territoryIndex     = new HashMap<>();
-    private final Level world;
+    private static final HashMap<TerritoryInfo, Set<ChunkPos>> territoryIndex     = new HashMap<>();
+    private static Level world;
 
     public TerritoryLevelSavedData(Level world) {
-        super(DATA_NAME);
-        this.world = world;
+        super();
+        TerritoryLevelSavedData.world = world;
+    }
+
+    public static TerritoryLevelSavedData load(CompoundTag compoundTag, Level world) {
+        TerritoryLevelSavedData.read(compoundTag);
+        return new TerritoryLevelSavedData(world);
     }
 
     public static TerritoryLevelSavedData get(ServerLevel world) {
-        return world.getSavedData().getOrCreate(() -> new TerritoryLevelSavedData(world), DATA_NAME);
+        return world.getDataStorage().computeIfAbsent(tag -> load(tag, world), () -> new TerritoryLevelSavedData(world), DATA_NAME);
     }
 
 
@@ -57,8 +62,7 @@ public class TerritoryLevelSavedData extends SavedData {
         }
     }
 
-    @Override
-    public void read(CompoundTag nbt) {
+    public static void read(CompoundTag nbt) {
         territoryIndex.clear();
         ListTag reservedTerritory = nbt.getList(RESERVED_TERRITORY, 10);
         for (int i = 0; i < reservedTerritory.size(); i++) {
@@ -68,7 +72,7 @@ public class TerritoryLevelSavedData extends SavedData {
             HashSet<ChunkPos> territories = new HashSet<>();
             TerritoryInfo     info        = new TerritoryInfo();
 
-            TERRITORY_INFO_CAPABILITY.readNBT(info, null, compound);
+            ChunkCapabilityProvider.instance.resolve().get().deserializeNBT(compound);
 
             for (int j = 0; j < terListTag.size(); j++) {
                 ChunkPos pos = ConvertNbtToPos(terListTag.getCompound(j));
@@ -86,7 +90,7 @@ public class TerritoryLevelSavedData extends SavedData {
         ListTag reservedTerritory = new ListTag();
 
         for (Map.Entry<TerritoryInfo, Set<ChunkPos>> entry : territoryIndex.entrySet()) {
-            CompoundTag nbt         = (CompoundTag) TERRITORY_INFO_CAPABILITY.writeNBT(entry.getKey(), null);
+            CompoundTag nbt         = (CompoundTag) ChunkCapabilityProvider.instance.resolve().get().serializeNBT();
             ListTag     territories = new ListTag();
             entry.getValue().forEach(t -> territories.add(ConvertPosToNbt(t)));
             nbt.put("territories", territories);

@@ -1,6 +1,5 @@
 package top.leonx.territory.util;
 
-import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.level.ChunkPos;
 
 import java.util.*;

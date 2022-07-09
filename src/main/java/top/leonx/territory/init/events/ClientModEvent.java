@@ -1,10 +1,9 @@
 package top.leonx.territory.init.events;
 
-import net.minecraft.client.gui.ScreenManager;
+import net.minecraft.client.gui.screens.MenuScreens;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.DeferredWorkQueue;
-import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import top.leonx.territory.TerritoryMod;
@@ -19,10 +18,10 @@ public class ClientModEvent {
     public static void onFMLClientSetupEvent(final FMLClientSetupEvent event)
     {
 
-        DeferredWorkQueue.runLater(()-> {
-            ScreenManager.registerFactory(ModMenuTypes.TERRITORY_CONTAINER.get(), TerritoryScreen::new);
-        });
-        ClientRegistry.bindTileEntityRenderer(ModTiles.TERRITORY_TILE_ENTITY.get(),
-                                              TerritoryTableTileEntityRenderer::new);
+
+        MenuScreens.register(ModMenuTypes.TERRITORY_CONTAINER.get(), TerritoryScreen::new);
+
+        BlockEntityRenderers.register(ModTiles.TERRITORY_TILE_ENTITY.get(),
+                TerritoryTableTileEntityRenderer::new);
     }
 }

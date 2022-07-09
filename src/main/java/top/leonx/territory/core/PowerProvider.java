@@ -1,6 +1,5 @@
 package top.leonx.territory.core;
 
-import net.minecraft.item.Item;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.Item;
 

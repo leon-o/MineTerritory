@@ -2,6 +2,7 @@ package top.leonx.territory.client.screen;
 
 import com.google.common.collect.Lists;
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Widget;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
@@ -47,7 +48,7 @@ public abstract class AbstractScreenPage<T extends AbstractContainerMenu> extend
     public abstract void drawGuiContainerForegroundLayer(PoseStack matrix,int mouseX, int mouseY);
     public abstract void init();
     @Nonnull
-    protected <B extends Widget> B addButton(@Nonnull B p_addButton_1_) {
+    protected <B extends AbstractWidget> B addButton(@Nonnull B p_addButton_1_) {
         this.buttons.add(p_addButton_1_);
         this.children.add(p_addButton_1_);
         return p_addButton_1_;

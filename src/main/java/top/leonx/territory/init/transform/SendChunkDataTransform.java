@@ -1,9 +1,6 @@
 package top.leonx.territory.init.transform;
 
-import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.World;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import top.leonx.territory.core.TerritoryInfo;

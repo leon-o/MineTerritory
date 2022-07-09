@@ -9,9 +9,9 @@ import net.minecraftforge.fml.event.config.ModConfigEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import top.leonx.territory.TerritoryMod;
-import top.leonx.territory.init.handler.TerritoryPacketHandler;
-import top.leonx.territory.init.config.TerritoryConfig;
 import top.leonx.territory.core.TerritoryInfoSynchronizer;
+import top.leonx.territory.init.config.TerritoryConfig;
+import top.leonx.territory.init.handler.TerritoryPacketHandler;
 
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
 public class ModEvent {

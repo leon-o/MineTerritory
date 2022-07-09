@@ -2,13 +2,10 @@ package top.leonx.territory.util;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Vector3f;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.vector.Vec3;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
@@ -67,9 +64,9 @@ public class BoundaryRender {
         RenderSystem.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 
 
-        RenderSystem.rotatef(pitch,1,0,0);
-        RenderSystem.rotatef(yaw-180,0,1,0);
-        RenderSystem.translated(-viewPos.x, -viewPos.y, -viewPos.z);
+        stack.mulPose(Vector3f.XN.rotation(pitch));
+        stack.mulPose(Vector3f.YP.rotationDegrees(yaw-180));
+        stack.translate(-viewPos.x, -viewPos.y, -viewPos.z);
 
         RenderUtil.enableTextureRepeat();
         Minecraft.getInstance().textureManager.bindForSetup(checkerboardOverlayLocation);

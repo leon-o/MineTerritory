@@ -6,10 +6,10 @@ import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import top.leonx.territory.init.registry.ModBlocks;
 import top.leonx.territory.init.config.TerritoryConfig;
-import top.leonx.territory.init.registry.ModMenuTypes;
+import top.leonx.territory.init.registry.ModBlocks;
 import top.leonx.territory.init.registry.ModItems;
+import top.leonx.territory.init.registry.ModMenuTypes;
 import top.leonx.territory.init.registry.ModTiles;
 
 // The value here should match an entry in the META-INF/mods.toml file

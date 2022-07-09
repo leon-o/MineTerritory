@@ -27,6 +27,7 @@ tasks.withType(JavaCompile) {
 
 minecraft {
     mappings channel: 'parchment', version: '2022.07.03-1.18.2'
+    accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
     runs {
         client {
             workingDirectory project.file('run')

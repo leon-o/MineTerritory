@@ -35,7 +35,7 @@ public class TerritoryInfoSynchronizer {
     }
 
     public static void UpdateInfoToClientTracked(LevelChunk chunk) {
-        TerritoryInfo info = chunk.getCapability(TERRITORY_INFO_CAPABILITY).orElse(TERRITORY_INFO_CAPABILITY.getDefaultInstance());
+        TerritoryInfo info = chunk.getCapability(TERRITORY_INFO_CAPABILITY).orElse(new TerritoryInfo());
         UpdateInfoToClientTracked(chunk, info);
     }
 
@@ -48,7 +48,7 @@ public class TerritoryInfoSynchronizer {
     }
 
     public static void UpdateInfoToClientPlayer(LevelChunk chunk, ServerPlayer player) {
-        TerritoryInfo info = chunk.getCapability(TERRITORY_INFO_CAPABILITY).orElse(TERRITORY_INFO_CAPABILITY.getDefaultInstance());
+        TerritoryInfo info = chunk.getCapability(TERRITORY_INFO_CAPABILITY).orElse(new TerritoryInfo());
         TerritoryPacketHandler.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new UpdateSingleLevelChunkMsg(chunk.getPos(), info));
     }
 

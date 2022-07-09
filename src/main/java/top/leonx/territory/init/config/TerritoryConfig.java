@@ -1,13 +1,10 @@
 package top.leonx.territory.init.config;
 
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.item.Item;
-import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.JsonToNBT;
-import net.minecraft.tags.ITag;
+import net.minecraft.nbt.TagParser;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.ItemTags;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.fml.config.ModConfig;
@@ -20,6 +17,7 @@ import top.leonx.territory.core.PowerProvider;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 
 public final class TerritoryConfig {
@@ -98,7 +96,7 @@ public final class TerritoryConfig {
         }
 
         public static void processPowerProvider() {
-            if (ItemTags.getCollection().getRegisteredTags().size() == 0) return;
+            if (Objects.requireNonNull(ForgeRegistries.ITEMS.tags()).stream().findAny().isEmpty()) return;
             TerritoryConfig.powerProvider = new HashMap<>();
 
             Pattern typePattern = Pattern.compile("(item)|(tag)(?=:)");
@@ -117,8 +115,9 @@ public final class TerritoryConfig {
                 String           id    = idMatcher.group();
                 Collection<Item> items = null;
                 if (type.equals("tag")) {
-                    ITag<Item> itemTag = ItemTags.getCollection().get(new ResourceLocation(id));
-                    if (itemTag != null) items = itemTag.getAllElements();
+                    ITag<Item> itemTag = Objects.requireNonNull(ForgeRegistries.ITEMS.tags()).getTag(ItemTags.create(new ResourceLocation(id)));
+                            //ItemTags.getCollection().get(new ResourceLocation(id));
+                    items = itemTag.stream().collect(Collectors.toList());
                 } else if (type.equals("item")) {
                     Item item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(id));
                     items = Collections.singleton(item);
@@ -134,7 +133,7 @@ public final class TerritoryConfig {
                 CompoundTag tag = null;
                 if (tagMatcher.find()) {
                     try {
-                        tag = JsonToNBT.getTagFromJson(tagMatcher.group());
+                        tag = TagParser.parseTag(tagMatcher.group());
                     } catch (CommandSyntaxException e) {
                         e.printStackTrace();
                     }

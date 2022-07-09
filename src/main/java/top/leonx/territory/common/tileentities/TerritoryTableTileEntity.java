@@ -9,8 +9,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListNBT;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
@@ -179,7 +179,7 @@ public class TerritoryTableTileEntity extends BlockEntity implements BlockEntity
     @Nullable
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {
-        return new ClientboundBlockEntityDataPacket(this.worldPosition, 3, writeInternal());
+        return ClientboundBlockEntityDataPacket.create(this);
     }
 
     @Override
@@ -231,7 +231,7 @@ public class TerritoryTableTileEntity extends BlockEntity implements BlockEntity
     private void computeAngle() {
         Player player = Minecraft.getInstance().player;//this.world.getClosestPlayer((float)this.pos.getX() + 0.5F, (float)this.pos.getY() + 0.5F,
 
-        if (player != null && this.worldPosition.closerThan(player.getEyePosition(), 4)) {
+        if (player != null && this.worldPosition.closerThan(new Vec3i(player.getEyePosition().x, player.getEyePosition().y, player.getEyePosition().z), 4)) {
             rise = true;
             double dx          = player.xCloak - (this.worldPosition.getX() + 0.5);
             double dz          = player.zCloak - (this.worldPosition.getZ() + 0.5);
@@ -339,9 +339,9 @@ public class TerritoryTableTileEntity extends BlockEntity implements BlockEntity
             for (int j = 0; j < mapSize; j++) {
                 int index = mapColor[i + j * mapSize] & 255;
                 if (index / 4 == 0) {
-                    this.mapTexture.getPixels().setPixelRGBA(i, j, 0);
+                    Objects.requireNonNull(this.mapTexture.getPixels()).setPixelRGBA(i, j, 0);
                 } else {
-                    this.mapTexture.getPixels().setPixelRGBA(i, j, MaterialColor.MATERIAL_COLORS[index / 4].getMapColor(index & 3));
+                    Objects.requireNonNull(this.mapTexture.getPixels()).setPixelRGBA(i, j, MaterialColor.MATERIAL_COLORS[index / 4].calculateRGBColor(MaterialColor.Brightness.byId(index & 3)));
                 }
             }
         }

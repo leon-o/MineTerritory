@@ -2,14 +2,9 @@ package top.leonx.territory.core;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.Level;
-import net.minecraft.world.chunk.LevelChunk;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.LevelChunk;
-import net.minecraft.world.server.ServerLevel;
 import top.leonx.territory.util.UserUtil;
 
 import java.util.*;
@@ -63,9 +58,9 @@ public class TerritoryInfoHolder {
     {
         getChunkTerritoryInfo(chunk).getFrom(info);
         addIndex(info, chunk.getPos());
-        chunk.markDirty();
+        //chunk.markDirty();
 
-        if(!world.isRemote)
+        if(!world.isClientSide)
             TerritoryInfoSynchronizer.UpdateInfoToClientTracked(chunk,info);
     }
     public void assignToLevelChunk(LevelChunk chunk, UUID ownerId, UUID territoryId, BlockPos tablePos, String name, PermissionFlag defaultPer, Map<UUID, PermissionFlag> specificPer)
@@ -73,7 +68,7 @@ public class TerritoryInfoHolder {
         TerritoryInfo info = getChunkTerritoryInfo(chunk);
         info.assignedTo(ownerId,territoryId,tablePos,name,defaultPer,specificPer);
         addIndex(info, chunk.getPos());
-        chunk.markDirty();
+        //chunk.markDirty();
 
         if(!world.isClientSide)
             TerritoryInfoSynchronizer.UpdateInfoToClientTracked(chunk,info);
@@ -87,13 +82,13 @@ public class TerritoryInfoHolder {
         TerritoryInfo info = getChunkTerritoryInfo(chunk);
         removeIndex(info,chunk.getPos());
         info.deassign();
-        chunk.markDirty();
+        //chunk.markDirty();
 
         if(!world.isClientSide)
             TerritoryInfoSynchronizer.UpdateInfoToClientTracked(chunk,info);
     }
     public TerritoryInfo getChunkTerritoryInfo(LevelChunk chunk) {
-        return chunk.getCapability(TERRITORY_INFO_CAPABILITY).orElse(TERRITORY_INFO_CAPABILITY.getDefaultInstance());
+        return chunk.getCapability(TERRITORY_INFO_CAPABILITY).orElse(new TerritoryInfo());
     }
 
     public TerritoryInfo getChunkTerritoryInfo(ChunkPos pos) {

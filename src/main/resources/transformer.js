@@ -11,7 +11,7 @@ var InsnList = Java.type('org.objectweb.asm.tree.InsnList');
 function transformSendChunkData(method)
 {
     var insnList=new InsnList();
-    var sendNode=new MethodInsnNode(Opcodes.INVOKESTATIC,"top/leonx/territory/transform/SendChunkDataTransform","onServerChunkLoad","(Lnet/minecraft/util/math/ChunkPos;Lnet/minecraft/entity/player/ServerPlayerEntity;)V",false);
+    var sendNode=new MethodInsnNode(Opcodes.INVOKESTATIC,"top/leonx/territory/transform/SendChunkDataTransform","onServerChunkLoad","(Lnet/minecraft/world/level/ChunkPos;Lnet/minecraft/server/level/ServerPlayer;)V",false);
     insnList.add(new VarInsnNode(Opcodes.ALOAD,1));
     insnList.add(new VarInsnNode(Opcodes.ALOAD,0));
     insnList.add(sendNode);
@@ -33,8 +33,8 @@ function transformIsValidPosition(method) {
     codeList.add(new VarInsnNode(Opcodes.ALOAD,1));
     codeList.add(new VarInsnNode(Opcodes.ALOAD,2));
     codeList.add(new VarInsnNode(Opcodes.ALOAD,3));
-    codeList.add(new MethodInsnNode(Opcodes.INVOKESTATIC,"top/leonx/territory/transform/FireTransform","canBurn","(Lnet/minecraft/block/BlockState;" +
-        "Lnet/minecraft/world/IWorldReader;Lnet/minecraft/util/math/BlockPos;)Z",false));
+    codeList.add(new MethodInsnNode(Opcodes.INVOKESTATIC,"top/leonx/territory/transform/FireTransform","canBurn","(Lnet/minecraft/world/level/block/state/BlockState;" +
+        "Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/core/BlockPos;)Z",false));
     var label0_1=new Label();
     var label01Node=new LabelNode(label0_1);
     codeList.add(new JumpInsnNode(Opcodes.IFNE,label01Node));
@@ -58,18 +58,18 @@ function initializeCoreMod() {
         'sendToClientSrg': {
             'target': {
                 'type': 'METHOD',
-                'class': 'net.minecraft.entity.player.ServerPlayerEntity',
-                'methodName': 'func_213844_a',//sendChunkLoad
-                'methodDesc': '(Lnet/minecraft/util/math/ChunkPos;Lnet/minecraft/network/IPacket;Lnet/minecraft/network/IPacket;)V'
+                'class': 'net.minecraft.server.level.ServerPlayer',
+                'methodName': 'm_184135_',//sendChunkLoad
+                'methodDesc': '(Lnet/minecraft/world/level/ChunkPos;Lnet/minecraft/network/protocol/Packet;)V'
             },
             'transformer': transformSendChunkData
         },
         'fireIsValidPositionSrg': {
             'target': {
                 'type': 'METHOD',
-                'class': 'net.minecraft.block.FireBlock',
-                'methodName': 'func_196260_a',//IsValidPosition
-                'methodDesc': '(Lnet/minecraft/block/BlockState;Lnet/minecraft/world/IWorldReader;Lnet/minecraft/util/math/BlockPos;)Z'
+                'class': 'net.minecraft.world.level.block.FireBlock',
+                'methodName': 'm_60710_',//canSurvive
+                'methodDesc': '(Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/core/BlockPos;)Z'
             },
             'transformer': transformIsValidPosition
         }

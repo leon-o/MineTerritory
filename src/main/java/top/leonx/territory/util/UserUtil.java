@@ -1,9 +1,7 @@
 package top.leonx.territory.util;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.player.AbstractClientPlayer;
 import net.minecraft.client.player.AbstractClientPlayer;
-import net.minecraft.entity.player.Player;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.UsernameCache;
