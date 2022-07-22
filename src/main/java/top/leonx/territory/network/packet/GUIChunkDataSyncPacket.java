@@ -3,16 +3,20 @@ package top.leonx.territory.network.packet;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.util.math.ChunkPos;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
 public class GUIChunkDataSyncPacket {
 
-    public ChunkPos[] selectable;
-    public ChunkPos[] removable;
+    public Collection<ChunkPos> selectable;
+    public Collection<ChunkPos> removable;
 
-    public ChunkPos[] forbidden;
+    public Collection<ChunkPos> forbidden;
 
-    public ChunkPos[] occupied;
+    public Collection<ChunkPos> occupied;
 
-    public GUIChunkDataSyncPacket(ChunkPos[] selectable, ChunkPos[] removable, ChunkPos[] forbidden, ChunkPos[] occupied) {
+    public GUIChunkDataSyncPacket(Collection<ChunkPos> selectable, Collection<ChunkPos> removable, Collection<ChunkPos> forbidden, Collection<ChunkPos> occupied) {
         this.selectable = selectable;
         this.removable = removable;
         this.forbidden = forbidden;
@@ -20,10 +24,10 @@ public class GUIChunkDataSyncPacket {
     }
 
     public static void encode(GUIChunkDataSyncPacket msg, PacketByteBuf buffer) {
-        buffer.writeInt(msg.selectable.length);
-        buffer.writeInt(msg.removable.length);
-        buffer.writeInt(msg.forbidden.length);
-        buffer.writeInt(msg.occupied.length);
+        buffer.writeInt(msg.selectable.size());
+        buffer.writeInt(msg.removable.size());
+        buffer.writeInt(msg.forbidden.size());
+        buffer.writeInt(msg.occupied.size());
         for (ChunkPos pos : msg.selectable) {
             buffer.writeLong(pos.toLong());
         }
@@ -44,22 +48,22 @@ public class GUIChunkDataSyncPacket {
         int forbiddenLen = buffer.readInt();
         int occupiedLen = buffer.readInt();
 
-        ChunkPos[] selectable = new ChunkPos[selectableLen];
-        ChunkPos[] removable = new ChunkPos[removableLen];
-        ChunkPos[] forbidden = new ChunkPos[forbiddenLen];
-        ChunkPos[] occupied = new ChunkPos[occupiedLen];
+        List<ChunkPos> selectable = new ArrayList<>(selectableLen);
+        List<ChunkPos> removable = new ArrayList<>(removableLen);
+        List<ChunkPos> forbidden = new ArrayList<>(forbiddenLen);
+        List<ChunkPos> occupied = new ArrayList<>(occupiedLen);
 
         for (int i = 0; i < selectableLen; i++) {
-            selectable[i]=new ChunkPos(buffer.readLong());
+            selectable.set(i,new ChunkPos(buffer.readLong()));
         }
         for (int i = 0; i < removableLen; i++) {
-            removable[i]=new ChunkPos(buffer.readLong());
+            removable.set(i,new ChunkPos(buffer.readLong()));
         }
         for (int i = 0; i < forbiddenLen; i++) {
-            forbidden[i]=new ChunkPos(buffer.readLong());
+            forbidden.set(i,new ChunkPos(buffer.readLong()));
         }
         for (int i = 0; i < occupiedLen; i++) {
-            occupied[i]=new ChunkPos(buffer.readLong());
+            occupied.set(i,new ChunkPos(buffer.readLong()));
         }
 
         return new GUIChunkDataSyncPacket(selectable,removable,forbidden,occupied);

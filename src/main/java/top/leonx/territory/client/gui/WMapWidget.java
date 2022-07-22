@@ -9,12 +9,8 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Matrix4f;
-import net.minecraft.util.math.Vec2f;
 
 import java.util.Collection;
-import java.util.List;
-
-import static net.minecraft.client.gui.DrawableHelper.drawTexture;
 
 public class WMapWidget extends WWidget {
     private final Identifier mapTextureIdentifier;
@@ -47,8 +43,8 @@ public class WMapWidget extends WWidget {
 
 
 
-    public void SetChunkInfo(List<ChunkPos> territories,List<ChunkPos> removeables,
-                             List<ChunkPos> addable,List<ChunkPos> forbidens,ChunkPos center,int mapSize){
+    public void SetChunkInfo(Collection<ChunkPos> territories,Collection<ChunkPos> removeables,
+                             Collection<ChunkPos> addable,Collection<ChunkPos> forbidens,ChunkPos center,int mapSize){
         this.territories = territories;
         this.removables = removeables;
         this.addable = addable;

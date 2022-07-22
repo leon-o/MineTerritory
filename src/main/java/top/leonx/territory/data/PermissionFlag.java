@@ -8,6 +8,7 @@ public class PermissionFlag {
         ALL,
     }
     public final static PermissionFlag NONE=new PermissionFlag(0,"none");
+    public final static PermissionFlag ALL = new PermissionFlag(Integer.MAX_VALUE,"all");
     public final static PermissionFlag ENTER=new PermissionFlag(1,"enter");
     public final static PermissionFlag ATTACK_ENTITY=new PermissionFlag(1<<1,"attack_entity");
     public final static PermissionFlag BREAK_BLOCK=new PermissionFlag(1<<2,"break_block");

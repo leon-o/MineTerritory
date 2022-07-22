@@ -10,19 +10,16 @@ import top.leonx.territory.util.UserUtil;
 import java.util.*;
 
 public class TerritoryInfo {
-    public BlockPos centerPos = BlockPos.ORIGIN;
     public String territoryName = "";
-    public Map<Integer,TerritoryArea> areas = Collections.emptyMap();
-    public Map<Integer,TerritoryGroup> groups = Collections.emptyMap();
+    private TerritoryArea mainArea;
+    //public Map<UUID,TerritoryArea> areas = Collections.emptyMap();
+    public Map<UUID,TerritoryGroup> groups = Collections.emptyMap();
     public PermissionFlag defaultPermission = PermissionFlag.NONE;
     public UUID ownerId = Util.NIL_UUID;
     public UUID territoryId = Util.NIL_UUID;
 
     // Version identification
     public int version=1;
-    private boolean isProtected=false;
-
-    public boolean IsProtected(){return isProtected;}
 
     @Override
     public boolean equals(Object o) {
@@ -37,24 +34,13 @@ public class TerritoryInfo {
         return Objects.hash(territoryId, version);
     }
 
-    public TerritoryInfo copy() {
-        TerritoryInfo info=new TerritoryInfo();
-        info.isProtected=isProtected;
-        info.ownerId=ownerId;
-        info.defaultPermission=new PermissionFlag(defaultPermission.getCode());
-        info.territoryName=territoryName;
-        info.centerPos=centerPos;
-        info.territoryId=territoryId;
-        return info;
-    }
 
     @Override
     public String toString() {
-        return String.format("{id:%s,owner:%s,name:%s,center:%s,defP:%d}",
+        return String.format("{id:%s,owner:%s,name:%s,defP:%d}",
                 territoryId==null?"NULL":territoryId.toString(),
                 ownerId==null?"NULL":UserUtil.getNameByUUID(ownerId),
                 Optional.ofNullable(territoryName).orElse("NULL"),
-                centerPos == null ?"NULL" :centerPos.toString(),
                 defaultPermission == null ? 0 : defaultPermission.getCode());
     }
 
@@ -64,11 +50,9 @@ public class TerritoryInfo {
     public static final String TERRITORY_ID_KEY="te_id";
     //private static final String TERRITORY_POS_KEY ="territories";
     public static final String GROUP_ID_KEY="permission";
-    public static final String AREA_KEY="areas";
+    public static final String AREA_KEY="area";
     public static final String DEFAULT_PERMISSION_KEY="def_permission";
     public static final String TERRITORY_NAME_KEY="name";
-    public static final String CENTER_POS="center_pos";
-    public static final String IS_PROTECTED_KEY="protect";
 
 
     public void readFromNbt(NbtCompound compound) {
@@ -79,9 +63,8 @@ public class TerritoryInfo {
         this.territoryId=compound.getUuid(TERRITORY_ID_KEY);
         this.territoryName=compound.getString(TERRITORY_NAME_KEY);
         this.defaultPermission=new PermissionFlag(compound.getInt(DEFAULT_PERMISSION_KEY));
-        this.centerPos= BlockPos.fromLong(compound.getLong(CENTER_POS));
         NbtList groupNBT = compound.getList(GROUP_ID_KEY,NbtElement.COMPOUND_TYPE);
-        NbtList areaNBT = compound.getList(AREA_KEY,NbtElement.COMPOUND_TYPE);
+        NbtCompound areaNBT = compound.getCompound(AREA_KEY);
 
         if(groupNBT!=null && groupNBT.size()>0){
             this.groups= new HashMap<>();
@@ -95,27 +78,9 @@ public class TerritoryInfo {
         }else{
             this.groups = Collections.emptyMap();
         }
-        if(areaNBT!=null && areaNBT.size()>0){
-            this.areas = new HashMap<>();
 
-            for (NbtElement element : areaNBT) {
-                if(element instanceof NbtCompound areaTag){
-                    var area = new TerritoryArea();
-                    area.readFromNbt(areaTag);
-                    this.areas.put(area.areaId,area);
-                }
-            }
-        }else{
-            this.areas = Collections.emptyMap();
-        }
-            /*NbtList permissionList = compound.getList(PERMISSION_KEY, 10);
-            permissionFlagHashMap=new HashMap<>();
-            for (NbtElement t : permissionList) {
-                Map.Entry<UUID, PermissionFlag> entry = ConvertNbtToUUIDPermission((NbtCompound) t);
-                permissionFlagHashMap.put(entry.getKey(), entry.getValue());
-            }*/
-
-
+        this.mainArea = new TerritoryArea();
+        mainArea.readFromNbt(areaNBT);
     }
 
 
@@ -126,29 +91,31 @@ public class TerritoryInfo {
         compound.putUuid(TERRITORY_ID_KEY,instance.territoryId);
         compound.putInt(DEFAULT_PERMISSION_KEY,instance.defaultPermission.getCode());
         compound.putString(TERRITORY_NAME_KEY,instance.territoryName);
-        compound.putLong(CENTER_POS,instance.centerPos.asLong());
         NbtList groupList = new NbtList();
-        NbtList areaList = new NbtList();
+        NbtCompound areaComponent = new NbtCompound();
 
-        for (Integer id : groups.keySet()) {
+        for (UUID id : groups.keySet()) {
             var group = groups.get(id);
             NbtCompound groupTag = new NbtCompound();
             group.writeToNbt(groupTag);
             groupList.add(groupTag);
         }
 
-        for (Integer id : areas.keySet()) {
-            var area = areas.get(id);
-            NbtCompound areaTag = new NbtCompound();
-            area.writeToNbt(areaTag);
-            areaList.add(areaTag);
-        }
+        mainArea.writeToNbt(areaComponent);
 
         compound.put(GROUP_ID_KEY,groupList);
-        compound.put(AREA_KEY,areaList);
+        compound.put(AREA_KEY,areaComponent);
     }
 
-    public Map<Integer, TerritoryArea> getAreas() {
-        return areas;
+    public TerritoryArea getMainArea() {
+        return mainArea;
+    }
+
+    public void setMainArea(TerritoryArea mainArea) {
+        this.mainArea = mainArea;
+    }
+
+    public BlockPos getCenterPos(){
+        return mainArea.getCenterPos();
     }
 }

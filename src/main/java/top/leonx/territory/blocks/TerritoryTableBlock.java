@@ -15,21 +15,23 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
-import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.explosion.Explosion;
-import top.leonx.territory.data.ComponentTypes;
 import top.leonx.territory.data.TerritoryInfo;
+import top.leonx.territory.data.TerritoryInfoHolder;
 import top.leonx.territory.tileentities.ModTileEntityTypes;
 import top.leonx.territory.tileentities.TerritoryTableTileEntity;
 import top.leonx.territory.util.MessageUtil;
 
 import javax.annotation.Nullable;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Random;
 
-@SuppressWarnings({"NullableProblems", "deprecation"})
+@SuppressWarnings({"deprecation"})
 public class TerritoryTableBlock extends BlockWithEntity {
     public TerritoryTableBlock() {
         super(AbstractBlock.Settings.of(Material.STONE, MapColor.RED).hardness
@@ -40,7 +42,8 @@ public class TerritoryTableBlock extends BlockWithEntity {
     public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
         if (hand == Hand.MAIN_HAND) getTerritoryTileEntity(world, pos).mapStack = player.getStackInHand(hand);
         if (world.isClient) return ActionResult.PASS;
-        TerritoryTableTileEntity tileEntity = getTerritoryTileEntity(world, pos);
+        // todo permission check
+        //TerritoryTableTileEntity tileEntity = getTerritoryTileEntity(world, pos);
         player.openHandledScreen(state.createScreenHandlerFactory(world, pos));
         /*if (tileEntity.getOwnerId().equals(player.getUuid()) || tileEntity.getTerritoryInfo().permissions.containsKey(
                 player.getUuid()) && tileEntity.getTerritoryInfo().permissions.get(player.getUuid()).contain(
@@ -68,11 +71,14 @@ public class TerritoryTableBlock extends BlockWithEntity {
     @org.jetbrains.annotations.Nullable
     @Override
     public BlockState getPlacementState(ItemPlacementContext context) {
-        Chunk chunk = context.getWorld().getChunk(context.getBlockPos().getX() >> 4, context.getBlockPos().getZ() >> 4);
-        TerritoryInfo info = ComponentTypes.WORLD_TERRITORY_INFO.get(chunk);
+        ChunkPos chunkPos = new ChunkPos(context.getBlockPos());
+        //Chunk chunk = context.getWorld().getChunk(chunkPos.x,chunkPos.z);
+        TerritoryInfoHolder holder = TerritoryInfoHolder.get(context.getWorld());
+        Optional<TerritoryInfo> territoryInfo = holder.getChunkTerritoryInfo(chunkPos);
         // todo Capability
-        if (info.IsProtected()) {
-            if (!context.getWorld().isClient) {
+        if (context.getPlayer()==null || territoryInfo.isPresent() &&
+                !Objects.equals(territoryInfo.get().ownerId, context.getPlayer().getUuid())) {
+            if (!context.getWorld().isClient && context.getPlayer()!=null) {
                 context.getPlayer().sendMessage(new TranslatableText("message.territory.already_occupied").setStyle(MessageUtil.YELLOW),false);
             }
             return Blocks.AIR.getDefaultState();
@@ -83,10 +89,11 @@ public class TerritoryTableBlock extends BlockWithEntity {
 
     @Override
     public void onPlaced(World worldIn, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
-
-        TerritoryTableTileEntity tileEntity = getTerritoryTileEntity(worldIn, pos);
-        tileEntity.initTerritoryInfo(placer.getUuid());
-        tileEntity.drawMapData();
+        if(placer!=null){
+            TerritoryTableTileEntity tileEntity = getTerritoryTileEntity(worldIn, pos);
+            tileEntity.initTerritoryArea(placer.getUuid());
+            tileEntity.drawMapData();
+        }
         super.onPlaced(worldIn, pos, state, placer, stack);
     }
 

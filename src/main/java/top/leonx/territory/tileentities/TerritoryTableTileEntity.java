@@ -41,8 +41,8 @@ import net.minecraft.world.Heightmap;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldAccess;
 import net.minecraft.world.chunk.WorldChunk;
-import top.leonx.territory.config.TerritoryConfig;
 import top.leonx.territory.container.TerritoryTableContainer;
+import top.leonx.territory.data.TerritoryArea;
 import top.leonx.territory.data.TerritoryInfo;
 import top.leonx.territory.data.TerritoryInfoHolder;
 import top.leonx.territory.util.DataUtil;
@@ -60,7 +60,8 @@ import static top.leonx.territory.util.DataUtil.ConvertPosToNbt;
 public class TerritoryTableTileEntity extends BlockEntity implements ExtendedScreenHandlerFactory, NamedScreenHandlerFactory {
     private static final String TERRITORY_POS_KEY = "ter";
     private static final String MAP_COLOR = "map";
-    private final TerritoryInfo territoryInfo = new TerritoryInfo();
+    private TerritoryInfo territoryInfo = null;
+    private TerritoryArea area = null;
     //private final        LazyOptional<TerritoryInfo> territoryInfoLazyOptional = LazyOptional.of(() -> territoryInfo);
     private final HashSet<ChunkPos> lastTerritories = new HashSet<>();
     private final List<ChunkPos> territoriesLostDueToPower = new ArrayList<>();
@@ -87,10 +88,22 @@ public class TerritoryTableTileEntity extends BlockEntity implements ExtendedScr
         return territoryInfo.ownerId;
     }
 
-    public void initTerritoryInfo(UUID owner_id) {
-        territoryInfo.assignedTo(owner_id, UUID.randomUUID(), pos, UserUtil.getNameByUUID(owner_id) + "'s",
-                                 TerritoryConfig.defaultPermission, new HashMap<>());
-        updateTerritoryToWorld();
+    public void initTerritoryArea(UUID owner_id) {
+        var chunkPos = new ChunkPos(this.pos);
+        var holder = TerritoryInfoHolder.get(world);
+        var lowestArea = holder.getLowestLevelTerritoryArea(chunkPos);
+        Optional<TerritoryInfo> infoOptional = holder.getChunkTerritoryInfo(chunkPos);
+        if (lowestArea.isPresent()) {
+            assert infoOptional.isPresent();
+            this.territoryInfo = infoOptional.get();
+            this.area = lowestArea.get().createChild(this.pos);
+        }else{
+            var newTerritory = holder.createTerritory(this.pos,owner_id);
+            assert newTerritory.isPresent();
+            this.territoryInfo = newTerritory.get();
+            this.area = this.territoryInfo.getMainArea();
+        }
+        //updateTerritoryToWorld();
         markDirty();
     }
 
@@ -102,7 +115,11 @@ public class TerritoryTableTileEntity extends BlockEntity implements ExtendedScr
         return territoryInfo;
     }
 
-    public void updateTerritoryToWorld() {
+    public TerritoryArea getArea() {
+        return area;
+    }
+
+    /*public void updateTerritoryToWorld() {
         if (world == null || world.isClient) return;
 
         lastTerritories.stream().filter(t -> !territories.contains(t)).forEach(
@@ -111,7 +128,7 @@ public class TerritoryTableTileEntity extends BlockEntity implements ExtendedScr
         lastTerritories.clear();
         lastTerritories.addAll(territories);
         markDirty();
-    }
+    }*/
 
     @Override
     public void readNbt(@Nonnull NbtCompound compound) {
@@ -197,7 +214,7 @@ public class TerritoryTableTileEntity extends BlockEntity implements ExtendedScr
             mapRenderType = RenderLayer.getText(mapLocation);
         }
         //drawMapData();
-        territoryInfo.centerPos = pos;
+        //territoryInfo.centerPos = pos;
         territories.add(new ChunkPos(pos.getX() >> 4, pos.getZ() >> 4));
         lastTerritories.add(new ChunkPos(pos.getX() >> 4, pos.getZ() >> 4));
     }
@@ -206,7 +223,7 @@ public class TerritoryTableTileEntity extends BlockEntity implements ExtendedScr
     public void markRemoved() {
         super.markRemoved();
         territories.clear();
-        updateTerritoryToWorld();
+        //updateTerritoryToWorld();
     }
 
     public static void tick(World world, BlockPos pos, BlockState state, TerritoryTableTileEntity blockEntity) {
@@ -258,7 +275,7 @@ public class TerritoryTableTileEntity extends BlockEntity implements ExtendedScr
                 territories.remove(pos);
                 territoriesLostDueToPower.add(pos);
             }
-            updateTerritoryToWorld();
+            //updateTerritoryToWorld();
             world.updateListeners(pos, world.getBlockState(pos), world.getBlockState(pos), 2);
             world.getServer().getPlayerManager().getPlayer(getOwnerId()).sendMessage(
                     new TranslatableText("message.territory" + ".insufficient_protect_power").setStyle(MessageUtil.RED),
@@ -280,7 +297,7 @@ public class TerritoryTableTileEntity extends BlockEntity implements ExtendedScr
 
         }
         if (count == 0) return;
-        updateTerritoryToWorld();
+        //updateTerritoryToWorld();
         world.updateListeners(pos, world.getBlockState(pos), world.getBlockState(pos), 2);
         world.getServer().getPlayerManager().getPlayer(getOwnerId()).sendMessage(
                 new TranslatableText("message.territory.territory_restore", Integer.toString(count)).setStyle(

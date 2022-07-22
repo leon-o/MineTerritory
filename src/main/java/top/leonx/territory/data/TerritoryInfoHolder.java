@@ -1,31 +1,47 @@
 package top.leonx.territory.data;
 
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
+import top.leonx.territory.TerritoryMod;
 
+import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class TerritoryInfoHolder {
-    public final ConcurrentHashMap<TerritoryInfo,HashSet<ChunkPos>>  TERRITORY_CHUNKS=new ConcurrentHashMap<>();
-
-    public final Map<ChunkPos,List<TerritoryArea>> chunkToAreaMap = new HashMap<>();
+    public final Map<ChunkPos,HashSet<TerritoryArea>> chunkToAreaMap = new HashMap<>();
     public final World world;
-    private final WorldTerritoryInfoComponent info;
+    private final WorldTerritoryInfoComponent worldData;
     private TerritoryInfoHolder(World world)
     {
         this.world=world;
-        info = ComponentTypes.WORLD_TERRITORY_INFO.get(world);
+        worldData = ComponentTypes.WORLD_TERRITORY_INFO.get(world);
 
-        for (TerritoryInfo territory : info.getTerritories()) {
-            for (var area : territory.getAreas().values()) {
-                for (ChunkPos pos : area.chunks) {
-                    if (!chunkToAreaMap.containsKey(pos)) {
-                        chunkToAreaMap.put(pos,List.of(area));
-                    }else{
-                        chunkToAreaMap.get(pos).add(area);
-                    }
+        for (TerritoryInfo territory : worldData.getTerritories()) {
+            for (ChunkPos pos : territory.getMainArea().chunks) {
+                if(chunkToAreaMap.containsKey(pos)){
+                    TerritoryMod.LOGGER.error( String.format("There has been a main area in %s",pos.toString()));
+                }else{
+                    var set = new HashSet<TerritoryArea>();
+                    set.add(territory.getMainArea());
+                    chunkToAreaMap.put(pos,set);
+                }
+                deepVisit(territory.getMainArea());
+            }
+        }
+    }
+
+    private void deepVisit(TerritoryArea area){
+        if (area.children == null) {
+            return;
+        }
+        for (TerritoryArea child : area.children) {
+            for (ChunkPos pos : child.chunks) {
+                if(chunkToAreaMap.containsKey(pos)){
+                    chunkToAreaMap.get(pos).add(child);
+                }else{
+                    TerritoryMod.LOGGER.error( String.format("There is not a main area in %s",pos.toString()));
                 }
             }
         }
@@ -42,22 +58,29 @@ public class TerritoryInfoHolder {
         return territoryInfoHolders.get(world);
     }
 
-    public void addIndex(TerritoryInfo info, ChunkPos chunkPos) {
-        if (!TERRITORY_CHUNKS.containsKey(info))
-            TERRITORY_CHUNKS.put(info,new HashSet<>());
-        TERRITORY_CHUNKS.get(info).add(chunkPos);
-    }
 
-    public void removeIndex(TerritoryInfo info, ChunkPos pos) {
-        if (!TERRITORY_CHUNKS.containsKey(info)) return;
-
-        TERRITORY_CHUNKS.get(info).remove(pos);
-        if(TERRITORY_CHUNKS.get(info).size()==0)
-            TERRITORY_CHUNKS.remove(info);
-    }
-    public void assignToChunk(ChunkPos pos,TerritoryArea area)
+    public boolean assignToChunk(ChunkPos pos,TerritoryArea area)
     {
+        if (chunkToAreaMap.containsKey(pos)) {
+            if (chunkToAreaMap.get(pos).stream().anyMatch(a-> a.getAreaLevel()>=area.getAreaLevel())) {
+                return false;
+            }
+        }
+
+        if(!chunkToAreaMap.containsKey(pos)){
+            chunkToAreaMap.put(pos,new HashSet<>());
+        }
+        var areas = chunkToAreaMap.get(pos);
         area.chunks.add(pos);
+        areas.add(area);
+        var curArea = area;
+        while(curArea.getParent() != null){
+            curArea = curArea.getParent();
+            curArea.chunks.add(pos);
+            areas.add(curArea);
+        }
+
+        return true;
     }
 
     public Optional<TerritoryInfo> getChunkTerritoryInfo(Chunk chunk) {
@@ -66,18 +89,80 @@ public class TerritoryInfoHolder {
 
     public Optional<TerritoryInfo> getChunkTerritoryInfo(ChunkPos pos) {
         if (chunkToAreaMap.containsKey(pos)) {
-            List<TerritoryArea> areas = chunkToAreaMap.get(pos);
-            if(areas.size()>0){
-                TerritoryArea area = areas.get(0);
-                info.getTerritoryById(area.territoryId);
+            var mainArea = chunkToAreaMap.get(pos);
+            Optional<TerritoryArea> first = mainArea.stream().findFirst();
+            if (first.isPresent()) {
+                return worldData.getTerritoryById(first.get().getTerritoryId());
             }
         }
         return Optional.empty();
     }
 
-    public Set<ChunkPos> getAssociatedTerritory(TerritoryInfo info) {
-        return TERRITORY_CHUNKS.get(info);
+    public Optional<TerritoryInfo> createTerritory(BlockPos pos, UUID ownerId){
+        ChunkPos chunkPos = new ChunkPos(pos);
+        if (chunkToAreaMap.containsKey(chunkPos) && chunkToAreaMap.get(chunkPos).size()>0){
+            return Optional.empty();
+        }
+        var territory = new TerritoryInfo();
+        String s = ownerId.toString() + new Date().getTime();
+        territory.territoryId = UUID.nameUUIDFromBytes(s.getBytes(StandardCharsets.UTF_8));
+        territory.territoryName = "My Territory"; // todo
+        territory.ownerId = ownerId;
+        var area = new TerritoryArea(territory,pos);
+        territory.setMainArea(area);
+        territory.defaultPermission = PermissionFlag.ALL;
+        //territory.groups
+        return Optional.of(territory);
     }
+
+    public Optional<TerritoryArea> getLowestLevelTerritoryArea(ChunkPos pos){
+        if (chunkToAreaMap.containsKey(pos)) {
+            var areas = chunkToAreaMap.get(pos);
+            return areas.stream().max(Comparator.comparingInt(TerritoryArea::getAreaLevel));
+        }
+        return Optional.empty();
+    }
+
+    public boolean isChunkOccupied(ChunkPos pos){
+        return chunkToAreaMap.containsKey(pos) && chunkToAreaMap.get(pos).size()>0;
+    }
+
+    public void setAreaChunks(TerritoryArea area,Collection<ChunkPos> chunks){
+        for (ChunkPos pos : area.getChunks()) {
+            chunkToAreaMap.get(pos).remove(area);
+        }
+        area.chunks.clear();
+        area.chunks.addAll(chunks);
+        for (ChunkPos pos : area.getChunks()) {
+            addToChunkAreaMap(pos,area);
+        }
+
+        area.MarkModified();
+    }
+
+    private void addToChunkAreaMap(ChunkPos pos,TerritoryArea area){
+        HashSet<TerritoryArea> areas;
+        if(chunkToAreaMap.containsKey(pos)){
+            areas = chunkToAreaMap.get(pos);
+        }else {
+            areas=new HashSet<>();
+            chunkToAreaMap.put(pos,areas);
+        }
+        areas.add(area);
+    }
+
+    /*private TerritoryArea getLowestLevelTerritoryAreaInternal(TerritoryArea parentArea, ChunkPos pos){
+        if(parentArea.children!=null && parentArea.children.size()>0){
+            for (TerritoryArea child : parentArea.children) {
+                if (!child.chunks.contains(pos)) {
+                    continue;
+                }
+                return getLowestLevelTerritoryAreaInternal(child,pos);
+            }
+        }else{
+            return parentArea;
+        }
+    }*/
 
     /*public void addReservedTerritory(TerritoryInfo info,ChunkPos pos)
     {

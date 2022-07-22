@@ -1,61 +1,63 @@
 package top.leonx.territory.container;
 
 import io.github.cottonmc.cotton.gui.SyncedGuiDescription;
-import io.github.cottonmc.cotton.gui.widget.*;
+import io.github.cottonmc.cotton.gui.widget.WButton;
+import io.github.cottonmc.cotton.gui.widget.WGridPanel;
+import io.github.cottonmc.cotton.gui.widget.WPanel;
+import io.github.cottonmc.cotton.gui.widget.WTabPanel;
 import io.github.cottonmc.cotton.gui.widget.data.Insets;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.block.BlockState;
+import net.minecraft.block.BlockEntityProvider;
+import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.network.MessageType;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.screen.ScreenHandlerContext;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.LiteralText;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.Util;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
-import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.chunk.ChunkStatus;
+import top.leonx.territory.client.gui.WMapWidget;
+import top.leonx.territory.config.TerritoryConfig;
+import top.leonx.territory.data.TerritoryArea;
+import top.leonx.territory.data.TerritoryInfo;
+import top.leonx.territory.data.TerritoryInfoHolder;
 import top.leonx.territory.network.PacketContext;
 import top.leonx.territory.network.TerritoryNetworkHandler;
-import top.leonx.territory.client.gui.WMapWidget;
-import top.leonx.territory.data.ComponentTypes;
-import top.leonx.territory.config.TerritoryConfig;
-import top.leonx.territory.data.TerritoryInfo;
 import top.leonx.territory.network.packet.GUIBaseDataPushRequestPacket;
 import top.leonx.territory.network.packet.GUIChunkDataSyncPacket;
 import top.leonx.territory.network.packet.GUIChunkOperateRequestPacket;
 import top.leonx.territory.tileentities.TerritoryTableTileEntity;
-import top.leonx.territory.util.MessageUtil;
 import top.leonx.territory.util.TerritoryUtil;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
 public class TerritoryTableContainer extends SyncedGuiDescription {
 
     public final BlockPos tileEntityPos;
     public final ChunkPos tileEntityChunkPos;
     public final TerritoryInfo territoryInfo;
-    public final Set<ChunkPos> territories = new HashSet<>();
-    public final Set<ChunkPos> selectableChunkPos = new HashSet<>();
-    public final Set<ChunkPos> removableChunkPos = new HashSet<>();
-    public final Set<ChunkPos> forbiddenChunkPos = new HashSet<>();
+    private final TerritoryTableTileEntity tileEntity;
+    private final TerritoryArea area;
+
+    public final Set<ChunkPos> occupiedChunks = new HashSet<>();
+    public final Set<ChunkPos> selectableChunks = new HashSet<>();
+    public final Set<ChunkPos> removableChunks = new HashSet<>();
+    public final Set<ChunkPos> forbiddenChunks = new HashSet<>();
+
     private final PlayerEntity player;
-    private final Set<ChunkPos> originalTerritories = new HashSet<>();
+    private final Set<ChunkPos> originalOccupied = new HashSet<>();
     public Identifier mapLocation;
     public ChunkPos mapLeftTopChunkPos;
     public int protectPower;
@@ -67,62 +69,75 @@ public class TerritoryTableContainer extends SyncedGuiDescription {
     public TerritoryTableContainer(int syncId, PlayerInventory inventory, ScreenHandlerContext context) {
         super(ModContainerTypes.TERRITORY_CONTAINER, syncId, inventory, getBlockInventory(context, 32), getBlockPropertyDelegate(context));
         this.player = inventory.player;
-        var tileEntity = (TerritoryTableTileEntity) context.get(World::getBlockEntity).get();
-        this.territoryInfo = tileEntity.getTerritoryInfo().copy();
-
+        Optional<BlockEntity> blockEntity = context.get(World::getBlockEntity);
+        if(blockEntity.isEmpty()){
+            throw new IllegalArgumentException("Can not get BlockEntity from context");
+        }
+        tileEntity = (TerritoryTableTileEntity) blockEntity.get();
+        this.territoryInfo = tileEntity.getTerritoryInfo();
+        this.area = tileEntity.getArea();
         tileEntityPos = tileEntity.getPos();
+
+        // todo 可以控制的尺寸
         tileEntityChunkPos = new ChunkPos(tileEntityPos.getX() >> 4, tileEntityPos.getZ() >> 4);
         mapLeftTopChunkPos = new ChunkPos((tileEntityPos.getX() >> 4) - 4, (tileEntityPos.getZ() >> 4) - 4);
-        territories.addAll(tileEntity.territories);
-        originalTerritories.addAll(tileEntity.territories);
+        occupiedChunks.addAll(tileEntity.territories);
+        originalOccupied.addAll(tileEntity.territories);
 
-        if (Objects.requireNonNull(tileEntity.getWorld()).isClient) {
-
-            for (int x = mapLeftTopChunkPos.x; x < mapLeftTopChunkPos.x + 9; x++) {
-                for (int z = mapLeftTopChunkPos.z; z < mapLeftTopChunkPos.z + 9; z++) {
-                    if(territories.contains(new ChunkPos(x,z))) continue;
-                    Chunk chunk = tileEntity.getWorld().getChunk(x, z, ChunkStatus.EMPTY,false);
-                    if(chunk!=null){
-                        TerritoryInfo info = ComponentTypes.WORLD_TERRITORY_INFO.get(chunk);//chunk.getCapability(ModCapabilities.TERRITORY_INFO_CAPABILITY).orElse(ModCapabilities.TERRITORY_INFO_CAPABILITY.getDefaultInstance());
-                        if (info.IsProtected() && !info.equals(territoryInfo))
-                            forbiddenChunkPos.add(new ChunkPos(x, z));
-                    }
-                }
-            }
-
-            initChunkInfo();
+        if (!Objects.requireNonNull(tileEntity.getWorld()).isClient) {
+            computeChunkSelectionData();
         }
         protectPower = tileEntity.computeProtectPower();
         if(FabricLoader.getInstance().getEnvironmentType()== EnvType.CLIENT)
             mapLocation=tileEntity.mapLocation;
 
 
+        WTabPanel tabPanel = new WTabPanel();
+        setRootPanel(tabPanel);
+        tabPanel.setSize(336, 292);
+        //tabPanel.setInsets(Insets.ROOT_PANEL);
+
+        tabPanel.add(buildPanelWithDoneBtn(buildMapTab()),tab->tab.title(new TranslatableText("gui.territory.tab_map")));
+        tabPanel.add(buildPanelWithDoneBtn(buildPermGroupTab()),tab->tab.title(new TranslatableText("gui.territory.tab_perm_group")));
+        tabPanel.add(buildPanelWithDoneBtn(buildPermTab()),tab->tab.title(new TranslatableText("gui.territory.tab_perm_map")));
+
+        tabPanel.validate(this);
+    }
+
+    private WPanel buildPanelWithDoneBtn(WPanel child){
         WGridPanel root = new WGridPanel();
-        setRootPanel(root);
-        root.setSize(336, 200);
+        root.setSize(360, 252);
+        root.setInsets(Insets.ROOT_PANEL);
+        root.add(child,0,0,20,13);
+
+        WButton doneBtn = new WButton(new TranslatableText("gui.territory.done_btn"));
+        doneBtn.setOnClick(this::done);
+        root.add(new WButton(new TranslatableText("gui.territory.permission_btn")),11,8,6,1);
+        root.add(doneBtn,11,10,15,1);
+
+        return root;
+    }
+
+    private WPanel buildMapTab(){
+        WGridPanel root = new WGridPanel();
+
         root.setInsets(Insets.ROOT_PANEL);
         WMapWidget map = new WMapWidget(tileEntity.mapLocation,180);
         root.add(map,0,1);
-        var center= this.tileEntityChunkPos;
-        map.SetChunkInfo(List.of(new ChunkPos(center.x+1,center.z)),
-                         List.of(new ChunkPos(center.x,center.z+1)),
-                         List.of(new ChunkPos(center.x+1,center.z+1)),
-                         List.of(new ChunkPos(center.x,center.z)),
-                         center,tileEntity.mapSize);
-        var listPanel = new WListPanel<String,WText>(List.of("a","b","c"),
-                                                     ()->new WText(new LiteralText("a")),(d,s)->{
-            s.setText(new LiteralText(d));
-        });
-        /*var cardPanel = new WScrollPanel();
-        cardPanel.add(new WText(new LiteralText("a")));
-        cardPanel.add(new WText(new LiteralText("b")));
-        cardPanel.add(new WText(new LiteralText("3")));
-        cardPanel.layout();*/
-        root.add(listPanel, 11, 1, 6, 3);
-        root.add(new WButton(new TranslatableText("gui.territory.permission_btn")),11,8,6,1);
-        root.add(new WButton(new TranslatableText("gui.territory.done_btn")),11,10,6,1);
+        map.SetChunkInfo(occupiedChunks,
+                removableChunks,
+                selectableChunks, forbiddenChunks, this.tileEntityChunkPos,tileEntity.mapSize);
+        return root;
+    }
 
-        root.validate(this);
+    private WPanel buildPermGroupTab(){
+        WGridPanel root = new WGridPanel();
+        return root;
+    }
+
+    private WPanel buildPermTab(){
+        WGridPanel root = new WGridPanel();
+        return root;
     }
 
     private static ScreenHandlerContext getTileEntity(PlayerInventory inventory, PacketByteBuf buffer) {
@@ -130,40 +145,10 @@ public class TerritoryTableContainer extends SyncedGuiDescription {
         return ScreenHandlerContext.create(inventory.player.world,buffer.readBlockPos());//tileAtPos;
     }
 
-    public boolean updateTileEntityServerSide(ServerPlayerEntity player, TerritoryOperationMsg msg) {
-        if (originalTerritories.size() + msg.add.length - msg.remove.length > protectPower)
-            return false;
-
-        TerritoryTableTileEntity tileEntity = (TerritoryTableTileEntity) player.world.getBlockEntity(tileEntityPos);
-        if (!player.isCreative()) {
-            int experienceNeed = (int) Math.round((msg.add.length-msg.remove.length)* TerritoryConfig.expNeededPerChunk);
-            if (player.experienceLevel >= experienceNeed) {
-                player.addExperienceLevels(-experienceNeed);
-            } else {
-                player.sendMessage(new TranslatableText("message.territory.need_experience", Integer.toString(experienceNeed)).setStyle(MessageUtil.YELLOW),
-                                   MessageType.GAME_INFO, Util.NIL_UUID);
-                return false;
-            }
-        }
-        player.world.playSound(null, player.getBlockPos(), SoundEvents.BLOCK_ENCHANTMENT_TABLE_USE,
-                               SoundCategory.BLOCKS, 2F, 1F);
-        for (ChunkPos pos : msg.remove) {
-            tileEntity.territories.remove(pos);
-        }
-
-        Collections.addAll(tileEntity.territories, msg.add);
-
-        tileEntity.getTerritoryInfo().permissions = msg.permissions;
-        tileEntity.getTerritoryInfo().defaultPermission = msg.defaultPermission;
-        tileEntity.getTerritoryInfo().territoryName = msg.territoryName;
-        tileEntity.markDirty();
-        tileEntity.updateTerritoryToWorld();
-        return true;
-    }
     public int getXpRequired()
     {
         if (!player.isCreative()) {
-            return  (int) Math.round((territories.size()- originalTerritories.size())* TerritoryConfig.expNeededPerChunk);
+            return  (int) Math.round((occupiedChunks.size()- originalOccupied.size())* TerritoryConfig.expNeededPerChunk);
         }
         return 0;
     }
@@ -174,38 +159,54 @@ public class TerritoryTableContainer extends SyncedGuiDescription {
         super.close(player);
     }
 
-    public void Done() {
-
-        ChunkPos[] readyToRemove =
-                originalTerritories.stream().filter(t -> !territories.contains(t)).toArray(ChunkPos[]::new);
-        ChunkPos[] readyToAdd =
-                territories.stream().filter(t -> !originalTerritories.contains(t)).toArray(ChunkPos[]::new);
-
-        TerritoryOperationMsg msg = new TerritoryOperationMsg(territoryInfo.territoryName, readyToAdd, readyToRemove,
-                territoryInfo.permissions, territoryInfo.defaultPermission);
-
-        PacketByteBuf buf = PacketByteBufs.create();
-        TerritoryOperationMsg.encode(msg,buf);
-        ClientPlayNetworking.send(TerritoryNetworkHandler.GUI_BASE_DATA_PUSH_REQUEST,buf);
+    public void doneServerSide(){
+        TerritoryInfoHolder.get(this.world).setAreaChunks(area,this.occupiedChunks);
     }
 
-    public void initChunkInfo() {
-        TerritoryUtil.computeSelectableBtn(selectableChunkPos,territories,forbiddenChunkPos);
-        TerritoryUtil.computeRemovableBtn(removableChunkPos,tileEntityChunkPos,territories);
+    @Environment(EnvType.CLIENT)
+    public void done() {
+
+        TerritoryNetworkHandler.clientGuiChunkOperateChannel.sendToServer(
+                new GUIChunkOperateRequestPacket(ChunkPos.ORIGIN, GUIChunkOperateRequestPacket.Operation.Submit)
+        );
     }
 
-    public void onFetchChunkInfoFromServer(){
+    public void computeChunkSelectionData() {
+        for (int x = mapLeftTopChunkPos.x; x < mapLeftTopChunkPos.x + 9; x++) {
+            for (int z = mapLeftTopChunkPos.z; z < mapLeftTopChunkPos.z + 9; z++) {
+                var chunkPos = new ChunkPos(x,z);
+                if(occupiedChunks.contains(chunkPos)) continue;
+                // todo TerritoryInfoHolder.get(world)
+                var infoHolder = TerritoryInfoHolder.get(world);
+                if(infoHolder.isChunkOccupied(chunkPos)){
+                    forbiddenChunks.add(chunkPos);
+                }
+            }
+        }
 
+        var parent = area.getParent();
+        while (parent!=null){
+            for (ChunkPos pos : parent.getChunks()) {
+                forbiddenChunks.remove(pos);
+            }
+
+            for (TerritoryArea child : parent.getChildren()) {
+                if(child==area) continue;
+                forbiddenChunks.addAll(child.getChunks());
+            }
+            parent = parent.getParent();
+        }
+        TerritoryUtil.computeSelectableBtn(selectableChunks, occupiedChunks, forbiddenChunks);
+        TerritoryUtil.computeRemovableBtn(removableChunks,tileEntityChunkPos, occupiedChunks);
     }
 
-    public void
 
     public int getTotalProtectPower() {
         return protectPower;
     }
 
     public int getUsedProtectPower() {
-        return territories.size();
+        return occupiedChunks.size();
     }
 
     @Override
@@ -213,27 +214,45 @@ public class TerritoryTableContainer extends SyncedGuiDescription {
         return true;
     }
 
+    private void onClientOperationRequest(GUIChunkOperateRequestPacket msg){
+        if(msg.getOperation()== GUIChunkOperateRequestPacket.Operation.Submit){
+            // todo Finish logic when client submit.
+            this.doneServerSide();
+            if (this.player instanceof ServerPlayerEntity serverPlayer) {
+                serverPlayer.closeHandledScreen();
+            }
+            return;
+        }
+        if(msg.getOperation()== GUIChunkOperateRequestPacket.Operation.Add){
+            occupiedChunks.add(msg.getChunkPos());
+        }else if(msg.getOperation() == GUIChunkOperateRequestPacket.Operation.Remove){
+            occupiedChunks.remove(msg.getChunkPos());
+        }
+        computeChunkSelectionData();
+        syncSelectionDataToClient();
+    }
 
-    /*public static void onServerReceived(MinecraftServer server, ServerPlayerEntity player, ServerPlayNetworkHandler handler, GUIChunkDataSyncPacket msg, PacketContext<GUIChunkDataSyncPacket> context) {
-        if (player.currentScreenHandler instanceof TerritoryTableContainer container) {
-            if (!container.updateTileEntityServerSide(player, msg)) return;
-
-            World world = container.player.world;
-            BlockState state = world.getBlockState(container.tileEntityPos);
-            world.updateListeners(container.tileEntityPos, state, state, 2); //notify all clients to update.
-            context.sendPacket(msg); // todo successful message
+    private void syncSelectionDataToClient(){
+        if(player instanceof ServerPlayerEntity serverPlayerEntity){
+            TerritoryNetworkHandler.guiChunkDataSyncChannel.sendToClient(
+                    serverPlayerEntity,new GUIChunkDataSyncPacket(selectableChunks,removableChunks,forbiddenChunks,occupiedChunks)
+            );
         }
     }
 
-    public static void onClientReceived(MinecraftClient client, ClientPlayNetworkHandler handler, GUIChunkDataSyncPacket msg, PacketContext<GUIChunkDataSyncPacket> context) {
-        if (client.player.currentScreenHandler instanceof TerritoryTableContainer screenHandler) {
-            // todo
-        }
-    }*/
-
     @Environment(EnvType.CLIENT)
     public static <T> void ClientHandleChunkDataSync(MinecraftClient client, ClientPlayNetworkHandler handler, GUIChunkDataSyncPacket msg, PacketContext<T> context) {
-
+        assert client.player != null;
+        if (client.player.currentScreenHandler instanceof TerritoryTableContainer tableContainer) {
+            tableContainer.forbiddenChunks.clear();
+            tableContainer.forbiddenChunks.addAll(msg.forbidden);
+            tableContainer.occupiedChunks.clear();
+            tableContainer.occupiedChunks.addAll(msg.occupied);
+            tableContainer.selectableChunks.clear();
+            tableContainer.selectableChunks.addAll(msg.selectable);
+            tableContainer.removableChunks.clear();
+            tableContainer.removableChunks.addAll(msg.removable);
+        }
     }
 
     public static <T> void ServerHandleBaseDataPushRequest(MinecraftServer server, ServerPlayerEntity player, ServerPlayNetworkHandler handler, GUIBaseDataPushRequestPacket msg, PacketContext<T> context) {
@@ -241,6 +260,8 @@ public class TerritoryTableContainer extends SyncedGuiDescription {
     }
 
     public static <T> void ServerHandleChunkOperateRequest(MinecraftServer server, ServerPlayerEntity player, ServerPlayNetworkHandler handler, GUIChunkOperateRequestPacket msg, PacketContext<T> context) {
-
+        if (player.currentScreenHandler instanceof TerritoryTableContainer tableContainer) {
+            tableContainer.onClientOperationRequest(msg);
+        }
     }
 }

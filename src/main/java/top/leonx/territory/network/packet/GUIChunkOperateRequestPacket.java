@@ -6,11 +6,13 @@ import net.minecraft.util.math.ChunkPos;
 public class GUIChunkOperateRequestPacket {
     public enum Operation{
         Add,
-        Remove;
-
+        Remove,
+        Submit;
         public static Operation fromInt(int value){
             if (value == 1) {
                 return Operation.Remove;
+            }else if(value == 2){
+                return Operation.Submit;
             }
             return Operation.Add;
         }

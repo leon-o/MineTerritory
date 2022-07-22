@@ -15,12 +15,12 @@ public class TerritoryGroup {
     public static final String SINGLE_PLAYER = "si_p";
     public static final String SINGLE_PLAYER_ID = "si_pid";
     public static final String MULTI_PLAYER_ID = "mu_pid";
-    public int groupId;
+    public UUID groupId;
     public List<UUID> players = null;
     public UUID player = Util.NIL_UUID;
 
     public void readFromNbt(NbtCompound tag){
-        tag.putInt(GROUP_ID,groupId);
+        tag.putUuid(GROUP_ID,groupId);
         boolean singlePlayer = tag.getBoolean(SINGLE_PLAYER);
         if (singlePlayer){
             player = tag.getUuid(SINGLE_PLAYER_ID);
@@ -34,7 +34,7 @@ public class TerritoryGroup {
     }
 
     public void writeToNbt(NbtCompound tag){
-        groupId = tag.getInt(GROUP_ID);
+        groupId = tag.getUuid(GROUP_ID);
         if(players==null){
             tag.putBoolean(SINGLE_PLAYER,true);
             tag.putUuid(SINGLE_PLAYER_ID,player);
